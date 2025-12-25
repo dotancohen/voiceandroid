@@ -3,12 +3,12 @@ package com.dotancohen.voiceandroid.data
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import uniffi.voice_core.VoiceClient
-import uniffi.voice_core.VoiceCoreException
-import uniffi.voice_core.SyncServerConfig as UniFFISyncServerConfig
-import uniffi.voice_core.NoteData as UniFFINoteData
-import uniffi.voice_core.SyncResultData as UniFFISyncResultData
-import uniffi.voice_core.generateDeviceId as uniffiGenerateDeviceId
+import uniffi.voicecore.VoiceClient
+import uniffi.voicecore.VoiceCoreException
+import uniffi.voicecore.SyncServerConfig as UniFFISyncServerConfig
+import uniffi.voicecore.NoteData as UniFFINoteData
+import uniffi.voicecore.SyncResultData as UniFFISyncResultData
+import uniffi.voicecore.generateDeviceId as uniffiGenerateDeviceId
 
 /**
  * Repository for interacting with the Voice Core Rust library.

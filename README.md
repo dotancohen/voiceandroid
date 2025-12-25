@@ -48,7 +48,7 @@ Android client for the Voice note-taking application. Syncs with a Voice server 
 3. Build Rust native libraries (if not already built):
    ```bash
    export ANDROID_NDK_HOME=/path/to/ndk
-   cd submodules/voice-core
+   cd submodules/voicecore
 
    # Build for all architectures
    for target in aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android; do
@@ -58,18 +58,18 @@ Android client for the Voice note-taking application. Syncs with a Voice server 
    # Copy libraries
    cd ../..
    mkdir -p app/src/main/jniLibs/{arm64-v8a,armeabi-v7a,x86_64,x86}
-   cp submodules/voice-core/target/aarch64-linux-android/release/libvoice_core.so app/src/main/jniLibs/arm64-v8a/
-   cp submodules/voice-core/target/armv7-linux-androideabi/release/libvoice_core.so app/src/main/jniLibs/armeabi-v7a/
-   cp submodules/voice-core/target/x86_64-linux-android/release/libvoice_core.so app/src/main/jniLibs/x86_64/
-   cp submodules/voice-core/target/i686-linux-android/release/libvoice_core.so app/src/main/jniLibs/x86/
+   cp submodules/voicecore/target/aarch64-linux-android/release/libvoicecore.so app/src/main/jniLibs/arm64-v8a/
+   cp submodules/voicecore/target/armv7-linux-androideabi/release/libvoicecore.so app/src/main/jniLibs/armeabi-v7a/
+   cp submodules/voicecore/target/x86_64-linux-android/release/libvoicecore.so app/src/main/jniLibs/x86_64/
+   cp submodules/voicecore/target/i686-linux-android/release/libvoicecore.so app/src/main/jniLibs/x86/
    ```
 
 4. Generate Kotlin bindings (if not already generated):
    ```bash
-   cd submodules/voice-core
+   cd submodules/voicecore
    cargo build --release --features uniffi
    ./target/release/uniffi-bindgen generate \
-       --library target/release/libvoice_core.so \
+       --library target/release/libvoicecore.so \
        --language kotlin \
        --out-dir ../../app/src/main/java
    ```
@@ -110,10 +110,11 @@ VoiceAndroid/
 │       ├── jniLibs/           # Native Rust libraries
 │       └── res/               # Android resources
 ├── submodules/
-│   └── voice-core/            # Rust core library
+│   └── voicecore/             # Rust core library
 └── gradle/
 ```
 
 ## License
 
-MIT License - see LICENSE file for details.
+GPL version 3.0 or above
+

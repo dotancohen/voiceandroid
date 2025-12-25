@@ -3,7 +3,7 @@
 
 @file:Suppress("NAME_SHADOWING")
 
-package uniffi.voice_core
+package uniffi.voicecore
 
 // Common helper code.
 //
@@ -59,7 +59,7 @@ open class RustBuffer : Structure() {
     companion object {
         internal fun alloc(size: ULong = 0UL) = uniffiRustCall() { status ->
             // Note: need to convert the size to a `Long` value to make this work with JVM.
-            UniffiLib.INSTANCE.ffi_voice_core_rustbuffer_alloc(size.toLong(), status)
+            UniffiLib.INSTANCE.ffi_voicecore_rustbuffer_alloc(size.toLong(), status)
         }.also {
             if(it.data == null) {
                throw RuntimeException("RustBuffer.alloc() returned null data pointer (size=${size})")
@@ -75,7 +75,7 @@ open class RustBuffer : Structure() {
         }
 
         internal fun free(buf: RustBuffer.ByValue) = uniffiRustCall() { status ->
-            UniffiLib.INSTANCE.ffi_voice_core_rustbuffer_free(buf, status)
+            UniffiLib.INSTANCE.ffi_voicecore_rustbuffer_free(buf, status)
         }
     }
 
@@ -375,7 +375,7 @@ private fun findLibraryName(componentName: String): String {
     if (libOverride != null) {
         return libOverride
     }
-    return "voice_core"
+    return "voicecore"
 }
 
 private inline fun <reified Lib : Library> loadIndirect(
@@ -744,7 +744,7 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 internal interface UniffiLib : Library {
     companion object {
         internal val INSTANCE: UniffiLib by lazy {
-            loadIndirect<UniffiLib>(componentName = "voice_core")
+            loadIndirect<UniffiLib>(componentName = "voicecore")
             .also { lib: UniffiLib ->
                 uniffiCheckContractApiVersion(lib)
                 uniffiCheckApiChecksums(lib)
@@ -757,171 +757,171 @@ internal interface UniffiLib : Library {
         }
     }
 
-    fun uniffi_voice_core_fn_clone_voiceclient(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_clone_voiceclient(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
-    fun uniffi_voice_core_fn_free_voiceclient(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_free_voiceclient(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voice_core_fn_constructor_voiceclient_new(`dataDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_constructor_voiceclient_new(`dataDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
-    fun uniffi_voice_core_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voice_core_fn_method_voiceclient_get_all_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_get_all_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voice_core_fn_method_voiceclient_get_device_id(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_get_device_id(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voice_core_fn_method_voiceclient_get_device_name(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_get_device_name(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voice_core_fn_method_voiceclient_get_note_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_get_note_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
-    fun uniffi_voice_core_fn_method_voiceclient_get_sync_config(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_get_sync_config(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voice_core_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
-    fun uniffi_voice_core_fn_method_voiceclient_set_device_id(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_set_device_id(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voice_core_fn_method_voiceclient_set_device_name(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_set_device_name(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voice_core_fn_method_voiceclient_sync_now(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_sync_now(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voice_core_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun ffi_voice_core_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun ffi_voice_core_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun ffi_voice_core_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rustbuffer_free(`buf`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun ffi_voice_core_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rustbuffer_reserve(`buf`: RustBuffer.ByValue,`additional`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun ffi_voice_core_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_u8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_u8(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_u8(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_u8(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_u8(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_u8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
-    fun ffi_voice_core_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_i8(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_i8(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_i8(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_i8(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_i8(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_i8(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
-    fun ffi_voice_core_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_u16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_u16(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_u16(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_u16(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_u16(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_u16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Short
-    fun ffi_voice_core_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_i16(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_i16(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_i16(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_i16(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_i16(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_i16(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Short
-    fun ffi_voice_core_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_u32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_u32(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_u32(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_u32(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_u32(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_u32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
-    fun ffi_voice_core_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_i32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_i32(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_i32(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_i32(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_i32(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_i32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
-    fun ffi_voice_core_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_u64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_u64(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_u64(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_u64(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_u64(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_u64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Long
-    fun ffi_voice_core_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_i64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_i64(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_i64(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_i64(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_i64(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_i64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Long
-    fun ffi_voice_core_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_f32(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_f32(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_f32(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_f32(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_f32(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_f32(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Float
-    fun ffi_voice_core_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_f64(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_f64(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_f64(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_f64(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_f64(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_f64(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Double
-    fun ffi_voice_core_rust_future_poll_pointer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_pointer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_pointer(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_pointer(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_pointer(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_pointer(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_pointer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_pointer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
-    fun ffi_voice_core_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_rust_buffer(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_rust_buffer(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_rust_buffer(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_rust_buffer(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_rust_buffer(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_rust_buffer(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun ffi_voice_core_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
+    fun ffi_voicecore_rust_future_poll_void(`handle`: Long,`callback`: UniffiRustFutureContinuationCallback,`callbackData`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_cancel_void(`handle`: Long,
+    fun ffi_voicecore_rust_future_cancel_void(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_free_void(`handle`: Long,
+    fun ffi_voicecore_rust_future_free_void(`handle`: Long,
     ): Unit
-    fun ffi_voice_core_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun ffi_voicecore_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voice_core_checksum_func_generate_device_id(
+    fun uniffi_voicecore_checksum_func_generate_device_id(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_configure_sync(
+    fun uniffi_voicecore_checksum_method_voiceclient_configure_sync(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_get_all_notes(
+    fun uniffi_voicecore_checksum_method_voiceclient_get_all_notes(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_get_device_id(
+    fun uniffi_voicecore_checksum_method_voiceclient_get_device_id(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_get_device_name(
+    fun uniffi_voicecore_checksum_method_voiceclient_get_device_name(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_get_note_count(
+    fun uniffi_voicecore_checksum_method_voiceclient_get_note_count(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_get_sync_config(
+    fun uniffi_voicecore_checksum_method_voiceclient_get_sync_config(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_is_sync_configured(
+    fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_set_device_id(
+    fun uniffi_voicecore_checksum_method_voiceclient_set_device_id(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_set_device_name(
+    fun uniffi_voicecore_checksum_method_voiceclient_set_device_name(
     ): Short
-    fun uniffi_voice_core_checksum_method_voiceclient_sync_now(
+    fun uniffi_voicecore_checksum_method_voiceclient_sync_now(
     ): Short
-    fun uniffi_voice_core_checksum_constructor_voiceclient_new(
+    fun uniffi_voicecore_checksum_constructor_voiceclient_new(
     ): Short
-    fun ffi_voice_core_uniffi_contract_version(
+    fun ffi_voicecore_uniffi_contract_version(
     ): Int
     
 }
@@ -930,7 +930,7 @@ private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
     // Get the bindings contract version from our ComponentInterface
     val bindings_contract_version = 26
     // Get the scaffolding contract version by calling the into the dylib
-    val scaffolding_contract_version = lib.ffi_voice_core_uniffi_contract_version()
+    val scaffolding_contract_version = lib.ffi_voicecore_uniffi_contract_version()
     if (bindings_contract_version != scaffolding_contract_version) {
         throw RuntimeException("UniFFI contract version mismatch: try cleaning and rebuilding your project")
     }
@@ -938,40 +938,40 @@ private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
 
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: UniffiLib) {
-    if (lib.uniffi_voice_core_checksum_func_generate_device_id() != 61759.toShort()) {
+    if (lib.uniffi_voicecore_checksum_func_generate_device_id() != 30760.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_configure_sync() != 47822.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_configure_sync() != 51278.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_get_all_notes() != 35395.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_notes() != 62343.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_get_device_id() != 64852.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_device_id() != 41402.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_get_device_name() != 26016.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_device_name() != 23646.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_get_note_count() != 50676.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_note_count() != 32814.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_get_sync_config() != 29194.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_sync_config() != 64316.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_is_sync_configured() != 6550.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_is_sync_configured() != 19345.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_set_device_id() != 2651.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_device_id() != 29924.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_set_device_name() != 56903.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_device_name() != 11140.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_method_voiceclient_sync_now() != 55665.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_sync_now() != 57614.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voice_core_checksum_constructor_voiceclient_new() != 12304.toShort()) {
+    if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 26098.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -1370,7 +1370,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     constructor(`dataDir`: kotlin.String) :
         this(
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_constructor_voiceclient_new(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_constructor_voiceclient_new(
         FfiConverterString.lower(`dataDir`),_status)
 }
     )
@@ -1426,7 +1426,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
         override fun run() {
             pointer?.let { ptr ->
                 uniffiRustCall { status ->
-                    UniffiLib.INSTANCE.uniffi_voice_core_fn_free_voiceclient(ptr, status)
+                    UniffiLib.INSTANCE.uniffi_voicecore_fn_free_voiceclient(ptr, status)
                 }
             }
         }
@@ -1434,7 +1434,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     fun uniffiClonePointer(): Pointer {
         return uniffiRustCall() { status ->
-            UniffiLib.INSTANCE.uniffi_voice_core_fn_clone_voiceclient(pointer!!, status)
+            UniffiLib.INSTANCE.uniffi_voicecore_fn_clone_voiceclient(pointer!!, status)
         }
     }
 
@@ -1446,7 +1446,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
         = 
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_configure_sync(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_configure_sync(
         it, FfiConverterTypeSyncServerConfig.lower(`syncConfig`),_status)
 }
     }
@@ -1461,7 +1461,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
             return FfiConverterSequenceTypeNoteData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_get_all_notes(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_all_notes(
         it, _status)
 }
     }
@@ -1476,7 +1476,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
             return FfiConverterString.lift(
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_get_device_id(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_device_id(
         it, _status)
 }
     }
@@ -1491,7 +1491,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
             return FfiConverterString.lift(
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_get_device_name(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_device_name(
         it, _status)
 }
     }
@@ -1507,7 +1507,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
             return FfiConverterInt.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_get_note_count(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_note_count(
         it, _status)
 }
     }
@@ -1522,7 +1522,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
             return FfiConverterOptionalTypeSyncServerConfig.lift(
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_get_sync_config(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_sync_config(
         it, _status)
 }
     }
@@ -1537,7 +1537,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
             return FfiConverterBoolean.lift(
     callWithPointer {
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_is_sync_configured(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_is_sync_configured(
         it, _status)
 }
     }
@@ -1553,7 +1553,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
         = 
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_set_device_id(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_device_id(
         it, FfiConverterString.lower(`deviceId`),_status)
 }
     }
@@ -1568,7 +1568,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
         = 
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_set_device_name(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_device_name(
         it, FfiConverterString.lower(`name`),_status)
 }
     }
@@ -1583,7 +1583,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
             return FfiConverterTypeSyncResultData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_method_voiceclient_sync_now(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_sync_now(
         it, _status)
 }
     }
@@ -2002,7 +2002,7 @@ public object FfiConverterSequenceTypeNoteData: FfiConverterRustBuffer<List<Note
          */ fun `generateDeviceId`(): kotlin.String {
             return FfiConverterString.lift(
     uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_voice_core_fn_func_generate_device_id(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_func_generate_device_id(
         _status)
 }
     )

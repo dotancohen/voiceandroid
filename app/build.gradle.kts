@@ -18,8 +18,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            // Architectures to build for
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+            // Architectures to build for (override with -PtargetAbi=arm64-v8a)
+            val targetAbi = project.findProperty("targetAbi") as String?
+            if (targetAbi != null) {
+                abiFilters += listOf(targetAbi)
+            } else {
+                abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
+            }
         }
     }
 
@@ -90,7 +95,7 @@ tasks.register("buildRust") {
             ?: "${System.getenv("ANDROID_HOME")}/ndk/${android.ndkVersion}"
 
         val projectDir = project.rootDir
-        val rustDir = File(projectDir, "submodules/voice-core")
+        val rustDir = File(projectDir, "submodules/voicecore")
         val jniLibsDir = File(projectDir, "app/src/main/jniLibs")
 
         targets.forEach { (rustTarget, abiFolder) ->
@@ -112,7 +117,7 @@ tasks.register("buildRust") {
             }
 
             // Copy the library
-            val libPath = File(rustDir, "target/$rustTarget/release/libvoice_core.so")
+            val libPath = File(rustDir, "target/$rustTarget/release/libvoicecore.so")
             if (libPath.exists()) {
                 copy {
                     from(libPath)
@@ -132,8 +137,8 @@ tasks.register("generateKotlinBindings") {
 
     doLast {
         val projectDir = project.rootDir
-        val rustDir = File(projectDir, "submodules/voice-core")
-        val bindingsDir = File(projectDir, "app/src/main/java/com/dotancohen/voiceandroid/rust")
+        val rustDir = File(projectDir, "submodules/voicecore")
+        val bindingsDir = File(projectDir, "app/src/main/java")
 
         bindingsDir.mkdirs()
 
@@ -144,7 +149,7 @@ tasks.register("generateKotlinBindings") {
                 "--no-default-features", "--features", "uniffi",
                 "--bin", "uniffi-bindgen",
                 "generate",
-                "--library", "target/aarch64-linux-android/release/libvoice_core.so",
+                "--library", "target/aarch64-linux-android/release/libvoicecore.so",
                 "--language", "kotlin",
                 "--out-dir", bindingsDir.absolutePath
             )

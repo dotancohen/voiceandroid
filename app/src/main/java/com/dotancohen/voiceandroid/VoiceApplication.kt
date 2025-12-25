@@ -8,7 +8,7 @@ class VoiceApplication : Application() {
         super.onCreate()
 
         // Load native library
-        System.loadLibrary("voice_core")
+        System.loadLibrary("voicecore")
     }
 
     companion object {
