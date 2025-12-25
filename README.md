@@ -1,6 +1,6 @@
 # VoiceAndroid
 
-Android client for the Voice note-taking application. Syncs with a Voice server to retrieve and display notes.
+Android client for the [Voice](https://github.com/dotancohen/voice) note-taking application. Syncs with a Voice server to retrieve and display notes.
 
 ## Features
 
