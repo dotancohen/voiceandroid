@@ -738,6 +738,18 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -767,6 +779,16 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_get_all_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_attachments_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_audio_file(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_audio_file_path(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_audio_files_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_audiofile_directory(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_device_id(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_device_name(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -777,6 +799,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_set_audiofile_directory(`ptr`: Pointer,`path`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_device_id(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_device_name(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -903,6 +927,16 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_notes(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_attachments_for_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_audio_file(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_audio_file_path(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_audio_files_for_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_audiofile_directory(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_device_id(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_device_name(
@@ -912,6 +946,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_get_sync_config(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_set_audiofile_directory(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_device_id(
     ): Short
@@ -947,6 +983,21 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_notes() != 62343.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_attachments_for_note() != 52452.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_audio_file() != 57093.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_audio_file_path() != 9057.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_audio_files_for_note() != 37541.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_audiofile_directory() != 53696.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_device_id() != 41402.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -960,6 +1011,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_sync_configured() != 19345.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_audiofile_directory() != 4853.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_device_id() != 29924.toShort()) {
@@ -1302,6 +1356,31 @@ public interface VoiceClientInterface {
     fun `getAllNotes`(): List<NoteData>
     
     /**
+     * Get all attachments for a note
+     */
+    fun `getAttachmentsForNote`(`noteId`: kotlin.String): List<NoteAttachmentData>
+    
+    /**
+     * Get a single audio file by ID
+     */
+    fun `getAudioFile`(`audioFileId`: kotlin.String): AudioFileData?
+    
+    /**
+     * Get the file path for an audio file (if audiofile_directory is configured)
+     */
+    fun `getAudioFilePath`(`audioFileId`: kotlin.String): kotlin.String?
+    
+    /**
+     * Get all audio files for a note (via note_attachments)
+     */
+    fun `getAudioFilesForNote`(`noteId`: kotlin.String): List<AudioFileData>
+    
+    /**
+     * Get the audio file directory
+     */
+    fun `getAudiofileDirectory`(): kotlin.String?
+    
+    /**
      * Get the device ID
      */
     fun `getDeviceId`(): kotlin.String
@@ -1325,6 +1404,11 @@ public interface VoiceClientInterface {
      * Check if sync is configured
      */
     fun `isSyncConfigured`(): kotlin.Boolean
+    
+    /**
+     * Set the audio file directory for storing downloaded audio files
+     */
+    fun `setAudiofileDirectory`(`path`: kotlin.String)
     
     /**
      * Set the device ID (for importing from another installation)
@@ -1471,6 +1555,85 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Get all attachments for a note
+     */
+    @Throws(VoiceCoreException::class)override fun `getAttachmentsForNote`(`noteId`: kotlin.String): List<NoteAttachmentData> {
+            return FfiConverterSequenceTypeNoteAttachmentData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_attachments_for_note(
+        it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get a single audio file by ID
+     */
+    @Throws(VoiceCoreException::class)override fun `getAudioFile`(`audioFileId`: kotlin.String): AudioFileData? {
+            return FfiConverterOptionalTypeAudioFileData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_audio_file(
+        it, FfiConverterString.lower(`audioFileId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get the file path for an audio file (if audiofile_directory is configured)
+     */
+    @Throws(VoiceCoreException::class)override fun `getAudioFilePath`(`audioFileId`: kotlin.String): kotlin.String? {
+            return FfiConverterOptionalString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_audio_file_path(
+        it, FfiConverterString.lower(`audioFileId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get all audio files for a note (via note_attachments)
+     */
+    @Throws(VoiceCoreException::class)override fun `getAudioFilesForNote`(`noteId`: kotlin.String): List<AudioFileData> {
+            return FfiConverterSequenceTypeAudioFileData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_audio_files_for_note(
+        it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get the audio file directory
+     */override fun `getAudiofileDirectory`(): kotlin.String? {
+            return FfiConverterOptionalString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_audiofile_directory(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Get the device ID
      */override fun `getDeviceId`(): kotlin.String {
             return FfiConverterString.lift(
@@ -1543,6 +1706,21 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     }
     )
     }
+    
+
+    
+    /**
+     * Set the audio file directory for storing downloaded audio files
+     */
+    @Throws(VoiceCoreException::class)override fun `setAudiofileDirectory`(`path`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_audiofile_directory(
+        it, FfiConverterString.lower(`path`),_status)
+}
+    }
+    
     
 
     
@@ -1624,6 +1802,124 @@ public object FfiConverterTypeVoiceClient: FfiConverter<VoiceClient, Pointer> {
         // The Rust code always expects pointers written as 8 bytes,
         // and will fail to compile if they don't fit.
         buf.putLong(Pointer.nativeValue(lower(value)))
+    }
+}
+
+
+
+/**
+ * An audio file from the database
+ */
+data class AudioFileData (
+    var `id`: kotlin.String, 
+    var `importedAt`: kotlin.String, 
+    var `filename`: kotlin.String, 
+    var `fileCreatedAt`: kotlin.String?, 
+    var `summary`: kotlin.String?, 
+    var `deviceId`: kotlin.String, 
+    var `modifiedAt`: kotlin.String?, 
+    var `deletedAt`: kotlin.String?
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileData> {
+    override fun read(buf: ByteBuffer): AudioFileData {
+        return AudioFileData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: AudioFileData) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterString.allocationSize(value.`importedAt`) +
+            FfiConverterString.allocationSize(value.`filename`) +
+            FfiConverterOptionalString.allocationSize(value.`fileCreatedAt`) +
+            FfiConverterOptionalString.allocationSize(value.`summary`) +
+            FfiConverterString.allocationSize(value.`deviceId`) +
+            FfiConverterOptionalString.allocationSize(value.`modifiedAt`) +
+            FfiConverterOptionalString.allocationSize(value.`deletedAt`)
+    )
+
+    override fun write(value: AudioFileData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterString.write(value.`importedAt`, buf)
+            FfiConverterString.write(value.`filename`, buf)
+            FfiConverterOptionalString.write(value.`fileCreatedAt`, buf)
+            FfiConverterOptionalString.write(value.`summary`, buf)
+            FfiConverterString.write(value.`deviceId`, buf)
+            FfiConverterOptionalString.write(value.`modifiedAt`, buf)
+            FfiConverterOptionalString.write(value.`deletedAt`, buf)
+    }
+}
+
+
+
+/**
+ * A note-attachment association from the database
+ */
+data class NoteAttachmentData (
+    var `id`: kotlin.String, 
+    var `noteId`: kotlin.String, 
+    var `attachmentId`: kotlin.String, 
+    var `attachmentType`: kotlin.String, 
+    var `createdAt`: kotlin.String, 
+    var `deviceId`: kotlin.String, 
+    var `modifiedAt`: kotlin.String?, 
+    var `deletedAt`: kotlin.String?
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeNoteAttachmentData: FfiConverterRustBuffer<NoteAttachmentData> {
+    override fun read(buf: ByteBuffer): NoteAttachmentData {
+        return NoteAttachmentData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: NoteAttachmentData) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterString.allocationSize(value.`noteId`) +
+            FfiConverterString.allocationSize(value.`attachmentId`) +
+            FfiConverterString.allocationSize(value.`attachmentType`) +
+            FfiConverterString.allocationSize(value.`createdAt`) +
+            FfiConverterString.allocationSize(value.`deviceId`) +
+            FfiConverterOptionalString.allocationSize(value.`modifiedAt`) +
+            FfiConverterOptionalString.allocationSize(value.`deletedAt`)
+    )
+
+    override fun write(value: NoteAttachmentData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterString.write(value.`noteId`, buf)
+            FfiConverterString.write(value.`attachmentId`, buf)
+            FfiConverterString.write(value.`attachmentType`, buf)
+            FfiConverterString.write(value.`createdAt`, buf)
+            FfiConverterString.write(value.`deviceId`, buf)
+            FfiConverterOptionalString.write(value.`modifiedAt`, buf)
+            FfiConverterOptionalString.write(value.`deletedAt`, buf)
     }
 }
 
@@ -1944,6 +2240,38 @@ public object FfiConverterOptionalString: FfiConverterRustBuffer<kotlin.String?>
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeAudioFileData: FfiConverterRustBuffer<AudioFileData?> {
+    override fun read(buf: ByteBuffer): AudioFileData? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeAudioFileData.read(buf)
+    }
+
+    override fun allocationSize(value: AudioFileData?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeAudioFileData.allocationSize(value)
+        }
+    }
+
+    override fun write(value: AudioFileData?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeAudioFileData.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterOptionalTypeSyncServerConfig: FfiConverterRustBuffer<SyncServerConfig?> {
     override fun read(buf: ByteBuffer): SyncServerConfig? {
         if (buf.get().toInt() == 0) {
@@ -1966,6 +2294,62 @@ public object FfiConverterOptionalTypeSyncServerConfig: FfiConverterRustBuffer<S
         } else {
             buf.put(1)
             FfiConverterTypeSyncServerConfig.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeAudioFileData: FfiConverterRustBuffer<List<AudioFileData>> {
+    override fun read(buf: ByteBuffer): List<AudioFileData> {
+        val len = buf.getInt()
+        return List<AudioFileData>(len) {
+            FfiConverterTypeAudioFileData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<AudioFileData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeAudioFileData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<AudioFileData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeAudioFileData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeNoteAttachmentData: FfiConverterRustBuffer<List<NoteAttachmentData>> {
+    override fun read(buf: ByteBuffer): List<NoteAttachmentData> {
+        val len = buf.getInt()
+        return List<NoteAttachmentData>(len) {
+            FfiConverterTypeNoteAttachmentData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<NoteAttachmentData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeNoteAttachmentData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<NoteAttachmentData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeNoteAttachmentData.write(it, buf)
         }
     }
 }

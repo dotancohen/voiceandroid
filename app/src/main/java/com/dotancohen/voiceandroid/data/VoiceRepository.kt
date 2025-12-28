@@ -8,7 +8,10 @@ import uniffi.voicecore.VoiceCoreException
 import uniffi.voicecore.SyncServerConfig as UniFFISyncServerConfig
 import uniffi.voicecore.NoteData as UniFFINoteData
 import uniffi.voicecore.SyncResultData as UniFFISyncResultData
+import uniffi.voicecore.AudioFileData as UniFFIAudioFileData
+import uniffi.voicecore.NoteAttachmentData as UniFFINoteAttachmentData
 import uniffi.voicecore.generateDeviceId as uniffiGenerateDeviceId
+import java.io.File
 
 /**
  * Repository for interacting with the Voice Core Rust library.
@@ -16,6 +19,12 @@ import uniffi.voicecore.generateDeviceId as uniffiGenerateDeviceId
 class VoiceRepository(private val context: Context) {
 
     private val dataDir: String = context.filesDir.absolutePath
+    private val audioFileDir: String by lazy {
+        // Use external files directory for audio files (accessible for debugging, backed up)
+        val dir = context.getExternalFilesDir("audio") ?: File(context.filesDir, "audio")
+        dir.mkdirs()
+        dir.absolutePath
+    }
 
     private var client: VoiceClient? = null
 
@@ -28,6 +37,8 @@ class VoiceRepository(private val context: Context) {
             if (client == null) {
                 client = VoiceClient(dataDir)
             }
+            // Configure audiofile directory for sync
+            ensureInitialized().setAudiofileDirectory(audioFileDir)
             Result.success(Unit)
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
@@ -211,10 +222,106 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
+     * Get all attachments for a note.
+     */
+    suspend fun getAttachmentsForNote(noteId: String): Result<List<NoteAttachment>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val attachments = voiceClient.getAttachmentsForNote(noteId).map { data ->
+                NoteAttachment(
+                    id = data.id,
+                    noteId = data.noteId,
+                    attachmentId = data.attachmentId,
+                    attachmentType = data.attachmentType,
+                    createdAt = data.createdAt,
+                    deviceId = data.deviceId,
+                    modifiedAt = data.modifiedAt,
+                    deletedAt = data.deletedAt
+                )
+            }
+            Result.success(attachments)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get all audio files for a note (via note_attachments).
+     */
+    suspend fun getAudioFilesForNote(noteId: String): Result<List<AudioFile>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val audioFiles = voiceClient.getAudioFilesForNote(noteId).map { data ->
+                AudioFile(
+                    id = data.id,
+                    importedAt = data.importedAt,
+                    filename = data.filename,
+                    fileCreatedAt = data.fileCreatedAt,
+                    summary = data.summary,
+                    deviceId = data.deviceId,
+                    modifiedAt = data.modifiedAt,
+                    deletedAt = data.deletedAt
+                )
+            }
+            Result.success(audioFiles)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get a single audio file by ID.
+     */
+    suspend fun getAudioFile(audioFileId: String): Result<AudioFile?> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val audioFile = voiceClient.getAudioFile(audioFileId)?.let { data ->
+                AudioFile(
+                    id = data.id,
+                    importedAt = data.importedAt,
+                    filename = data.filename,
+                    fileCreatedAt = data.fileCreatedAt,
+                    summary = data.summary,
+                    deviceId = data.deviceId,
+                    modifiedAt = data.modifiedAt,
+                    deletedAt = data.deletedAt
+                )
+            }
+            Result.success(audioFile)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get the file path for an audio file (if it exists on disk).
+     */
+    suspend fun getAudioFilePath(audioFileId: String): Result<String?> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getAudioFilePath(audioFileId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get the audio file directory path.
+     */
+    fun getAudioFileDirectory(): String = audioFileDir
+
+    /**
      * Close the client and release resources.
      */
     fun close() {
-        client?.close()
         client = null
     }
 
