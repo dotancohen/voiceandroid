@@ -47,6 +47,7 @@ import com.dotancohen.voiceandroid.viewmodel.NotesViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(
+    onNoteClick: (String) -> Unit = {},
     viewModel: NotesViewModel = viewModel()
 ) {
     val notes by viewModel.notes.collectAsState()
@@ -86,7 +87,10 @@ fun NotesScreen(
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(notes) { noteWithAudio ->
-                        NoteCard(noteWithAudio = noteWithAudio)
+                        NoteCard(
+                            noteWithAudio = noteWithAudio,
+                            onClick = { onNoteClick(noteWithAudio.note.id) }
+                        )
                     }
                 }
             }
@@ -95,14 +99,19 @@ fun NotesScreen(
 }
 
 @Composable
-fun NoteCard(noteWithAudio: NoteWithAudioFiles) {
+fun NoteCard(
+    noteWithAudio: NoteWithAudioFiles,
+    onClick: () -> Unit = {}
+) {
     val note = noteWithAudio.note
     val audioFiles = noteWithAudio.audioFiles
     var isExpanded by remember { mutableStateOf(false) }
     val hasAttachments = audioFiles.isNotEmpty()
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(

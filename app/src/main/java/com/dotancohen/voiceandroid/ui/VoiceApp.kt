@@ -14,15 +14,21 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import com.dotancohen.voiceandroid.ui.screens.NoteDetailScreen
 import com.dotancohen.voiceandroid.ui.screens.NotesScreen
 import com.dotancohen.voiceandroid.ui.screens.SettingsScreen
 
 sealed class Screen(val route: String, val title: String) {
     data object Notes : Screen("notes", "Notes")
+    data object NoteDetail : Screen("note/{noteId}", "Note") {
+        fun createRoute(noteId: String) = "note/$noteId"
+    }
     data object Settings : Screen("settings", "Settings")
 }
 
@@ -44,6 +50,7 @@ fun VoiceApp() {
                                 imageVector = when (screen) {
                                     is Screen.Notes -> Icons.AutoMirrored.Filled.List
                                     is Screen.Settings -> Icons.Default.Settings
+                                    else -> Icons.Default.Settings // NoteDetail not in bottom nav
                                 },
                                 contentDescription = screen.title
                             )
@@ -70,7 +77,21 @@ fun VoiceApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Notes.route) {
-                NotesScreen()
+                NotesScreen(
+                    onNoteClick = { noteId ->
+                        navController.navigate(Screen.NoteDetail.createRoute(noteId))
+                    }
+                )
+            }
+            composable(
+                route = Screen.NoteDetail.route,
+                arguments = listOf(navArgument("noteId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getString("noteId") ?: return@composable
+                NoteDetailScreen(
+                    noteId = noteId,
+                    onBack = { navController.popBackStack() }
+                )
             }
             composable(Screen.Settings.route) {
                 SettingsScreen()
