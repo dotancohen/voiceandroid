@@ -15,6 +15,10 @@ Android client for the [Voice](https://github.com/dotancohen/voice) note-taking 
 - Android 10 (API 29) or higher
 - Voice sync server running and accessible
 
+## Permissions
+
+- MANAGE_EXTERNAL_STORAGE - Grants full filesystem access, needed to store audio files in a user-accessible location for integrating with additional tools.
+
 ## Building
 
 ### Prerequisites
