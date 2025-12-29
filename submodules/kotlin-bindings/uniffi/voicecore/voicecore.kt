@@ -750,12 +750,6 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
-
-
-
-
-
-
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -781,12 +775,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_constructor_voiceclient_new(`dataDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
-    fun uniffi_voicecore_fn_method_voiceclient_clear_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voicecore_fn_method_voiceclient_get_all_audio_files(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_all_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_attachments_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -806,8 +796,6 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_get_note_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
     fun uniffi_voicecore_fn_method_voiceclient_get_sync_config(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -935,11 +923,7 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_checksum_func_generate_device_id(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_clear_sync_state(
-    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_configure_sync(
-    ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_notes(
     ): Short
@@ -960,8 +944,6 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_get_note_count(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_sync_config(
-    ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_initial_sync(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
     ): Short
@@ -995,13 +977,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_func_generate_device_id() != 30760.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_sync_state() != 33205.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_configure_sync() != 51278.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files() != 5578.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_notes() != 62343.toShort()) {
@@ -1032,9 +1008,6 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_sync_config() != 64316.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 5382.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_sync_configured() != 19345.toShort()) {
@@ -1373,22 +1346,9 @@ private class JavaLangRefCleanable(
 public interface VoiceClientInterface {
     
     /**
-     * Clear sync state to force a full re-sync from scratch
-     *
-     * This deletes the sync peer record, causing the next sync to start
-     * from the beginning and fetch all data fresh.
-     */
-    fun `clearSyncState`()
-    
-    /**
      * Configure sync settings
      */
     fun `configureSync`(`syncConfig`: SyncServerConfig)
-    
-    /**
-     * Get all audio files in the database (for debugging)
-     */
-    fun `getAllAudioFiles`(): List<AudioFileData>
     
     /**
      * Get all notes from the local database
@@ -1439,14 +1399,6 @@ public interface VoiceClientInterface {
      * Get current sync configuration
      */
     fun `getSyncConfig`(): SyncServerConfig?
-    
-    /**
-     * Perform initial sync - fetches full dataset from server
-     *
-     * Unlike sync_now(), this ignores timestamps and fetches all data.
-     * Use this for first-time sync or to re-fetch everything.
-     */
-    fun `initialSync`(): SyncResultData
     
     /**
      * Check if sync is configured
@@ -1572,24 +1524,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Clear sync state to force a full re-sync from scratch
-     *
-     * This deletes the sync peer record, causing the next sync to start
-     * from the beginning and fetch all data fresh.
-     */
-    @Throws(VoiceCoreException::class)override fun `clearSyncState`()
-        = 
-    callWithPointer {
-    uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_clear_sync_state(
-        it, _status)
-}
-    }
-    
-    
-
-    
-    /**
      * Configure sync settings
      */
     @Throws(VoiceCoreException::class)override fun `configureSync`(`syncConfig`: SyncServerConfig)
@@ -1601,22 +1535,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 }
     }
     
-    
-
-    
-    /**
-     * Get all audio files in the database (for debugging)
-     */
-    @Throws(VoiceCoreException::class)override fun `getAllAudioFiles`(): List<AudioFileData> {
-            return FfiConverterSequenceTypeAudioFileData.lift(
-    callWithPointer {
-    uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_all_audio_files(
-        it, _status)
-}
-    }
-    )
-    }
     
 
     
@@ -1768,25 +1686,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     callWithPointer {
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_sync_config(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    
-    /**
-     * Perform initial sync - fetches full dataset from server
-     *
-     * Unlike sync_now(), this ignores timestamps and fetches all data.
-     * Use this for first-time sync or to re-fetch everything.
-     */
-    @Throws(VoiceCoreException::class)override fun `initialSync`(): SyncResultData {
-            return FfiConverterTypeSyncResultData.lift(
-    callWithPointer {
-    uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_initial_sync(
         it, _status)
 }
     }

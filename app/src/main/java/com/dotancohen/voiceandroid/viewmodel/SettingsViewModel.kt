@@ -28,6 +28,12 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _deviceName = MutableStateFlow("")
     val deviceName: StateFlow<String> = _deviceName.asStateFlow()
 
+    private val _audiofileDirectory = MutableStateFlow("")
+    val audiofileDirectory: StateFlow<String> = _audiofileDirectory.asStateFlow()
+
+    private val _defaultAudiofileDirectory = MutableStateFlow("")
+    val defaultAudiofileDirectory: StateFlow<String> = _defaultAudiofileDirectory.asStateFlow()
+
     private val _isSyncing = MutableStateFlow(false)
     val isSyncing: StateFlow<Boolean> = _isSyncing.asStateFlow()
 
@@ -37,8 +43,46 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _syncError = MutableStateFlow<String?>(null)
     val syncError: StateFlow<String?> = _syncError.asStateFlow()
 
+    // Debug info
+    private val _debugInfo = MutableStateFlow<String?>(null)
+    val debugInfo: StateFlow<String?> = _debugInfo.asStateFlow()
+
+    // Pending audio path awaiting permission grant (persisted to survive activity recreation)
+    private val _pendingAudioPath = MutableStateFlow<String?>(
+        prefs.getString("pending_audiofile_path", null)
+    )
+    val pendingAudioPath: StateFlow<String?> = _pendingAudioPath.asStateFlow()
+
     init {
         loadSettings()
+    }
+
+    /**
+     * Set a pending audio path that will be saved after permission is granted.
+     */
+    fun setPendingAudioPath(path: String?) {
+        _pendingAudioPath.value = path
+        prefs.edit().apply {
+            if (path != null) {
+                putString("pending_audiofile_path", path)
+            } else {
+                remove("pending_audiofile_path")
+            }
+            apply()
+        }
+    }
+
+    /**
+     * Try to apply the pending audio path if permission is now granted.
+     * Returns true if a pending path was applied.
+     */
+    fun tryApplyPendingAudioPath(): Boolean {
+        val path = _pendingAudioPath.value ?: return false
+        // Clear pending path first
+        setPendingAudioPath(null)
+        // Try to save it
+        saveAudiofileDirectory(path)
+        return true
     }
 
     private fun loadSettings() {
@@ -55,6 +99,42 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             repository.getDeviceName().onSuccess { name ->
                 _deviceName.value = name
             }
+
+            // Load audiofile directory
+            _defaultAudiofileDirectory.value = repository.defaultAudioFileDir
+            _audiofileDirectory.value = repository.audioFileDir
+        }
+    }
+
+    /**
+     * Save the audiofile directory path.
+     * Returns true if successful, false if the directory is invalid.
+     */
+    fun saveAudiofileDirectory(path: String): Boolean {
+        var success = false
+        viewModelScope.launch {
+            val pathToSave = path.trim().ifBlank { null }
+            repository.setAudiofileDirectory(pathToSave)
+                .onSuccess {
+                    _audiofileDirectory.value = repository.audioFileDir
+                    _syncError.value = null
+                    success = true
+                }
+                .onFailure { e ->
+                    _syncError.value = "Failed to set audio directory: ${e.message}"
+                    success = false
+                }
+        }
+        return success
+    }
+
+    /**
+     * Reset audiofile directory to default.
+     */
+    fun resetAudiofileDirectory() {
+        viewModelScope.launch {
+            repository.setAudiofileDirectory(null)
+            _audiofileDirectory.value = repository.audioFileDir
         }
     }
 
@@ -110,6 +190,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _isSyncing.value = true
             _syncResult.value = null
             _syncError.value = null
+            _debugInfo.value = null
 
             repository.syncNow()
                 .onSuccess { result ->
@@ -118,6 +199,62 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 .onFailure { exception ->
                     _syncError.value = exception.message
                 }
+
+            // Get debug info about audio files
+            updateDebugInfo()
+
+            _isSyncing.value = false
+        }
+    }
+
+    fun updateDebugInfo() {
+        viewModelScope.launch {
+            val allAudioFiles = repository.getAllAudioFiles().getOrNull() ?: emptyList()
+            val allNotes = repository.getAllNotes().getOrNull() ?: emptyList()
+
+            val notesWithAudio = allNotes.count { note ->
+                val audioForNote = repository.getAudioFilesForNote(note.id).getOrNull() ?: emptyList()
+                audioForNote.isNotEmpty()
+            }
+
+            val audioFileDir = repository.getAudioFileDirectory()
+
+            _debugInfo.value = buildString {
+                appendLine("Debug Info:")
+                appendLine("- Audio files in DB: ${allAudioFiles.size}")
+                appendLine("- Notes in DB: ${allNotes.size}")
+                appendLine("- Notes with audio: $notesWithAudio")
+                appendLine("- Audio dir: $audioFileDir")
+                if (allAudioFiles.isNotEmpty()) {
+                    appendLine("- First audio file: ${allAudioFiles[0].filename} (${allAudioFiles[0].id.take(8)}...)")
+                }
+            }
+        }
+    }
+
+    /**
+     * Perform initial sync to fetch full dataset from server.
+     * This is useful if note_attachments or other data was missed during incremental sync.
+     */
+    fun fullResync() {
+        if (_isSyncing.value) return
+
+        viewModelScope.launch {
+            _isSyncing.value = true
+            _syncResult.value = null
+            _syncError.value = null
+            _debugInfo.value = "Performing full sync..."
+
+            repository.initialSync()
+                .onSuccess { result ->
+                    _syncResult.value = result
+                }
+                .onFailure { exception ->
+                    _syncError.value = exception.message
+                }
+
+            // Get debug info about audio files
+            updateDebugInfo()
 
             _isSyncing.value = false
         }
