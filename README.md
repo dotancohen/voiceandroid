@@ -24,64 +24,64 @@ Android client for the [Voice](https://github.com/dotancohen/voice) note-taking 
 ### Prerequisites
 
 1. **Android SDK** with:
-   - SDK Platform 35
-   - Build Tools 34
-   - NDK 29.x
+  - SDK Platform 35
+  - Build Tools 34
+  - NDK 29.x
 
 2. **Rust toolchain** with Android targets:
-   ```bash
-   rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
-   cargo install cargo-ndk
-   ```
+```bash
+rustup target add aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android
+cargo install cargo-ndk
+```
 
 3. **JDK 17+** (Android Studio includes one)
 
 ### Build Steps
 
 1. Clone with submodules:
-   ```bash
-   git clone --recursive https://github.com/dotancohen/VoiceAndroid.git
-   cd VoiceAndroid
-   ```
+```bash
+git clone --recursive https://github.com/dotancohen/VoiceAndroid.git
+cd VoiceAndroid
+```
 
 2. Set up local.properties:
-   ```bash
-   echo "sdk.dir=/path/to/Android/Sdk" > local.properties
-   ```
+```bash
+echo "sdk.dir=/path/to/Android/Sdk" > local.properties
+```
 
 3. Build Rust native libraries (if not already built):
-   ```bash
-   export ANDROID_NDK_HOME=/path/to/ndk
-   cd submodules/voicecore
+```bash
+export ANDROID_NDK_HOME=/path/to/ndk
+cd submodules/voicecore
 
-   # Build for all architectures
-   for target in aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android; do
-       cargo ndk -t $target --platform 29 build --release --no-default-features --features uniffi
-   done
+# Build for all architectures
+for target in aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android; do
+    cargo ndk -t $target --platform 29 build --release --no-default-features --features uniffi
+done
 
-   # Copy libraries
-   cd ../..
-   mkdir -p app/src/main/jniLibs/{arm64-v8a,armeabi-v7a,x86_64,x86}
-   cp submodules/voicecore/target/aarch64-linux-android/release/libvoicecore.so app/src/main/jniLibs/arm64-v8a/
-   cp submodules/voicecore/target/armv7-linux-androideabi/release/libvoicecore.so app/src/main/jniLibs/armeabi-v7a/
-   cp submodules/voicecore/target/x86_64-linux-android/release/libvoicecore.so app/src/main/jniLibs/x86_64/
-   cp submodules/voicecore/target/i686-linux-android/release/libvoicecore.so app/src/main/jniLibs/x86/
-   ```
+# Copy libraries
+cd ../..
+mkdir -p app/src/main/jniLibs/{arm64-v8a,armeabi-v7a,x86_64,x86}
+cp submodules/voicecore/target/aarch64-linux-android/release/libvoicecore.so app/src/main/jniLibs/arm64-v8a/
+cp submodules/voicecore/target/armv7-linux-androideabi/release/libvoicecore.so app/src/main/jniLibs/armeabi-v7a/
+cp submodules/voicecore/target/x86_64-linux-android/release/libvoicecore.so app/src/main/jniLibs/x86_64/
+cp submodules/voicecore/target/i686-linux-android/release/libvoicecore.so app/src/main/jniLibs/x86/
+```
 
 4. Generate Kotlin bindings (if not already generated):
-   ```bash
-   cd submodules/voicecore
-   cargo build --release --features uniffi
-   ./target/release/uniffi-bindgen generate \
-       --library target/release/libvoicecore.so \
-       --language kotlin \
-       --out-dir ../../app/src/main/java
-   ```
+```bash
+cd submodules/voicecore
+cargo build --release --features uniffi
+./target/release/uniffi-bindgen generate \
+    --library target/release/libvoicecore.so \
+    --language kotlin \
+    --out-dir ../../app/src/main/java
+```
 
 5. Build the APK:
-   ```bash
-   ./gradlew assembleDebug
-   ```
+```bash
+./gradlew assembleDebug
+```
 
 The APK will be at `app/build/outputs/apk/debug/app-debug.apk`
 
