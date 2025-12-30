@@ -15,11 +15,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
@@ -71,6 +75,7 @@ fun SettingsScreen(
     val syncError by viewModel.syncError.collectAsState()
     val debugInfo by viewModel.debugInfo.collectAsState()
     val hasUnsyncedChanges by viewModel.hasUnsyncedChanges.collectAsState()
+    val logContent by viewModel.logContent.collectAsState()
 
     var editedServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
     var editedServerPeerId by remember(serverPeerId) { mutableStateOf(serverPeerId) }
@@ -81,6 +86,8 @@ fun SettingsScreen(
 
     // State for permission dialog
     var showPermissionDialog by remember { mutableStateOf(false) }
+    // State for log dialog
+    var showLogDialog by remember { mutableStateOf(false) }
     // Pending audio path is stored in ViewModel to survive activity recreation
     val pendingAudioPath by viewModel.pendingAudioPath.collectAsState()
 
@@ -461,7 +468,61 @@ fun SettingsScreen(
                 Text("Save Settings")
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Log Button
+            OutlinedButton(
+                onClick = {
+                    viewModel.loadLogContent()
+                    showLogDialog = true
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.List,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("View Log")
+            }
         }
+    }
+
+    // Log Dialog
+    if (showLogDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogDialog = false },
+            title = { Text("Application Log") },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp)
+                ) {
+                    Text(
+                        text = "Log file: ${viewModel.getLogFilePath()}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    SelectionContainer {
+                        Text(
+                            text = logContent.ifEmpty { "Log is empty" },
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .horizontalScroll(rememberScrollState())
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showLogDialog = false }) {
+                    Text("Close")
+                }
+            }
+        )
     }
 }
 

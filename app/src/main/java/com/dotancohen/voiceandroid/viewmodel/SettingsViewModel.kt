@@ -6,6 +6,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dotancohen.voiceandroid.data.SyncResult
 import com.dotancohen.voiceandroid.data.VoiceRepository
+import com.dotancohen.voiceandroid.util.AppLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -207,13 +208,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _syncResult.value = null
             _syncError.value = null
             _debugInfo.value = null
+            AppLogger.i(TAG, "Starting sync")
 
             repository.syncNow()
                 .onSuccess { result ->
                     _syncResult.value = result
+                    AppLogger.i(TAG, "Sync completed: received=${result.notesReceived}, sent=${result.notesSent}")
                 }
                 .onFailure { exception ->
                     _syncError.value = exception.message
+                    AppLogger.e(TAG, "Sync failed", exception)
                 }
 
             // Get debug info about audio files
@@ -267,13 +271,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _syncResult.value = null
             _syncError.value = null
             _debugInfo.value = "Performing full sync..."
+            AppLogger.i(TAG, "Starting full resync")
 
             repository.initialSync()
                 .onSuccess { result ->
                     _syncResult.value = result
+                    AppLogger.i(TAG, "Full resync completed: received=${result.notesReceived}, sent=${result.notesSent}")
                 }
                 .onFailure { exception ->
                     _syncError.value = exception.message
+                    AppLogger.e(TAG, "Full resync failed", exception)
                 }
 
             // Get debug info about audio files
@@ -284,5 +291,25 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
             _isSyncing.value = false
         }
+    }
+
+    // Log viewing
+    private val _logContent = MutableStateFlow("")
+    val logContent: StateFlow<String> = _logContent.asStateFlow()
+
+    /**
+     * Load the application log content.
+     */
+    fun loadLogContent() {
+        _logContent.value = AppLogger.readLog(1000)
+    }
+
+    /**
+     * Get the log file path for display.
+     */
+    fun getLogFilePath(): String = AppLogger.getLogFilePath()
+
+    companion object {
+        private const val TAG = "SettingsViewModel"
     }
 }

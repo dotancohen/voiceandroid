@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.dotancohen.voiceandroid.data.AudioFile
 import com.dotancohen.voiceandroid.data.Note
 import com.dotancohen.voiceandroid.data.VoiceRepository
+import com.dotancohen.voiceandroid.util.AppLogger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -111,16 +112,23 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
         val noteId = _note.value?.id ?: return
         viewModelScope.launch {
             _isSaving.value = true
+            AppLogger.i(TAG, "Saving note $noteId")
             repository.updateNote(noteId, _editedContent.value)
                 .onSuccess {
+                    AppLogger.i(TAG, "Note saved successfully: $noteId")
                     // Reload note to get updated modified_at
                     loadNote(noteId)
                     _isEditing.value = false
                 }
                 .onFailure { e ->
+                    AppLogger.e(TAG, "Failed to save note $noteId", e)
                     _error.value = "Failed to save: ${e.message}"
                 }
             _isSaving.value = false
         }
+    }
+
+    companion object {
+        private const val TAG = "NoteDetailViewModel"
     }
 }

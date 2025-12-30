@@ -3,6 +3,7 @@ package com.dotancohen.voiceandroid.data
 import android.content.Context
 import android.os.Build
 import android.os.Environment
+import com.dotancohen.voiceandroid.util.AppLogger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import uniffi.voicecore.VoiceClient
@@ -71,8 +72,10 @@ class VoiceRepository(private val context: Context) {
      */
     suspend fun initialize(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
+            AppLogger.i(TAG, "Initializing VoiceRepository, dataDir=$dataDir")
             if (client == null) {
                 client = VoiceClient(dataDir)
+                AppLogger.i(TAG, "VoiceClient created")
             }
 
             // Reload audiofile directory in case permission was granted after creation
@@ -80,10 +83,13 @@ class VoiceRepository(private val context: Context) {
 
             // Configure audiofile directory for sync
             ensureInitialized().setAudiofileDirectory(audioFileDir)
+            AppLogger.i(TAG, "Audio file directory set to: $audioFileDir")
             Result.success(Unit)
         } catch (e: VoiceCoreException) {
+            AppLogger.e(TAG, "Failed to initialize VoiceClient", e)
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Failed to initialize VoiceClient", e)
             Result.failure(e)
         }
     }
@@ -187,8 +193,10 @@ class VoiceRepository(private val context: Context) {
      */
     suspend fun syncNow(): Result<SyncResult> = withContext(Dispatchers.IO) {
         try {
+            AppLogger.i(TAG, "Starting sync")
             val voiceClient = ensureInitialized()
             val result = voiceClient.syncNow()
+            AppLogger.i(TAG, "Sync completed: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}")
             Result.success(SyncResult(
                 success = result.success,
                 notesReceived = result.notesReceived,
@@ -196,8 +204,10 @@ class VoiceRepository(private val context: Context) {
                 errorMessage = result.errorMessage
             ))
         } catch (e: VoiceCoreException) {
+            AppLogger.e(TAG, "Sync failed", e)
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Sync failed", e)
             Result.failure(e)
         }
     }
@@ -223,8 +233,10 @@ class VoiceRepository(private val context: Context) {
      */
     suspend fun initialSync(): Result<SyncResult> = withContext(Dispatchers.IO) {
         try {
+            AppLogger.i(TAG, "Starting initial sync (full dataset fetch)")
             val voiceClient = ensureInitialized()
             val result = voiceClient.initialSync()
+            AppLogger.i(TAG, "Initial sync completed: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}")
             Result.success(SyncResult(
                 success = result.success,
                 notesReceived = result.notesReceived,
@@ -232,8 +244,10 @@ class VoiceRepository(private val context: Context) {
                 errorMessage = result.errorMessage
             ))
         } catch (e: VoiceCoreException) {
+            AppLogger.e(TAG, "Initial sync failed", e)
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
+            AppLogger.e(TAG, "Initial sync failed", e)
             Result.failure(e)
         }
     }
@@ -512,6 +526,8 @@ class VoiceRepository(private val context: Context) {
     }
 
     companion object {
+        private const val TAG = "VoiceRepository"
+
         @Volatile
         private var instance: VoiceRepository? = null
 
