@@ -458,6 +458,48 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
+     * Update a note's content.
+     */
+    suspend fun updateNote(noteId: String, content: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.updateNote(noteId, content))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Check if there are local changes that haven't been synced.
+     */
+    suspend fun hasUnsyncedChanges(): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.hasUnsyncedChanges())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Debug: get sync state details.
+     */
+    suspend fun debugSyncState(): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.debugSyncState())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Get the audio file directory path.
      */
     fun getAudioFileDirectory(): String = audioFileDir

@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -36,6 +37,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -68,6 +70,7 @@ fun SettingsScreen(
     val syncResult by viewModel.syncResult.collectAsState()
     val syncError by viewModel.syncError.collectAsState()
     val debugInfo by viewModel.debugInfo.collectAsState()
+    val hasUnsyncedChanges by viewModel.hasUnsyncedChanges.collectAsState()
 
     var editedServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
     var editedServerPeerId by remember(serverPeerId) { mutableStateOf(serverPeerId) }
@@ -128,6 +131,12 @@ fun SettingsScreen(
         }
     }
 
+    // Check for unsynced changes and update debug info when this screen becomes visible
+    LaunchedEffect(Unit) {
+        viewModel.checkUnsyncedChanges()
+        viewModel.updateDebugInfo()
+    }
+
     // Permission dialog
     if (showPermissionDialog) {
         AlertDialog(
@@ -181,6 +190,100 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Sync Section (at top for easy access)
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Synchronization",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    OutlinedButton(
+                        onClick = { viewModel.syncNow() },
+                        enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank(),
+                        colors = if (hasUnsyncedChanges) {
+                            ButtonDefaults.outlinedButtonColors(
+                                containerColor = Color(0xFFFFEB3B),
+                                contentColor = Color.Black
+                            )
+                        } else {
+                            ButtonDefaults.outlinedButtonColors()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (isSyncing) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.height(20.dp)
+                                )
+                                Text("Syncing...")
+                            }
+                        } else {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = null
+                                )
+                                Text(if (hasUnsyncedChanges) "Sync Now (changes pending)" else "Sync Now")
+                            }
+                        }
+                    }
+
+                    // Full Re-sync button
+                    TextButton(
+                        onClick = { viewModel.fullResync() },
+                        enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank()
+                    ) {
+                        Text("Full Re-sync (fetch all)")
+                    }
+
+                    // Sync result
+                    syncResult?.let { result ->
+                        if (result.success) {
+                            Text(
+                                text = "Sync successful! Received: ${result.notesReceived}, Sent: ${result.notesSent}",
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        } else {
+                            Text(
+                                text = "Sync failed: ${result.errorMessage ?: "Unknown error"}",
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+
+                    // Sync error
+                    syncError?.let { error ->
+                        Text(
+                            text = "Error: $error",
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+
+                    // Debug info
+                    debugInfo?.let { info ->
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = info,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
             // Sync Server Configuration
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -358,93 +461,6 @@ fun SettingsScreen(
                 Text("Save Settings")
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Sync Section
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Synchronization",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    OutlinedButton(
-                        onClick = { viewModel.syncNow() },
-                        enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        if (isSyncing) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.height(20.dp)
-                                )
-                                Text("Syncing...")
-                            }
-                        } else {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = null
-                                )
-                                Text("Sync Now")
-                            }
-                        }
-                    }
-
-                    // Full Re-sync button
-                    TextButton(
-                        onClick = { viewModel.fullResync() },
-                        enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank()
-                    ) {
-                        Text("Full Re-sync (fetch all)")
-                    }
-
-                    // Sync result
-                    syncResult?.let { result ->
-                        if (result.success) {
-                            Text(
-                                text = "Sync successful! Received: ${result.notesReceived}, Sent: ${result.notesSent}",
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        } else {
-                            Text(
-                                text = "Sync failed: ${result.errorMessage ?: "Unknown error"}",
-                                color = MaterialTheme.colorScheme.error
-                            )
-                        }
-                    }
-
-                    // Sync error
-                    syncError?.let { error ->
-                        Text(
-                            text = "Error: $error",
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-
-                    // Debug info
-                    debugInfo?.let { info ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = info,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
         }
     }
 }

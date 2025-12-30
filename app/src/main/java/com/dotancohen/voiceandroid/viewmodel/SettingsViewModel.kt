@@ -47,6 +47,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _debugInfo = MutableStateFlow<String?>(null)
     val debugInfo: StateFlow<String?> = _debugInfo.asStateFlow()
 
+    // Unsynced changes indicator
+    private val _hasUnsyncedChanges = MutableStateFlow(false)
+    val hasUnsyncedChanges: StateFlow<Boolean> = _hasUnsyncedChanges.asStateFlow()
+
     // Pending audio path awaiting permission grant (persisted to survive activity recreation)
     private val _pendingAudioPath = MutableStateFlow<String?>(
         prefs.getString("pending_audiofile_path", null)
@@ -55,6 +59,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     init {
         loadSettings()
+        checkUnsyncedChanges()
+    }
+
+    /**
+     * Check if there are local changes that haven't been synced.
+     */
+    fun checkUnsyncedChanges() {
+        viewModelScope.launch {
+            repository.hasUnsyncedChanges()
+                .onSuccess { _hasUnsyncedChanges.value = it }
+                .onFailure { _hasUnsyncedChanges.value = false }
+        }
     }
 
     /**
@@ -203,6 +219,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             // Get debug info about audio files
             updateDebugInfo()
 
+            // Check for any remaining unsynced changes
+            checkUnsyncedChanges()
+
             _isSyncing.value = false
         }
     }
@@ -218,6 +237,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             }
 
             val audioFileDir = repository.getAudioFileDirectory()
+            val syncState = repository.debugSyncState().getOrNull() ?: "N/A"
 
             _debugInfo.value = buildString {
                 appendLine("Debug Info:")
@@ -228,6 +248,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 if (allAudioFiles.isNotEmpty()) {
                     appendLine("- First audio file: ${allAudioFiles[0].filename} (${allAudioFiles[0].id.take(8)}...)")
                 }
+                appendLine()
+                appendLine("Sync State:")
+                append(syncState)
             }
         }
     }
@@ -255,6 +278,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
             // Get debug info about audio files
             updateDebugInfo()
+
+            // Check for any remaining unsynced changes
+            checkUnsyncedChanges()
 
             _isSyncing.value = false
         }

@@ -30,6 +30,16 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    // Edit state
+    private val _isEditing = MutableStateFlow(false)
+    val isEditing: StateFlow<Boolean> = _isEditing.asStateFlow()
+
+    private val _editedContent = MutableStateFlow("")
+    val editedContent: StateFlow<String> = _editedContent.asStateFlow()
+
+    private val _isSaving = MutableStateFlow(false)
+    val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
+
     /**
      * Load a note and its audio files by ID.
      */
@@ -69,5 +79,48 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
      */
     suspend fun getAudioFilePath(audioFileId: String): String? {
         return repository.getAudioFilePath(audioFileId).getOrNull()
+    }
+
+    /**
+     * Start editing the current note.
+     */
+    fun startEditing() {
+        _editedContent.value = _note.value?.content ?: ""
+        _isEditing.value = true
+    }
+
+    /**
+     * Update the edited content.
+     */
+    fun updateEditedContent(content: String) {
+        _editedContent.value = content
+    }
+
+    /**
+     * Cancel editing and discard changes.
+     */
+    fun cancelEditing() {
+        _isEditing.value = false
+        _editedContent.value = ""
+    }
+
+    /**
+     * Save the edited note content.
+     */
+    fun saveNote() {
+        val noteId = _note.value?.id ?: return
+        viewModelScope.launch {
+            _isSaving.value = true
+            repository.updateNote(noteId, _editedContent.value)
+                .onSuccess {
+                    // Reload note to get updated modified_at
+                    loadNote(noteId)
+                    _isEditing.value = false
+                }
+                .onFailure { e ->
+                    _error.value = "Failed to save: ${e.message}"
+                }
+            _isSaving.value = false
+        }
     }
 }

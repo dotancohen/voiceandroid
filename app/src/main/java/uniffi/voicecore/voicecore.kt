@@ -756,6 +756,12 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -785,6 +791,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_debug_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_all_audio_files(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_all_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -807,6 +815,8 @@ internal interface UniffiLib : Library {
     ): Int
     fun uniffi_voicecore_fn_method_voiceclient_get_sync_config(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_has_unsynced_changes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -819,6 +829,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_sync_now(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_update_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_voicecore_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -939,6 +951,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_configure_sync(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_debug_sync_state(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_notes(
@@ -961,6 +975,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_sync_config(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_has_unsynced_changes(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_initial_sync(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
@@ -972,6 +988,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_set_device_name(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_sync_now(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_update_note(
     ): Short
     fun uniffi_voicecore_checksum_constructor_voiceclient_new(
     ): Short
@@ -999,6 +1017,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_configure_sync() != 51278.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_debug_sync_state() != 55360.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files() != 5578.toShort()) {
@@ -1034,6 +1055,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_sync_config() != 64316.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_has_unsynced_changes() != 18836.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 5382.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1050,6 +1074,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_sync_now() != 57614.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_update_note() != 14280.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 26098.toShort()) {
@@ -1386,6 +1413,11 @@ public interface VoiceClientInterface {
     fun `configureSync`(`syncConfig`: SyncServerConfig)
     
     /**
+     * Debug method to see sync state details
+     */
+    fun `debugSyncState`(): kotlin.String
+    
+    /**
      * Get all audio files in the database (for debugging)
      */
     fun `getAllAudioFiles`(): List<AudioFileData>
@@ -1441,6 +1473,11 @@ public interface VoiceClientInterface {
     fun `getSyncConfig`(): SyncServerConfig?
     
     /**
+     * Check if there are local changes that haven't been synced
+     */
+    fun `hasUnsyncedChanges`(): kotlin.Boolean
+    
+    /**
      * Perform initial sync - fetches full dataset from server
      *
      * Unlike sync_now(), this ignores timestamps and fetches all data.
@@ -1472,6 +1509,11 @@ public interface VoiceClientInterface {
      * Perform sync with the configured server
      */
     fun `syncNow`(): SyncResultData
+    
+    /**
+     * Update a note's content
+     */
+    fun `updateNote`(`noteId`: kotlin.String, `content`: kotlin.String): kotlin.Boolean
     
     companion object
 }
@@ -1601,6 +1643,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 }
     }
     
+    
+
+    
+    /**
+     * Debug method to see sync state details
+     */
+    @Throws(VoiceCoreException::class)override fun `debugSyncState`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_debug_sync_state(
+        it, _status)
+}
+    }
+    )
+    }
     
 
     
@@ -1777,6 +1835,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Check if there are local changes that haven't been synced
+     */
+    @Throws(VoiceCoreException::class)override fun `hasUnsyncedChanges`(): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_has_unsynced_changes(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Perform initial sync - fetches full dataset from server
      *
      * Unlike sync_now(), this ignores timestamps and fetches all data.
@@ -1864,6 +1938,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_sync_now(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Update a note's content
+     */
+    @Throws(VoiceCoreException::class)override fun `updateNote`(`noteId`: kotlin.String, `content`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_update_note(
+        it, FfiConverterString.lower(`noteId`),FfiConverterString.lower(`content`),_status)
 }
     }
     )
