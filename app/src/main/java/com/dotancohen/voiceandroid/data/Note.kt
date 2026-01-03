@@ -52,3 +52,85 @@ data class NoteAttachment(
     val modifiedAt: String? = null,
     val deletedAt: String? = null
 )
+
+/**
+ * Data class representing a transcription of an audio file.
+ * This mirrors the TranscriptionData struct from the Rust UniFFI bindings.
+ */
+data class Transcription(
+    val id: String,
+    val audioFileId: String,
+    val content: String,
+    val contentSegments: String? = null,
+    val service: String,
+    val serviceArguments: String? = null,
+    val serviceResponse: String? = null,
+    val state: String,
+    val deviceId: String,
+    val createdAt: String,
+    val modifiedAt: String? = null,
+    val deletedAt: String? = null
+) {
+    /**
+     * Check if the transcription has a specific state tag.
+     * State is a space-separated list of tags. Tags prefixed with `!` indicate false/negation.
+     * Example: "original !verified !verbatim !cleaned !polished"
+     */
+    fun hasState(tag: String): Boolean {
+        return state.split(" ").contains(tag)
+    }
+
+    /**
+     * Check if the transcription is verified.
+     */
+    val isVerified: Boolean
+        get() = hasState("verified")
+
+    /**
+     * Check if the transcription is the original (not edited).
+     */
+    val isOriginal: Boolean
+        get() = hasState("original")
+
+    /**
+     * Check if the transcription has been cleaned (corrected errors).
+     */
+    val isCleaned: Boolean
+        get() = hasState("cleaned")
+
+    /**
+     * Check if the transcription has been polished (improved for readability).
+     */
+    val isPolished: Boolean
+        get() = hasState("polished")
+
+    /**
+     * Toggle a state tag. Returns the new state string.
+     * If the tag is currently true (e.g., "verified"), it becomes false ("!verified").
+     * If the tag is currently false (e.g., "!verified"), it becomes true ("verified").
+     */
+    fun toggleState(tag: String): String {
+        val tags = state.split(" ").toMutableList()
+        val negatedTag = "!$tag"
+
+        return when {
+            tags.contains(tag) -> {
+                // Tag is true, make it false
+                tags.remove(tag)
+                tags.add(negatedTag)
+                tags.joinToString(" ")
+            }
+            tags.contains(negatedTag) -> {
+                // Tag is false, make it true
+                tags.remove(negatedTag)
+                tags.add(tag)
+                tags.joinToString(" ")
+            }
+            else -> {
+                // Tag doesn't exist, add it as true
+                tags.add(tag)
+                tags.joinToString(" ")
+            }
+        }
+    }
+}

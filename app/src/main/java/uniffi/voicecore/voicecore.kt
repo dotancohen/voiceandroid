@@ -762,6 +762,14 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -815,6 +823,10 @@ internal interface UniffiLib : Library {
     ): Int
     fun uniffi_voicecore_fn_method_voiceclient_get_sync_config(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_transcription(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_transcriptions_for_audio_file(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_has_unsynced_changes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -830,6 +842,10 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_sync_now(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_update_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_update_transcription(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,`state`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_update_transcription_state(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,`state`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -975,6 +991,10 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_sync_config(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_transcription(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_transcriptions_for_audio_file(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_has_unsynced_changes(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_initial_sync(
@@ -990,6 +1010,10 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_sync_now(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_update_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_update_transcription(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_update_transcription_state(
     ): Short
     fun uniffi_voicecore_checksum_constructor_voiceclient_new(
     ): Short
@@ -1055,6 +1079,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_sync_config() != 64316.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_transcription() != 63886.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_transcriptions_for_audio_file() != 19101.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_has_unsynced_changes() != 18836.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1077,6 +1107,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_update_note() != 14280.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_update_transcription() != 56522.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_update_transcription_state() != 31413.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 26098.toShort()) {
@@ -1473,6 +1509,16 @@ public interface VoiceClientInterface {
     fun `getSyncConfig`(): SyncServerConfig?
     
     /**
+     * Get a single transcription by ID
+     */
+    fun `getTranscription`(`transcriptionId`: kotlin.String): TranscriptionData?
+    
+    /**
+     * Get all transcriptions for an audio file
+     */
+    fun `getTranscriptionsForAudioFile`(`audioFileId`: kotlin.String): List<TranscriptionData>
+    
+    /**
      * Check if there are local changes that haven't been synced
      */
     fun `hasUnsyncedChanges`(): kotlin.Boolean
@@ -1514,6 +1560,19 @@ public interface VoiceClientInterface {
      * Update a note's content
      */
     fun `updateNote`(`noteId`: kotlin.String, `content`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Update a transcription's content and optionally its state
+     */
+    fun `updateTranscription`(`transcriptionId`: kotlin.String, `content`: kotlin.String, `state`: kotlin.String?): kotlin.Boolean
+    
+    /**
+     * Update a transcription's state
+     *
+     * State is a space-separated list of tags. Tags prefixed with `!` indicate false/negation.
+     * Example: "original !verified !verbatim !cleaned !polished"
+     */
+    fun `updateTranscriptionState`(`transcriptionId`: kotlin.String, `state`: kotlin.String): kotlin.Boolean
     
     companion object
 }
@@ -1835,6 +1894,38 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Get a single transcription by ID
+     */
+    @Throws(VoiceCoreException::class)override fun `getTranscription`(`transcriptionId`: kotlin.String): TranscriptionData? {
+            return FfiConverterOptionalTypeTranscriptionData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_transcription(
+        it, FfiConverterString.lower(`transcriptionId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get all transcriptions for an audio file
+     */
+    @Throws(VoiceCoreException::class)override fun `getTranscriptionsForAudioFile`(`audioFileId`: kotlin.String): List<TranscriptionData> {
+            return FfiConverterSequenceTypeTranscriptionData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_transcriptions_for_audio_file(
+        it, FfiConverterString.lower(`audioFileId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Check if there are local changes that haven't been synced
      */
     @Throws(VoiceCoreException::class)override fun `hasUnsyncedChanges`(): kotlin.Boolean {
@@ -1954,6 +2045,41 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_update_note(
         it, FfiConverterString.lower(`noteId`),FfiConverterString.lower(`content`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Update a transcription's content and optionally its state
+     */
+    @Throws(VoiceCoreException::class)override fun `updateTranscription`(`transcriptionId`: kotlin.String, `content`: kotlin.String, `state`: kotlin.String?): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_update_transcription(
+        it, FfiConverterString.lower(`transcriptionId`),FfiConverterString.lower(`content`),FfiConverterOptionalString.lower(`state`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Update a transcription's state
+     *
+     * State is a space-separated list of tags. Tags prefixed with `!` indicate false/negation.
+     * Example: "original !verified !verbatim !cleaned !polished"
+     */
+    @Throws(VoiceCoreException::class)override fun `updateTranscriptionState`(`transcriptionId`: kotlin.String, `state`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_update_transcription_state(
+        it, FfiConverterString.lower(`transcriptionId`),FfiConverterString.lower(`state`),_status)
 }
     }
     )
@@ -2249,6 +2375,81 @@ public object FfiConverterTypeSyncServerConfig: FfiConverterRustBuffer<SyncServe
 
 
 
+/**
+ * A transcription from the database
+ */
+data class TranscriptionData (
+    var `id`: kotlin.String, 
+    var `audioFileId`: kotlin.String, 
+    var `content`: kotlin.String, 
+    var `contentSegments`: kotlin.String?, 
+    var `service`: kotlin.String, 
+    var `serviceArguments`: kotlin.String?, 
+    var `serviceResponse`: kotlin.String?, 
+    var `state`: kotlin.String, 
+    var `deviceId`: kotlin.String, 
+    var `createdAt`: kotlin.String, 
+    var `modifiedAt`: kotlin.String?, 
+    var `deletedAt`: kotlin.String?
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranscriptionData: FfiConverterRustBuffer<TranscriptionData> {
+    override fun read(buf: ByteBuffer): TranscriptionData {
+        return TranscriptionData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranscriptionData) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterString.allocationSize(value.`audioFileId`) +
+            FfiConverterString.allocationSize(value.`content`) +
+            FfiConverterOptionalString.allocationSize(value.`contentSegments`) +
+            FfiConverterString.allocationSize(value.`service`) +
+            FfiConverterOptionalString.allocationSize(value.`serviceArguments`) +
+            FfiConverterOptionalString.allocationSize(value.`serviceResponse`) +
+            FfiConverterString.allocationSize(value.`state`) +
+            FfiConverterString.allocationSize(value.`deviceId`) +
+            FfiConverterString.allocationSize(value.`createdAt`) +
+            FfiConverterOptionalString.allocationSize(value.`modifiedAt`) +
+            FfiConverterOptionalString.allocationSize(value.`deletedAt`)
+    )
+
+    override fun write(value: TranscriptionData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterString.write(value.`audioFileId`, buf)
+            FfiConverterString.write(value.`content`, buf)
+            FfiConverterOptionalString.write(value.`contentSegments`, buf)
+            FfiConverterString.write(value.`service`, buf)
+            FfiConverterOptionalString.write(value.`serviceArguments`, buf)
+            FfiConverterOptionalString.write(value.`serviceResponse`, buf)
+            FfiConverterString.write(value.`state`, buf)
+            FfiConverterString.write(value.`deviceId`, buf)
+            FfiConverterString.write(value.`createdAt`, buf)
+            FfiConverterOptionalString.write(value.`modifiedAt`, buf)
+            FfiConverterOptionalString.write(value.`deletedAt`, buf)
+    }
+}
+
+
+
 
 
 /**
@@ -2495,6 +2696,38 @@ public object FfiConverterOptionalTypeSyncServerConfig: FfiConverterRustBuffer<S
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeTranscriptionData: FfiConverterRustBuffer<TranscriptionData?> {
+    override fun read(buf: ByteBuffer): TranscriptionData? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTranscriptionData.read(buf)
+    }
+
+    override fun allocationSize(value: TranscriptionData?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTranscriptionData.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TranscriptionData?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTranscriptionData.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeAudioFileData: FfiConverterRustBuffer<List<AudioFileData>> {
     override fun read(buf: ByteBuffer): List<AudioFileData> {
         val len = buf.getInt()
@@ -2569,6 +2802,34 @@ public object FfiConverterSequenceTypeNoteData: FfiConverterRustBuffer<List<Note
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeNoteData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTranscriptionData: FfiConverterRustBuffer<List<TranscriptionData>> {
+    override fun read(buf: ByteBuffer): List<TranscriptionData> {
+        val len = buf.getInt()
+        return List<TranscriptionData>(len) {
+            FfiConverterTypeTranscriptionData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TranscriptionData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTranscriptionData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TranscriptionData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTranscriptionData.write(it, buf)
         }
     }
 }

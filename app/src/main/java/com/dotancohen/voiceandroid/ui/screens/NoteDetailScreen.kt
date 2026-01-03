@@ -30,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dotancohen.voiceandroid.ui.components.AudioPlayerWidget
+import com.dotancohen.voiceandroid.ui.components.TranscriptionsSection
 import com.dotancohen.voiceandroid.viewmodel.NoteDetailViewModel
 
 /**
@@ -49,6 +50,7 @@ fun NoteDetailScreen(
 ) {
     val note by viewModel.note.collectAsState()
     val audioFiles by viewModel.audioFiles.collectAsState()
+    val transcriptions by viewModel.transcriptions.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
     val isEditing by viewModel.isEditing.collectAsState()
@@ -168,6 +170,19 @@ fun NoteDetailScreen(
                             audioFiles = audioFiles,
                             getFilePath = { audioId ->
                                 viewModel.getAudioFilePath(audioId)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    // Transcriptions section (if there are any)
+                    if (transcriptions.values.any { it.isNotEmpty() }) {
+                        Spacer(modifier = Modifier.height(24.dp))
+
+                        TranscriptionsSection(
+                            transcriptions = transcriptions,
+                            onToggleState = { transcription, tag ->
+                                viewModel.toggleTranscriptionState(transcription, tag)
                             },
                             modifier = Modifier.fillMaxWidth()
                         )

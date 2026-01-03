@@ -13,6 +13,7 @@ import uniffi.voicecore.NoteData as UniFFINoteData
 import uniffi.voicecore.SyncResultData as UniFFISyncResultData
 import uniffi.voicecore.AudioFileData as UniFFIAudioFileData
 import uniffi.voicecore.NoteAttachmentData as UniFFINoteAttachmentData
+import uniffi.voicecore.TranscriptionData as UniFFITranscriptionData
 import uniffi.voicecore.generateDeviceId as uniffiGenerateDeviceId
 import java.io.File
 
@@ -517,6 +518,99 @@ class VoiceRepository(private val context: Context) {
      * Get the audio file directory path.
      */
     fun getAudioFileDirectory(): String = audioFileDir
+
+    // =========================================================================
+    // Transcription Methods
+    // =========================================================================
+
+    /**
+     * Get all transcriptions for an audio file.
+     */
+    suspend fun getTranscriptionsForAudioFile(audioFileId: String): Result<List<Transcription>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val transcriptions = voiceClient.getTranscriptionsForAudioFile(audioFileId).map { data ->
+                Transcription(
+                    id = data.id,
+                    audioFileId = data.audioFileId,
+                    content = data.content,
+                    contentSegments = data.contentSegments,
+                    service = data.service,
+                    serviceArguments = data.serviceArguments,
+                    serviceResponse = data.serviceResponse,
+                    state = data.state,
+                    deviceId = data.deviceId,
+                    createdAt = data.createdAt,
+                    modifiedAt = data.modifiedAt,
+                    deletedAt = data.deletedAt
+                )
+            }
+            Result.success(transcriptions)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get a single transcription by ID.
+     */
+    suspend fun getTranscription(transcriptionId: String): Result<Transcription?> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val transcription = voiceClient.getTranscription(transcriptionId)?.let { data ->
+                Transcription(
+                    id = data.id,
+                    audioFileId = data.audioFileId,
+                    content = data.content,
+                    contentSegments = data.contentSegments,
+                    service = data.service,
+                    serviceArguments = data.serviceArguments,
+                    serviceResponse = data.serviceResponse,
+                    state = data.state,
+                    deviceId = data.deviceId,
+                    createdAt = data.createdAt,
+                    modifiedAt = data.modifiedAt,
+                    deletedAt = data.deletedAt
+                )
+            }
+            Result.success(transcription)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Update a transcription's state.
+     * State is a space-separated list of tags.
+     */
+    suspend fun updateTranscriptionState(transcriptionId: String, state: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.updateTranscriptionState(transcriptionId, state))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Update a transcription's content and optionally its state.
+     */
+    suspend fun updateTranscription(transcriptionId: String, content: String, state: String? = null): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.updateTranscription(transcriptionId, content, state))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     /**
      * Close the client and release resources.
