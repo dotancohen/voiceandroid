@@ -134,3 +134,26 @@ data class Transcription(
         }
     }
 }
+
+/**
+ * Data class representing a tag.
+ * This mirrors the TagData struct from the Rust UniFFI bindings.
+ * Tags can be hierarchical with parent-child relationships.
+ */
+data class Tag(
+    val id: String,
+    val name: String,
+    val parentId: String? = null,
+    val createdAt: String? = null,
+    val modifiedAt: String? = null
+)
+
+/**
+ * Data class representing a search result.
+ * This mirrors the SearchResultData struct from the Rust UniFFI bindings.
+ */
+data class SearchResult(
+    val notes: List<Note>,
+    val ambiguousTags: List<String>,
+    val notFoundTags: List<String>
+)

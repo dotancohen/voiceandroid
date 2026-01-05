@@ -14,6 +14,8 @@ import uniffi.voicecore.SyncResultData as UniFFISyncResultData
 import uniffi.voicecore.AudioFileData as UniFFIAudioFileData
 import uniffi.voicecore.NoteAttachmentData as UniFFINoteAttachmentData
 import uniffi.voicecore.TranscriptionData as UniFFITranscriptionData
+import uniffi.voicecore.TagData as UniFFITagData
+import uniffi.voicecore.SearchResultData as UniFFISearchResultData
 import uniffi.voicecore.generateDeviceId as uniffiGenerateDeviceId
 import java.io.File
 
@@ -633,6 +635,86 @@ class VoiceRepository(private val context: Context) {
         try {
             val voiceClient = ensureInitialized()
             Result.success(voiceClient.deleteTag(tagId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // =========================================================================
+    // Tag and Search Methods
+    // =========================================================================
+
+    /**
+     * Get all tags from the database.
+     */
+    suspend fun getAllTags(): Result<List<Tag>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val tags = voiceClient.getAllTags().map { data ->
+                Tag(
+                    id = data.id,
+                    name = data.name,
+                    parentId = data.parentId,
+                    createdAt = data.createdAt,
+                    modifiedAt = data.modifiedAt
+                )
+            }
+            Result.success(tags)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get all tags for a specific note.
+     */
+    suspend fun getTagsForNote(noteId: String): Result<List<Tag>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val tags = voiceClient.getTagsForNote(noteId).map { data ->
+                Tag(
+                    id = data.id,
+                    name = data.name,
+                    parentId = data.parentId,
+                    createdAt = data.createdAt,
+                    modifiedAt = data.modifiedAt
+                )
+            }
+            Result.success(tags)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Execute a search query.
+     * Supports "tag:Name" syntax for tag filtering and free text search.
+     * Multiple tags can be combined: "tag:Work tag:Important meeting notes"
+     */
+    suspend fun searchNotes(query: String): Result<SearchResult> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val result = voiceClient.searchNotes(query)
+            val searchResult = SearchResult(
+                notes = result.notes.map { data ->
+                    Note(
+                        id = data.id,
+                        content = data.content,
+                        createdAt = data.createdAt,
+                        modifiedAt = data.modifiedAt,
+                        deletedAt = data.deletedAt
+                    )
+                },
+                ambiguousTags = result.ambiguousTags,
+                notFoundTags = result.notFoundTags
+            )
+            Result.success(searchResult)
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {

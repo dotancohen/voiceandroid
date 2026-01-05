@@ -1,5 +1,6 @@
 package com.dotancohen.voiceandroid.ui
 
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
@@ -12,6 +13,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
@@ -23,6 +26,7 @@ import androidx.navigation.navArgument
 import com.dotancohen.voiceandroid.ui.screens.NoteDetailScreen
 import com.dotancohen.voiceandroid.ui.screens.NotesScreen
 import com.dotancohen.voiceandroid.ui.screens.SettingsScreen
+import com.dotancohen.voiceandroid.viewmodel.SharedFilterViewModel
 
 sealed class Screen(val route: String, val title: String) {
     data object Notes : Screen("notes", "Notes")
@@ -37,6 +41,12 @@ fun VoiceApp() {
     val navController = rememberNavController()
     val screens = listOf(Screen.Notes, Screen.Settings)
 
+    // Get SharedFilterViewModel scoped to activity
+    val context = LocalContext.current
+    val sharedFilterViewModel: SharedFilterViewModel = viewModel(
+        viewModelStoreOwner = context as ComponentActivity
+    )
+
     Scaffold(
         bottomBar = {
             NavigationBar {
@@ -44,19 +54,21 @@ fun VoiceApp() {
                 val currentDestination = navBackStackEntry?.destination
 
                 screens.forEach { screen ->
+                    val isSelected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+
                     NavigationBarItem(
                         icon = {
                             Icon(
                                 imageVector = when (screen) {
                                     is Screen.Notes -> Icons.AutoMirrored.Filled.List
                                     is Screen.Settings -> Icons.Default.Settings
-                                    else -> Icons.Default.Settings // NoteDetail not in bottom nav
+                                    else -> Icons.Default.Settings
                                 },
                                 contentDescription = screen.title
                             )
                         },
                         label = { Text(screen.title) },
-                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                        selected = isSelected,
                         onClick = {
                             navController.navigate(screen.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
@@ -78,6 +90,7 @@ fun VoiceApp() {
         ) {
             composable(Screen.Notes.route) {
                 NotesScreen(
+                    sharedFilterViewModel = sharedFilterViewModel,
                     onNoteClick = { noteId ->
                         navController.navigate(Screen.NoteDetail.createRoute(noteId))
                     }

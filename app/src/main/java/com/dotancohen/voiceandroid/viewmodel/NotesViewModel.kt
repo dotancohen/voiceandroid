@@ -32,22 +32,62 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
 
+    // Search result metadata
+    private val _ambiguousTags = MutableStateFlow<List<String>>(emptyList())
+    val ambiguousTags: StateFlow<List<String>> = _ambiguousTags.asStateFlow()
+
+    private val _notFoundTags = MutableStateFlow<List<String>>(emptyList())
+    val notFoundTags: StateFlow<List<String>> = _notFoundTags.asStateFlow()
+
+    // Current search query (null = show all notes)
+    private val _currentSearchQuery = MutableStateFlow<String?>(null)
+    val currentSearchQuery: StateFlow<String?> = _currentSearchQuery.asStateFlow()
+
     init {
         loadNotes()
     }
 
+    /**
+     * Load all notes (unfiltered).
+     */
     fun loadNotes() {
+        loadNotes(null)
+    }
+
+    /**
+     * Load notes, optionally filtered by search query.
+     * @param searchQuery The search query to filter by, or null to load all notes.
+     */
+    fun loadNotes(searchQuery: String?) {
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
+            _currentSearchQuery.value = searchQuery
+            _ambiguousTags.value = emptyList()
+            _notFoundTags.value = emptyList()
 
-            repository.getAllNotes()
-                .onSuccess { notesList ->
+            val notesResult = if (searchQuery.isNullOrBlank()) {
+                // Load all notes
+                repository.getAllNotes().map { notesList ->
                     // Filter out deleted notes and sort by date (newest first)
-                    val filteredNotes = notesList
+                    notesList
                         .filter { it.deletedAt == null }
-                        .sortedByDescending { it.modifiedAt ?: it.createdAt }
+                        .sortedByDescending { it.createdAt }
+                }
+            } else {
+                // Search notes
+                repository.searchNotes(searchQuery).map { searchResult ->
+                    _ambiguousTags.value = searchResult.ambiguousTags
+                    _notFoundTags.value = searchResult.notFoundTags
+                    // Filter out deleted notes and sort by date (newest first)
+                    searchResult.notes
+                        .filter { it.deletedAt == null }
+                        .sortedByDescending { it.createdAt }
+                }
+            }
 
+            notesResult
+                .onSuccess { filteredNotes ->
                     // Load audio files for each note
                     val notesWithAudio = filteredNotes.map { note ->
                         val audioFiles = repository.getAudioFilesForNote(note.id)
@@ -74,7 +114,10 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
         return repository.getAudioFilePath(audioFileId).getOrNull()
     }
 
+    /**
+     * Refresh notes with the current search query.
+     */
     fun refresh() {
-        loadNotes()
+        loadNotes(_currentSearchQuery.value)
     }
 }
