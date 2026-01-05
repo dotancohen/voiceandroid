@@ -82,6 +82,13 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.14.0@aar")
 
     debugImplementation(libs.androidx.ui.tooling)
+
+    // Test dependencies
+    testImplementation(libs.junit)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
 }
 
 // Task to build Rust library for all Android targets

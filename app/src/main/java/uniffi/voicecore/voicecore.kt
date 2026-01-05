@@ -770,6 +770,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -801,6 +805,10 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_debug_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_delete_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_delete_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_get_all_audio_files(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_all_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -969,6 +977,10 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_debug_sync_state(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_delete_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_delete_tag(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_notes(
@@ -1044,6 +1056,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_debug_sync_state() != 55360.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_delete_note() != 38307.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_delete_tag() != 8239.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files() != 5578.toShort()) {
@@ -1454,6 +1472,16 @@ public interface VoiceClientInterface {
     fun `debugSyncState`(): kotlin.String
     
     /**
+     * Delete a note (soft delete - sets deleted_at timestamp)
+     */
+    fun `deleteNote`(`noteId`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Delete a tag (soft delete - sets deleted_at timestamp)
+     */
+    fun `deleteTag`(`tagId`: kotlin.String): kotlin.Boolean
+    
+    /**
      * Get all audio files in the database (for debugging)
      */
     fun `getAllAudioFiles`(): List<AudioFileData>
@@ -1714,6 +1742,38 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_debug_sync_state(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Delete a note (soft delete - sets deleted_at timestamp)
+     */
+    @Throws(VoiceCoreException::class)override fun `deleteNote`(`noteId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_delete_note(
+        it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Delete a tag (soft delete - sets deleted_at timestamp)
+     */
+    @Throws(VoiceCoreException::class)override fun `deleteTag`(`tagId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_delete_tag(
+        it, FfiConverterString.lower(`tagId`),_status)
 }
     }
     )

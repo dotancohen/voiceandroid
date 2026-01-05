@@ -613,6 +613,34 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
+     * Delete a note (soft delete - sets deleted_at timestamp).
+     */
+    suspend fun deleteNote(noteId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.deleteNote(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Delete a tag (soft delete - sets deleted_at timestamp).
+     */
+    suspend fun deleteTag(tagId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.deleteTag(tagId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Close the client and release resources.
      */
     fun close() {

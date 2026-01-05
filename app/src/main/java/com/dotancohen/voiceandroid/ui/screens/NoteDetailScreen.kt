@@ -13,7 +13,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -21,11 +23,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -56,10 +62,22 @@ fun NoteDetailScreen(
     val isEditing by viewModel.isEditing.collectAsState()
     val editedContent by viewModel.editedContent.collectAsState()
     val isSaving by viewModel.isSaving.collectAsState()
+    val isDeleting by viewModel.isDeleting.collectAsState()
+    val deleteSuccess by viewModel.deleteSuccess.collectAsState()
+
+    // Confirmation dialog state
+    var showDeleteConfirmation by remember { mutableStateOf(false) }
 
     // Load the note when the noteId changes
     LaunchedEffect(noteId) {
         viewModel.loadNote(noteId)
+    }
+
+    // Navigate back when note is deleted
+    LaunchedEffect(deleteSuccess) {
+        if (deleteSuccess) {
+            onBack()
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -98,6 +116,24 @@ fun NoteDetailScreen(
                         }
                     }
                 } else if (note != null) {
+                    // Delete button
+                    IconButton(
+                        onClick = { showDeleteConfirmation = true },
+                        enabled = !isDeleting
+                    ) {
+                        if (isDeleting) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Delete,
+                                contentDescription = "Delete"
+                            )
+                        }
+                    }
+                    // Edit button
                     IconButton(onClick = { viewModel.startEditing() }) {
                         Icon(
                             imageVector = Icons.Filled.Edit,
@@ -107,6 +143,30 @@ fun NoteDetailScreen(
                 }
             }
         )
+
+        // Delete confirmation dialog
+        if (showDeleteConfirmation) {
+            AlertDialog(
+                onDismissRequest = { showDeleteConfirmation = false },
+                title = { Text("Delete Note") },
+                text = { Text("Are you sure you want to delete this note? This action cannot be undone.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showDeleteConfirmation = false
+                            viewModel.deleteNote()
+                        }
+                    ) {
+                        Text("Delete")
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDeleteConfirmation = false }) {
+                        Text("Cancel")
+                    }
+                }
+            )
+        }
 
         when {
             isLoading -> {

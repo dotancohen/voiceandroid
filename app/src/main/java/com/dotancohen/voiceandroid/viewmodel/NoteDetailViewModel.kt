@@ -46,6 +46,13 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
     private val _isSaving = MutableStateFlow(false)
     val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
+    // Delete state
+    private val _isDeleting = MutableStateFlow(false)
+    val isDeleting: StateFlow<Boolean> = _isDeleting.asStateFlow()
+
+    private val _deleteSuccess = MutableStateFlow(false)
+    val deleteSuccess: StateFlow<Boolean> = _deleteSuccess.asStateFlow()
+
     /**
      * Load a note and its audio files by ID.
      */
@@ -132,6 +139,28 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
     fun cancelEditing() {
         _isEditing.value = false
         _editedContent.value = ""
+    }
+
+    /**
+     * Delete the current note (soft delete).
+     * Sets deleteSuccess to true on success so the UI can navigate back.
+     */
+    fun deleteNote() {
+        val noteId = _note.value?.id ?: return
+        viewModelScope.launch {
+            _isDeleting.value = true
+            AppLogger.i(TAG, "Deleting note $noteId")
+            repository.deleteNote(noteId)
+                .onSuccess {
+                    AppLogger.i(TAG, "Note deleted successfully: $noteId")
+                    _deleteSuccess.value = true
+                }
+                .onFailure { e ->
+                    AppLogger.e(TAG, "Failed to delete note $noteId", e)
+                    _error.value = "Failed to delete: ${e.message}"
+                }
+            _isDeleting.value = false
+        }
     }
 
     /**
