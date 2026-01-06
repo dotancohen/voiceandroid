@@ -782,6 +782,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -855,6 +857,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_merge_notes(`ptr`: Pointer,`noteId1`: RustBuffer.ByValue,`noteId2`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_reset_sync_timestamps(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_search_notes(`ptr`: Pointer,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_set_audiofile_directory(`ptr`: Pointer,`path`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1035,6 +1039,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_merge_notes(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_search_notes(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_audiofile_directory(
@@ -1143,6 +1149,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_merge_notes() != 17846.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps() != 4442.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_search_notes() != 16307.toShort()) {
@@ -1615,6 +1624,14 @@ public interface VoiceClientInterface {
      * Returns the surviving note ID (the one with earlier created_at).
      */
     fun `mergeNotes`(`noteId1`: kotlin.String, `noteId2`: kotlin.String): kotlin.String
+    
+    /**
+     * Reset sync timestamps to force re-fetching all data from peers
+     *
+     * Unlike clear_sync_state, this preserves peer configuration but clears
+     * the last_sync_at timestamps, causing the next sync to fetch all data.
+     */
+    fun `resetSyncTimestamps`()
     
     /**
      * Execute a search query
@@ -2141,6 +2158,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     }
     )
     }
+    
+
+    
+    /**
+     * Reset sync timestamps to force re-fetching all data from peers
+     *
+     * Unlike clear_sync_state, this preserves peer configuration but clears
+     * the last_sync_at timestamps, causing the next sync to fetch all data.
+     */
+    @Throws(VoiceCoreException::class)override fun `resetSyncTimestamps`()
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_reset_sync_timestamps(
+        it, _status)
+}
+    }
+    
     
 
     

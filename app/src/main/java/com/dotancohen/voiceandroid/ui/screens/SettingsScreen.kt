@@ -17,9 +17,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -37,7 +35,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -52,7 +49,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -62,27 +58,25 @@ import java.io.File
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    viewModel: SettingsViewModel = viewModel()
+    viewModel: SettingsViewModel = viewModel(),
+    onNavigateToSyncSettings: () -> Unit = {}
 ) {
-    val serverUrl by viewModel.serverUrl.collectAsState()
-    val serverPeerId by viewModel.serverPeerId.collectAsState()
-    val deviceId by viewModel.deviceId.collectAsState()
-    val deviceName by viewModel.deviceName.collectAsState()
     val audiofileDirectory by viewModel.audiofileDirectory.collectAsState()
     val defaultAudiofileDirectory by viewModel.defaultAudiofileDirectory.collectAsState()
+    val serverUrl by viewModel.serverUrl.collectAsState()
+    val serverPeerId by viewModel.serverPeerId.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncResult by viewModel.syncResult.collectAsState()
     val syncError by viewModel.syncError.collectAsState()
-    val debugInfo by viewModel.debugInfo.collectAsState()
     val hasUnsyncedChanges by viewModel.hasUnsyncedChanges.collectAsState()
     val logContent by viewModel.logContent.collectAsState()
 
-    var editedServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
-    var editedServerPeerId by remember(serverPeerId) { mutableStateOf(serverPeerId) }
-    var editedDeviceId by remember(deviceId) { mutableStateOf(deviceId) }
-    var editedDeviceName by remember(deviceName) { mutableStateOf(deviceName) }
-
     val context = LocalContext.current
+
+    // Check for unsynced changes when screen becomes visible
+    LaunchedEffect(Unit) {
+        viewModel.checkUnsyncedChanges()
+    }
 
     // State for permission dialog
     var showPermissionDialog by remember { mutableStateOf(false) }
@@ -138,11 +132,6 @@ fun SettingsScreen(
         }
     }
 
-    // Check for unsynced changes and update debug info when this screen becomes visible
-    LaunchedEffect(Unit) {
-        viewModel.checkUnsyncedChanges()
-        viewModel.updateDebugInfo()
-    }
 
     // Permission dialog
     if (showPermissionDialog) {
@@ -197,7 +186,7 @@ fun SettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Sync Section (at top for easy access)
+            // Synchronization Section
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -211,6 +200,7 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
+                    // Sync Now button
                     OutlinedButton(
                         onClick = { viewModel.syncNow() },
                         enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank(),
@@ -248,14 +238,6 @@ fun SettingsScreen(
                         }
                     }
 
-                    // Full Re-sync button
-                    TextButton(
-                        onClick = { viewModel.fullResync() },
-                        enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank()
-                    ) {
-                        Text("Full Re-sync (fetch all)")
-                    }
-
                     // Sync result
                     syncResult?.let { result ->
                         if (result.success) {
@@ -279,88 +261,14 @@ fun SettingsScreen(
                         )
                     }
 
-                    // Debug info
-                    debugInfo?.let { info ->
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = info,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-            }
+                    Spacer(modifier = Modifier.height(4.dp))
 
-            // Sync Server Configuration
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Sync Server",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    OutlinedTextField(
-                        value = editedServerUrl,
-                        onValueChange = { editedServerUrl = it },
-                        label = { Text("Server URL") },
-                        placeholder = { Text("https://example.com:8384") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
-                    )
-
-                    OutlinedTextField(
-                        value = editedServerPeerId,
-                        onValueChange = { editedServerPeerId = it },
-                        label = { Text("Server Peer ID") },
-                        placeholder = { Text("32 hex characters") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-                }
-            }
-
-            // Device Configuration
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Text(
-                        text = "Device",
-                        style = MaterialTheme.typography.titleMedium
-                    )
-
-                    OutlinedTextField(
-                        value = editedDeviceName,
-                        onValueChange = { editedDeviceName = it },
-                        label = { Text("Device Name") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-
-                    OutlinedTextField(
-                        value = editedDeviceId,
-                        onValueChange = { editedDeviceId = it },
-                        label = { Text("Device ID") },
-                        placeholder = { Text("32 hex characters (or generate new)") },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true
-                    )
-
+                    // Sync Settings navigation
                     TextButton(
-                        onClick = { editedDeviceId = viewModel.generateNewDeviceId() }
+                        onClick = onNavigateToSyncSettings,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Generate New Device ID")
+                        Text("Sync Settings")
                     }
                 }
             }
@@ -452,23 +360,6 @@ fun SettingsScreen(
                     }
                 }
             }
-
-            // Save Button
-            Button(
-                onClick = {
-                    viewModel.saveSettings(
-                        serverUrl = editedServerUrl,
-                        serverPeerId = editedServerPeerId,
-                        deviceId = editedDeviceId,
-                        deviceName = editedDeviceName
-                    )
-                },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Save Settings")
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             // Log Button
             OutlinedButton(

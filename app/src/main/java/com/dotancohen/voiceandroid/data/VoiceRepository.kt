@@ -231,6 +231,22 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
+     * Reset sync timestamps to force re-fetching all data from peers.
+     * Unlike clearSyncState, this preserves peer configuration.
+     */
+    suspend fun resetSyncTimestamps(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            voiceClient.resetSyncTimestamps()
+            Result.success(Unit)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Perform initial sync - fetches full dataset from server.
      * Use this for first-time sync or to re-fetch everything.
      */

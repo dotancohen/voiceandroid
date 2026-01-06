@@ -26,6 +26,7 @@ import androidx.navigation.navArgument
 import com.dotancohen.voiceandroid.ui.screens.NoteDetailScreen
 import com.dotancohen.voiceandroid.ui.screens.NotesScreen
 import com.dotancohen.voiceandroid.ui.screens.SettingsScreen
+import com.dotancohen.voiceandroid.ui.screens.SyncSettingsScreen
 import com.dotancohen.voiceandroid.viewmodel.SharedFilterViewModel
 
 sealed class Screen(val route: String, val title: String) {
@@ -34,6 +35,7 @@ sealed class Screen(val route: String, val title: String) {
         fun createRoute(noteId: String) = "note/$noteId"
     }
     data object Settings : Screen("settings", "Settings")
+    data object SyncSettings : Screen("sync_settings", "Sync Settings")
 }
 
 @Composable
@@ -107,7 +109,16 @@ fun VoiceApp() {
                 )
             }
             composable(Screen.Settings.route) {
-                SettingsScreen()
+                SettingsScreen(
+                    onNavigateToSyncSettings = {
+                        navController.navigate(Screen.SyncSettings.route)
+                    }
+                )
+            }
+            composable(Screen.SyncSettings.route) {
+                SyncSettingsScreen(
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }

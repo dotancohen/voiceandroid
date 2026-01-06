@@ -293,6 +293,31 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /**
+     * Reset sync timestamps to force re-fetching all data from peers.
+     * This preserves peer configuration but clears last_sync_at timestamps.
+     */
+    fun resetSyncTimestamps() {
+        viewModelScope.launch {
+            _syncResult.value = null
+            _syncError.value = null
+            AppLogger.i(TAG, "Resetting sync timestamps")
+
+            repository.resetSyncTimestamps()
+                .onSuccess {
+                    _debugInfo.value = "Sync timestamps reset. Next sync will fetch all data."
+                    AppLogger.i(TAG, "Sync timestamps reset successfully")
+                }
+                .onFailure { exception ->
+                    _syncError.value = exception.message
+                    AppLogger.e(TAG, "Failed to reset sync timestamps", exception)
+                }
+
+            // Update debug info to show new state
+            updateDebugInfo()
+        }
+    }
+
     // Log viewing
     private val _logContent = MutableStateFlow("")
     val logContent: StateFlow<String> = _logContent.asStateFlow()
