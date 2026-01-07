@@ -750,6 +750,46 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -775,9 +815,23 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_constructor_voiceclient_new(`dataDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
+    fun uniffi_voicecore_fn_method_voiceclient_add_tag_to_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_clear_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_debug_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_delete_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_delete_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_get_all_audio_files(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_all_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_all_tags(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_attachments_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -793,12 +847,32 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_device_name(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_note_conflict_types(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_note_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
     fun uniffi_voicecore_fn_method_voiceclient_get_sync_config(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_tags_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_transcription(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_transcriptions_for_audio_file(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_has_unsynced_changes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_merge_notes(`ptr`: Pointer,`noteId1`: RustBuffer.ByValue,`noteId2`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_reset_sync_timestamps(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_search_notes(`ptr`: Pointer,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_set_audiofile_directory(`ptr`: Pointer,`path`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_device_id(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -807,6 +881,12 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_sync_now(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_update_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_update_transcription(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,`state`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_update_transcription_state(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,`state`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_voicecore_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -923,9 +1003,23 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_checksum_func_generate_device_id(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_clear_sync_state(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_configure_sync(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_debug_sync_state(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_delete_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_delete_tag(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_notes(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_all_tags(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_attachments_for_note(
     ): Short
@@ -941,11 +1035,31 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_device_name(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_note_conflict_types(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_note_count(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_sync_config(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_tags_for_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_transcription(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_transcriptions_for_audio_file(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_has_unsynced_changes(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_initial_sync(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_merge_notes(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_search_notes(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_audiofile_directory(
     ): Short
@@ -954,6 +1068,12 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_set_device_name(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_sync_now(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_update_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_update_transcription(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_update_transcription_state(
     ): Short
     fun uniffi_voicecore_checksum_constructor_voiceclient_new(
     ): Short
@@ -977,10 +1097,31 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_func_generate_device_id() != 30760.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note() != 63485.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_sync_state() != 33205.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_configure_sync() != 51278.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_debug_sync_state() != 55360.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_delete_note() != 38307.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_delete_tag() != 8239.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files() != 5578.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_notes() != 62343.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_tags() != 12717.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_attachments_for_note() != 52452.toShort()) {
@@ -1004,13 +1145,43 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_device_name() != 23646.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_note_conflict_types() != 37172.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_note_count() != 32814.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_sync_config() != 64316.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_tags_for_note() != 28551.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_transcription() != 63886.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_transcriptions_for_audio_file() != 19101.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_has_unsynced_changes() != 18836.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 5382.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_sync_configured() != 19345.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_merge_notes() != 17846.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 60477.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps() != 4442.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_search_notes() != 16307.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_audiofile_directory() != 4853.toShort()) {
@@ -1023,6 +1194,15 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_sync_now() != 57614.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_update_note() != 14280.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_update_transcription() != 56522.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_update_transcription_state() != 31413.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 26098.toShort()) {
@@ -1346,14 +1526,55 @@ private class JavaLangRefCleanable(
 public interface VoiceClientInterface {
     
     /**
+     * Add a tag to a note
+     *
+     * Creates a note_tag association between the note and tag.
+     * Returns true if successful, false if the association already exists.
+     */
+    fun `addTagToNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Clear sync state to force a full re-sync from scratch
+     *
+     * This deletes the sync peer record, causing the next sync to start
+     * from the beginning and fetch all data fresh.
+     */
+    fun `clearSyncState`()
+    
+    /**
      * Configure sync settings
      */
     fun `configureSync`(`syncConfig`: SyncServerConfig)
     
     /**
+     * Debug method to see sync state details
+     */
+    fun `debugSyncState`(): kotlin.String
+    
+    /**
+     * Delete a note (soft delete - sets deleted_at timestamp)
+     */
+    fun `deleteNote`(`noteId`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Delete a tag (soft delete - sets deleted_at timestamp)
+     */
+    fun `deleteTag`(`tagId`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Get all audio files in the database (for debugging)
+     */
+    fun `getAllAudioFiles`(): List<AudioFileData>
+    
+    /**
      * Get all notes from the local database
      */
     fun `getAllNotes`(): List<NoteData>
+    
+    /**
+     * Get all tags from the database
+     */
+    fun `getAllTags`(): List<TagData>
     
     /**
      * Get all attachments for a note
@@ -1391,6 +1612,14 @@ public interface VoiceClientInterface {
     fun `getDeviceName`(): kotlin.String
     
     /**
+     * Get the types of unresolved conflicts for a specific note.
+     *
+     * Returns a list of conflict type strings (e.g., ["content", "delete"]).
+     * Returns an empty list if the note has no unresolved conflicts.
+     */
+    fun `getNoteConflictTypes`(`noteId`: kotlin.String): List<kotlin.String>
+    
+    /**
      * Get the count of notes in the database
      */
     fun `getNoteCount`(): kotlin.Int
@@ -1401,9 +1630,67 @@ public interface VoiceClientInterface {
     fun `getSyncConfig`(): SyncServerConfig?
     
     /**
+     * Get all tags for a specific note
+     */
+    fun `getTagsForNote`(`noteId`: kotlin.String): List<TagData>
+    
+    /**
+     * Get a single transcription by ID
+     */
+    fun `getTranscription`(`transcriptionId`: kotlin.String): TranscriptionData?
+    
+    /**
+     * Get all transcriptions for an audio file
+     */
+    fun `getTranscriptionsForAudioFile`(`audioFileId`: kotlin.String): List<TranscriptionData>
+    
+    /**
+     * Check if there are local changes that haven't been synced
+     */
+    fun `hasUnsyncedChanges`(): kotlin.Boolean
+    
+    /**
+     * Perform initial sync - fetches full dataset from server
+     *
+     * Unlike sync_now(), this ignores timestamps and fetches all data.
+     * Use this for first-time sync or to re-fetch everything.
+     */
+    fun `initialSync`(): SyncResultData
+    
+    /**
      * Check if sync is configured
      */
     fun `isSyncConfigured`(): kotlin.Boolean
+    
+    /**
+     * Merge two notes into one.
+     * Returns the surviving note ID (the one with earlier created_at).
+     */
+    fun `mergeNotes`(`noteId1`: kotlin.String, `noteId2`: kotlin.String): kotlin.String
+    
+    /**
+     * Remove a tag from a note
+     *
+     * Soft-deletes the note_tag association between the note and tag.
+     * Returns true if the tag was removed, false if the association didn't exist.
+     */
+    fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Reset sync timestamps to force re-fetching all data from peers
+     *
+     * Unlike clear_sync_state, this preserves peer configuration but clears
+     * the last_sync_at timestamps, causing the next sync to fetch all data.
+     */
+    fun `resetSyncTimestamps`()
+    
+    /**
+     * Execute a search query
+     *
+     * Supports "tag:Name" syntax for tag filtering and free text search.
+     * Multiple tags can be combined: "tag:Work tag:Important meeting notes"
+     */
+    fun `searchNotes`(`query`: kotlin.String): SearchResultData
     
     /**
      * Set the audio file directory for storing downloaded audio files
@@ -1424,6 +1711,24 @@ public interface VoiceClientInterface {
      * Perform sync with the configured server
      */
     fun `syncNow`(): SyncResultData
+    
+    /**
+     * Update a note's content
+     */
+    fun `updateNote`(`noteId`: kotlin.String, `content`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Update a transcription's content and optionally its state
+     */
+    fun `updateTranscription`(`transcriptionId`: kotlin.String, `content`: kotlin.String, `state`: kotlin.String?): kotlin.Boolean
+    
+    /**
+     * Update a transcription's state
+     *
+     * State is a space-separated list of tags. Tags prefixed with `!` indicate false/negation.
+     * Example: "original !verified !verbatim !cleaned !polished"
+     */
+    fun `updateTranscriptionState`(`transcriptionId`: kotlin.String, `state`: kotlin.String): kotlin.Boolean
     
     companion object
 }
@@ -1524,6 +1829,43 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Add a tag to a note
+     *
+     * Creates a note_tag association between the note and tag.
+     * Returns true if successful, false if the association already exists.
+     */
+    @Throws(VoiceCoreException::class)override fun `addTagToNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_add_tag_to_note(
+        it, FfiConverterString.lower(`noteId`),FfiConverterString.lower(`tagId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Clear sync state to force a full re-sync from scratch
+     *
+     * This deletes the sync peer record, causing the next sync to start
+     * from the beginning and fetch all data fresh.
+     */
+    @Throws(VoiceCoreException::class)override fun `clearSyncState`()
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_clear_sync_state(
+        it, _status)
+}
+    }
+    
+    
+
+    
+    /**
      * Configure sync settings
      */
     @Throws(VoiceCoreException::class)override fun `configureSync`(`syncConfig`: SyncServerConfig)
@@ -1539,6 +1881,70 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Debug method to see sync state details
+     */
+    @Throws(VoiceCoreException::class)override fun `debugSyncState`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_debug_sync_state(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Delete a note (soft delete - sets deleted_at timestamp)
+     */
+    @Throws(VoiceCoreException::class)override fun `deleteNote`(`noteId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_delete_note(
+        it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Delete a tag (soft delete - sets deleted_at timestamp)
+     */
+    @Throws(VoiceCoreException::class)override fun `deleteTag`(`tagId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_delete_tag(
+        it, FfiConverterString.lower(`tagId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get all audio files in the database (for debugging)
+     */
+    @Throws(VoiceCoreException::class)override fun `getAllAudioFiles`(): List<AudioFileData> {
+            return FfiConverterSequenceTypeAudioFileData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_all_audio_files(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Get all notes from the local database
      */
     @Throws(VoiceCoreException::class)override fun `getAllNotes`(): List<NoteData> {
@@ -1546,6 +1952,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_all_notes(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get all tags from the database
+     */
+    @Throws(VoiceCoreException::class)override fun `getAllTags`(): List<TagData> {
+            return FfiConverterSequenceTypeTagData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_all_tags(
         it, _status)
 }
     }
@@ -1664,6 +2086,25 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Get the types of unresolved conflicts for a specific note.
+     *
+     * Returns a list of conflict type strings (e.g., ["content", "delete"]).
+     * Returns an empty list if the note has no unresolved conflicts.
+     */
+    @Throws(VoiceCoreException::class)override fun `getNoteConflictTypes`(`noteId`: kotlin.String): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_note_conflict_types(
+        it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Get the count of notes in the database
      */
     @Throws(VoiceCoreException::class)override fun `getNoteCount`(): kotlin.Int {
@@ -1695,6 +2136,89 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Get all tags for a specific note
+     */
+    @Throws(VoiceCoreException::class)override fun `getTagsForNote`(`noteId`: kotlin.String): List<TagData> {
+            return FfiConverterSequenceTypeTagData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_tags_for_note(
+        it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get a single transcription by ID
+     */
+    @Throws(VoiceCoreException::class)override fun `getTranscription`(`transcriptionId`: kotlin.String): TranscriptionData? {
+            return FfiConverterOptionalTypeTranscriptionData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_transcription(
+        it, FfiConverterString.lower(`transcriptionId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get all transcriptions for an audio file
+     */
+    @Throws(VoiceCoreException::class)override fun `getTranscriptionsForAudioFile`(`audioFileId`: kotlin.String): List<TranscriptionData> {
+            return FfiConverterSequenceTypeTranscriptionData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_transcriptions_for_audio_file(
+        it, FfiConverterString.lower(`audioFileId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Check if there are local changes that haven't been synced
+     */
+    @Throws(VoiceCoreException::class)override fun `hasUnsyncedChanges`(): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_has_unsynced_changes(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Perform initial sync - fetches full dataset from server
+     *
+     * Unlike sync_now(), this ignores timestamps and fetches all data.
+     * Use this for first-time sync or to re-fetch everything.
+     */
+    @Throws(VoiceCoreException::class)override fun `initialSync`(): SyncResultData {
+            return FfiConverterTypeSyncResultData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_initial_sync(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Check if sync is configured
      */override fun `isSyncConfigured`(): kotlin.Boolean {
             return FfiConverterBoolean.lift(
@@ -1702,6 +2226,79 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_is_sync_configured(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Merge two notes into one.
+     * Returns the surviving note ID (the one with earlier created_at).
+     */
+    @Throws(VoiceCoreException::class)override fun `mergeNotes`(`noteId1`: kotlin.String, `noteId2`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_merge_notes(
+        it, FfiConverterString.lower(`noteId1`),FfiConverterString.lower(`noteId2`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Remove a tag from a note
+     *
+     * Soft-deletes the note_tag association between the note and tag.
+     * Returns true if the tag was removed, false if the association didn't exist.
+     */
+    @Throws(VoiceCoreException::class)override fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(
+        it, FfiConverterString.lower(`noteId`),FfiConverterString.lower(`tagId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Reset sync timestamps to force re-fetching all data from peers
+     *
+     * Unlike clear_sync_state, this preserves peer configuration but clears
+     * the last_sync_at timestamps, causing the next sync to fetch all data.
+     */
+    @Throws(VoiceCoreException::class)override fun `resetSyncTimestamps`()
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_reset_sync_timestamps(
+        it, _status)
+}
+    }
+    
+    
+
+    
+    /**
+     * Execute a search query
+     *
+     * Supports "tag:Name" syntax for tag filtering and free text search.
+     * Multiple tags can be combined: "tag:Work tag:Important meeting notes"
+     */
+    @Throws(VoiceCoreException::class)override fun `searchNotes`(`query`: kotlin.String): SearchResultData {
+            return FfiConverterTypeSearchResultData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_search_notes(
+        it, FfiConverterString.lower(`query`),_status)
 }
     }
     )
@@ -1763,6 +2360,57 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_sync_now(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Update a note's content
+     */
+    @Throws(VoiceCoreException::class)override fun `updateNote`(`noteId`: kotlin.String, `content`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_update_note(
+        it, FfiConverterString.lower(`noteId`),FfiConverterString.lower(`content`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Update a transcription's content and optionally its state
+     */
+    @Throws(VoiceCoreException::class)override fun `updateTranscription`(`transcriptionId`: kotlin.String, `content`: kotlin.String, `state`: kotlin.String?): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_update_transcription(
+        it, FfiConverterString.lower(`transcriptionId`),FfiConverterString.lower(`content`),FfiConverterOptionalString.lower(`state`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Update a transcription's state
+     *
+     * State is a space-separated list of tags. Tags prefixed with `!` indicate false/negation.
+     * Example: "original !verified !verbatim !cleaned !polished"
+     */
+    @Throws(VoiceCoreException::class)override fun `updateTranscriptionState`(`transcriptionId`: kotlin.String, `state`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_update_transcription_state(
+        it, FfiConverterString.lower(`transcriptionId`),FfiConverterString.lower(`state`),_status)
 }
     }
     )
@@ -1973,6 +2621,45 @@ public object FfiConverterTypeNoteData: FfiConverterRustBuffer<NoteData> {
 
 
 /**
+ * Result of a search operation
+ */
+data class SearchResultData (
+    var `notes`: List<NoteData>, 
+    var `ambiguousTags`: List<kotlin.String>, 
+    var `notFoundTags`: List<kotlin.String>
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSearchResultData: FfiConverterRustBuffer<SearchResultData> {
+    override fun read(buf: ByteBuffer): SearchResultData {
+        return SearchResultData(
+            FfiConverterSequenceTypeNoteData.read(buf),
+            FfiConverterSequenceString.read(buf),
+            FfiConverterSequenceString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SearchResultData) = (
+            FfiConverterSequenceTypeNoteData.allocationSize(value.`notes`) +
+            FfiConverterSequenceString.allocationSize(value.`ambiguousTags`) +
+            FfiConverterSequenceString.allocationSize(value.`notFoundTags`)
+    )
+
+    override fun write(value: SearchResultData, buf: ByteBuffer) {
+            FfiConverterSequenceTypeNoteData.write(value.`notes`, buf)
+            FfiConverterSequenceString.write(value.`ambiguousTags`, buf)
+            FfiConverterSequenceString.write(value.`notFoundTags`, buf)
+    }
+}
+
+
+
+/**
  * Sync operation result
  */
 data class SyncResultData (
@@ -2053,6 +2740,128 @@ public object FfiConverterTypeSyncServerConfig: FfiConverterRustBuffer<SyncServe
             FfiConverterString.write(value.`serverPeerId`, buf)
             FfiConverterString.write(value.`deviceId`, buf)
             FfiConverterString.write(value.`deviceName`, buf)
+    }
+}
+
+
+
+/**
+ * A tag from the database
+ */
+data class TagData (
+    var `id`: kotlin.String, 
+    var `name`: kotlin.String, 
+    var `parentId`: kotlin.String?, 
+    var `createdAt`: kotlin.String?, 
+    var `modifiedAt`: kotlin.String?
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTagData: FfiConverterRustBuffer<TagData> {
+    override fun read(buf: ByteBuffer): TagData {
+        return TagData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TagData) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterString.allocationSize(value.`name`) +
+            FfiConverterOptionalString.allocationSize(value.`parentId`) +
+            FfiConverterOptionalString.allocationSize(value.`createdAt`) +
+            FfiConverterOptionalString.allocationSize(value.`modifiedAt`)
+    )
+
+    override fun write(value: TagData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterString.write(value.`name`, buf)
+            FfiConverterOptionalString.write(value.`parentId`, buf)
+            FfiConverterOptionalString.write(value.`createdAt`, buf)
+            FfiConverterOptionalString.write(value.`modifiedAt`, buf)
+    }
+}
+
+
+
+/**
+ * A transcription from the database
+ */
+data class TranscriptionData (
+    var `id`: kotlin.String, 
+    var `audioFileId`: kotlin.String, 
+    var `content`: kotlin.String, 
+    var `contentSegments`: kotlin.String?, 
+    var `service`: kotlin.String, 
+    var `serviceArguments`: kotlin.String?, 
+    var `serviceResponse`: kotlin.String?, 
+    var `state`: kotlin.String, 
+    var `deviceId`: kotlin.String, 
+    var `createdAt`: kotlin.String, 
+    var `modifiedAt`: kotlin.String?, 
+    var `deletedAt`: kotlin.String?
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTranscriptionData: FfiConverterRustBuffer<TranscriptionData> {
+    override fun read(buf: ByteBuffer): TranscriptionData {
+        return TranscriptionData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TranscriptionData) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterString.allocationSize(value.`audioFileId`) +
+            FfiConverterString.allocationSize(value.`content`) +
+            FfiConverterOptionalString.allocationSize(value.`contentSegments`) +
+            FfiConverterString.allocationSize(value.`service`) +
+            FfiConverterOptionalString.allocationSize(value.`serviceArguments`) +
+            FfiConverterOptionalString.allocationSize(value.`serviceResponse`) +
+            FfiConverterString.allocationSize(value.`state`) +
+            FfiConverterString.allocationSize(value.`deviceId`) +
+            FfiConverterString.allocationSize(value.`createdAt`) +
+            FfiConverterOptionalString.allocationSize(value.`modifiedAt`) +
+            FfiConverterOptionalString.allocationSize(value.`deletedAt`)
+    )
+
+    override fun write(value: TranscriptionData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterString.write(value.`audioFileId`, buf)
+            FfiConverterString.write(value.`content`, buf)
+            FfiConverterOptionalString.write(value.`contentSegments`, buf)
+            FfiConverterString.write(value.`service`, buf)
+            FfiConverterOptionalString.write(value.`serviceArguments`, buf)
+            FfiConverterOptionalString.write(value.`serviceResponse`, buf)
+            FfiConverterString.write(value.`state`, buf)
+            FfiConverterString.write(value.`deviceId`, buf)
+            FfiConverterString.write(value.`createdAt`, buf)
+            FfiConverterOptionalString.write(value.`modifiedAt`, buf)
+            FfiConverterOptionalString.write(value.`deletedAt`, buf)
     }
 }
 
@@ -2304,6 +3113,66 @@ public object FfiConverterOptionalTypeSyncServerConfig: FfiConverterRustBuffer<S
 /**
  * @suppress
  */
+public object FfiConverterOptionalTypeTranscriptionData: FfiConverterRustBuffer<TranscriptionData?> {
+    override fun read(buf: ByteBuffer): TranscriptionData? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeTranscriptionData.read(buf)
+    }
+
+    override fun allocationSize(value: TranscriptionData?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeTranscriptionData.allocationSize(value)
+        }
+    }
+
+    override fun write(value: TranscriptionData?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeTranscriptionData.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.String>> {
+    override fun read(buf: ByteBuffer): List<kotlin.String> {
+        val len = buf.getInt()
+        return List<kotlin.String>(len) {
+            FfiConverterString.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<kotlin.String>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterString.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<kotlin.String>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterString.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeAudioFileData: FfiConverterRustBuffer<List<AudioFileData>> {
     override fun read(buf: ByteBuffer): List<AudioFileData> {
         val len = buf.getInt()
@@ -2378,6 +3247,62 @@ public object FfiConverterSequenceTypeNoteData: FfiConverterRustBuffer<List<Note
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeNoteData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTagData: FfiConverterRustBuffer<List<TagData>> {
+    override fun read(buf: ByteBuffer): List<TagData> {
+        val len = buf.getInt()
+        return List<TagData>(len) {
+            FfiConverterTypeTagData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TagData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTagData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TagData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTagData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTranscriptionData: FfiConverterRustBuffer<List<TranscriptionData>> {
+    override fun read(buf: ByteBuffer): List<TranscriptionData> {
+        val len = buf.getInt()
+        return List<TranscriptionData>(len) {
+            FfiConverterTypeTranscriptionData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TranscriptionData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTranscriptionData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TranscriptionData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTranscriptionData.write(it, buf)
         }
     }
 }

@@ -788,6 +788,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -844,6 +846,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_get_device_id(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_device_name(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_note_conflict_types(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_note_count(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
@@ -1031,6 +1035,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_device_name(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_note_conflict_types(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_note_count(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_sync_config(
@@ -1137,6 +1143,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_device_name() != 23646.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_note_conflict_types() != 37172.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_note_count() != 32814.toShort()) {
@@ -1603,6 +1612,14 @@ public interface VoiceClientInterface {
     fun `getDeviceName`(): kotlin.String
     
     /**
+     * Get the types of unresolved conflicts for a specific note.
+     *
+     * Returns a list of conflict type strings (e.g., ["content", "delete"]).
+     * Returns an empty list if the note has no unresolved conflicts.
+     */
+    fun `getNoteConflictTypes`(`noteId`: kotlin.String): List<kotlin.String>
+    
+    /**
      * Get the count of notes in the database
      */
     fun `getNoteCount`(): kotlin.Int
@@ -2061,6 +2078,25 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_device_name(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get the types of unresolved conflicts for a specific note.
+     *
+     * Returns a list of conflict type strings (e.g., ["content", "delete"]).
+     * Returns an empty list if the note has no unresolved conflicts.
+     */
+    @Throws(VoiceCoreException::class)override fun `getNoteConflictTypes`(`noteId`: kotlin.String): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_note_conflict_types(
+        it, FfiConverterString.lower(`noteId`),_status)
 }
     }
     )

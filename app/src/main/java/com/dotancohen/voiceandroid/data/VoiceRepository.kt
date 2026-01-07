@@ -769,6 +769,21 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
+     * Get the types of unresolved conflicts for a specific note.
+     * Returns a list of conflict type strings (e.g., ["content", "delete"]).
+     */
+    suspend fun getNoteConflictTypes(noteId: String): Result<List<String>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getNoteConflictTypes(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Close the client and release resources.
      */
     fun close() {

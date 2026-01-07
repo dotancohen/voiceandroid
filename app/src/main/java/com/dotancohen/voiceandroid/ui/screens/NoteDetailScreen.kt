@@ -23,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -66,6 +67,7 @@ fun NoteDetailScreen(
     val isSaving by viewModel.isSaving.collectAsState()
     val isDeleting by viewModel.isDeleting.collectAsState()
     val deleteSuccess by viewModel.deleteSuccess.collectAsState()
+    val conflictTypes by viewModel.conflictTypes.collectAsState()
 
     // Confirmation dialog state
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -205,6 +207,25 @@ fun NoteDetailScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {
+                    // Conflict warning banner
+                    if (conflictTypes.isNotEmpty()) {
+                        val typesStr = conflictTypes.joinToString(", ")
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Text(
+                                text = "WARNING: This note has unresolved $typesStr conflict(s)",
+                                modifier = Modifier.padding(12.dp),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer
+                            )
+                        }
+                    }
+
                     // Note content - editable or read-only
                     if (isEditing) {
                         OutlinedTextField(

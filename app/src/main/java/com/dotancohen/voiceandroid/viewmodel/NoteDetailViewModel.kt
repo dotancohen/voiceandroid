@@ -53,6 +53,10 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
     private val _deleteSuccess = MutableStateFlow(false)
     val deleteSuccess: StateFlow<Boolean> = _deleteSuccess.asStateFlow()
 
+    // Conflict state
+    private val _conflictTypes = MutableStateFlow<List<String>>(emptyList())
+    val conflictTypes: StateFlow<List<String>> = _conflictTypes.asStateFlow()
+
     /**
      * Load a note and its audio files by ID.
      */
@@ -60,6 +64,7 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             _isLoading.value = true
             _error.value = null
+            _conflictTypes.value = emptyList()
 
             // Get all notes and find the one we need
             // (We could add a getNoteById method to the repository, but this works for now)
@@ -69,6 +74,15 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
                     _note.value = foundNote
 
                     if (foundNote != null) {
+                        // Load conflict types for this note
+                        repository.getNoteConflictTypes(noteId)
+                            .onSuccess { types ->
+                                _conflictTypes.value = types
+                            }
+                            .onFailure { exception ->
+                                AppLogger.w(TAG, "Failed to load conflict types: ${exception.message}")
+                            }
+
                         // Load audio files for this note
                         repository.getAudioFilesForNote(noteId)
                             .onSuccess { files ->
