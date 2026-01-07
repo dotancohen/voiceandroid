@@ -784,6 +784,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -809,6 +813,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_constructor_voiceclient_new(`dataDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
+    fun uniffi_voicecore_fn_method_voiceclient_add_tag_to_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_clear_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -857,6 +863,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_merge_notes(`ptr`: Pointer,`noteId1`: RustBuffer.ByValue,`noteId2`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_reset_sync_timestamps(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_search_notes(`ptr`: Pointer,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -991,6 +999,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_checksum_func_generate_device_id(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_clear_sync_state(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_configure_sync(
@@ -1039,6 +1049,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_merge_notes(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_search_notes(
@@ -1077,6 +1089,9 @@ private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_func_generate_device_id() != 30760.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note() != 63485.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_sync_state() != 33205.toShort()) {
@@ -1149,6 +1164,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_merge_notes() != 17846.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 60477.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps() != 4442.toShort()) {
@@ -1499,6 +1517,14 @@ private class JavaLangRefCleanable(
 public interface VoiceClientInterface {
     
     /**
+     * Add a tag to a note
+     *
+     * Creates a note_tag association between the note and tag.
+     * Returns true if successful, false if the association already exists.
+     */
+    fun `addTagToNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean
+    
+    /**
      * Clear sync state to force a full re-sync from scratch
      *
      * This deletes the sync peer record, causing the next sync to start
@@ -1624,6 +1650,14 @@ public interface VoiceClientInterface {
      * Returns the surviving note ID (the one with earlier created_at).
      */
     fun `mergeNotes`(`noteId1`: kotlin.String, `noteId2`: kotlin.String): kotlin.String
+    
+    /**
+     * Remove a tag from a note
+     *
+     * Soft-deletes the note_tag association between the note and tag.
+     * Returns true if the tag was removed, false if the association didn't exist.
+     */
+    fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean
     
     /**
      * Reset sync timestamps to force re-fetching all data from peers
@@ -1775,6 +1809,25 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
             UniffiLib.INSTANCE.uniffi_voicecore_fn_clone_voiceclient(pointer!!, status)
         }
     }
+
+    
+    /**
+     * Add a tag to a note
+     *
+     * Creates a note_tag association between the note and tag.
+     * Returns true if successful, false if the association already exists.
+     */
+    @Throws(VoiceCoreException::class)override fun `addTagToNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_add_tag_to_note(
+        it, FfiConverterString.lower(`noteId`),FfiConverterString.lower(`tagId`),_status)
+}
+    }
+    )
+    }
+    
 
     
     /**
@@ -2154,6 +2207,25 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_merge_notes(
         it, FfiConverterString.lower(`noteId1`),FfiConverterString.lower(`noteId2`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Remove a tag from a note
+     *
+     * Soft-deletes the note_tag association between the note and tag.
+     * Returns true if the tag was removed, false if the association didn't exist.
+     */
+    @Throws(VoiceCoreException::class)override fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(
+        it, FfiConverterString.lower(`noteId`),FfiConverterString.lower(`tagId`),_status)
 }
     }
     )

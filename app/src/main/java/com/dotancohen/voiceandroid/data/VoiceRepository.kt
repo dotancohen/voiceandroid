@@ -709,6 +709,36 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
+     * Add a tag to a note.
+     * Creates a note_tag association between the note and tag.
+     */
+    suspend fun addTagToNote(noteId: String, tagId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.addTagToNote(noteId, tagId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Remove a tag from a note.
+     * Soft-deletes the note_tag association between the note and tag.
+     */
+    suspend fun removeTagFromNote(noteId: String, tagId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.removeTagFromNote(noteId, tagId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Execute a search query.
      * Supports "tag:Name" syntax for tag filtering and free text search.
      * Multiple tags can be combined: "tag:Work tag:Important meeting notes"

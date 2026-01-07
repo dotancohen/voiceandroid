@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Label
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
@@ -52,6 +53,7 @@ import com.dotancohen.voiceandroid.viewmodel.NoteDetailViewModel
 fun NoteDetailScreen(
     noteId: String,
     onBack: () -> Unit,
+    onNavigateToTags: () -> Unit = {},
     viewModel: NoteDetailViewModel = viewModel()
 ) {
     val note by viewModel.note.collectAsState()
@@ -116,6 +118,13 @@ fun NoteDetailScreen(
                         }
                     }
                 } else if (note != null) {
+                    // Tags button
+                    IconButton(onClick = onNavigateToTags) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Label,
+                            contentDescription = "Tags"
+                        )
+                    }
                     // Delete button
                     IconButton(
                         onClick = { showDeleteConfirmation = true },

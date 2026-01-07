@@ -27,6 +27,7 @@ import com.dotancohen.voiceandroid.ui.screens.NoteDetailScreen
 import com.dotancohen.voiceandroid.ui.screens.NotesScreen
 import com.dotancohen.voiceandroid.ui.screens.SettingsScreen
 import com.dotancohen.voiceandroid.ui.screens.SyncSettingsScreen
+import com.dotancohen.voiceandroid.ui.screens.TagManagementScreen
 import com.dotancohen.voiceandroid.viewmodel.SharedFilterViewModel
 
 sealed class Screen(val route: String, val title: String) {
@@ -36,6 +37,9 @@ sealed class Screen(val route: String, val title: String) {
     }
     data object Settings : Screen("settings", "Settings")
     data object SyncSettings : Screen("sync_settings", "Sync Settings")
+    data object TagManagement : Screen("tags/{noteId}", "Manage Tags") {
+        fun createRoute(noteId: String) = "tags/$noteId"
+    }
 }
 
 @Composable
@@ -104,6 +108,17 @@ fun VoiceApp() {
             ) { backStackEntry ->
                 val noteId = backStackEntry.arguments?.getString("noteId") ?: return@composable
                 NoteDetailScreen(
+                    noteId = noteId,
+                    onBack = { navController.popBackStack() },
+                    onNavigateToTags = { navController.navigate(Screen.TagManagement.createRoute(noteId)) }
+                )
+            }
+            composable(
+                route = Screen.TagManagement.route,
+                arguments = listOf(navArgument("noteId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val noteId = backStackEntry.arguments?.getString("noteId") ?: return@composable
+                TagManagementScreen(
                     noteId = noteId,
                     onBack = { navController.popBackStack() }
                 )
