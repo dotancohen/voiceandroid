@@ -27,6 +27,7 @@ import com.dotancohen.voiceandroid.ui.screens.NoteDetailScreen
 import com.dotancohen.voiceandroid.ui.screens.NotesScreen
 import com.dotancohen.voiceandroid.ui.screens.SettingsScreen
 import com.dotancohen.voiceandroid.ui.screens.SyncSettingsScreen
+import com.dotancohen.voiceandroid.ui.screens.TagHierarchyScreen
 import com.dotancohen.voiceandroid.ui.screens.TagManagementScreen
 import com.dotancohen.voiceandroid.viewmodel.SharedFilterViewModel
 
@@ -40,6 +41,7 @@ sealed class Screen(val route: String, val title: String) {
     data object TagManagement : Screen("tags/{noteId}", "Manage Tags") {
         fun createRoute(noteId: String) = "tags/$noteId"
     }
+    data object TagHierarchy : Screen("tag_hierarchy", "Manage Tags")
 }
 
 @Composable
@@ -127,11 +129,19 @@ fun VoiceApp() {
                 SettingsScreen(
                     onNavigateToSyncSettings = {
                         navController.navigate(Screen.SyncSettings.route)
+                    },
+                    onNavigateToManageTags = {
+                        navController.navigate(Screen.TagHierarchy.route)
                     }
                 )
             }
             composable(Screen.SyncSettings.route) {
                 SyncSettingsScreen(
+                    onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.TagHierarchy.route) {
+                TagHierarchyScreen(
                     onBack = { navController.popBackStack() }
                 )
             }

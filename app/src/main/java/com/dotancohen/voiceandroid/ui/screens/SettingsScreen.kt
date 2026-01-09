@@ -59,7 +59,8 @@ import java.io.File
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel(),
-    onNavigateToSyncSettings: () -> Unit = {}
+    onNavigateToSyncSettings: () -> Unit = {},
+    onNavigateToManageTags: () -> Unit = {}
 ) {
     val audiofileDirectory by viewModel.audiofileDirectory.collectAsState()
     val defaultAudiofileDirectory by viewModel.defaultAudiofileDirectory.collectAsState()
@@ -271,6 +272,19 @@ fun SettingsScreen(
                         Text("Sync Settings")
                     }
                 }
+            }
+
+            // Manage Tags
+            OutlinedButton(
+                onClick = onNavigateToManageTags,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.List,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Manage Tags")
             }
 
             // Audio Files Storage

@@ -658,6 +658,86 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
+    /**
+     * Create a new tag.
+     *
+     * @param name The tag name
+     * @param parentId Optional parent tag ID (null for root-level tag)
+     * @return The ID of the newly created tag
+     */
+    suspend fun createTag(name: String, parentId: String? = null): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.createTag(name, parentId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Rename a tag.
+     *
+     * @param tagId The tag ID
+     * @param newName The new name for the tag
+     * @return True if the tag was renamed, false if not found
+     */
+    suspend fun renameTag(tagId: String, newName: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.renameTag(tagId, newName))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Move a tag to a different parent (or make it a root tag).
+     *
+     * @param tagId The tag ID to move
+     * @param newParentId The new parent ID, or null to make it a root tag
+     * @return True if the tag was moved, false if not found
+     */
+    suspend fun reparentTag(tagId: String, newParentId: String?): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.reparentTag(tagId, newParentId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Filter notes by tag IDs.
+     *
+     * @param tagIds List of tag IDs to filter by
+     * @return Notes that have all the specified tags
+     */
+    suspend fun filterNotesByTags(tagIds: List<String>): Result<List<Note>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val notes = voiceClient.filterNotes(tagIds).map { data ->
+                Note(
+                    id = data.id,
+                    content = data.content,
+                    createdAt = data.createdAt,
+                    modifiedAt = data.modifiedAt,
+                    deletedAt = data.deletedAt
+                )
+            }
+            Result.success(notes)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // =========================================================================
     // Tag and Search Methods
     // =========================================================================
