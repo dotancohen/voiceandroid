@@ -82,6 +82,7 @@ dependencies {
     implementation("net.java.dev.jna:jna:5.14.0@aar")
 
     debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 
     // Test dependencies
     testImplementation(libs.junit)

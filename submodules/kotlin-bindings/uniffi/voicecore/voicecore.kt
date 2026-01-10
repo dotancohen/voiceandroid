@@ -790,6 +790,24 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -821,12 +839,16 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_create_tag(`ptr`: Pointer,`name`: RustBuffer.ByValue,`parentId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_debug_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_delete_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_delete_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_filter_notes(`ptr`: Pointer,`tagIds`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_all_audio_files(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_all_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -853,6 +875,8 @@ internal interface UniffiLib : Library {
     ): Int
     fun uniffi_voicecore_fn_method_voiceclient_get_sync_config(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_system_tag_id_hex(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_tags_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_transcription(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -863,11 +887,19 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_is_note_marked(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_mark_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_merge_notes(`ptr`: Pointer,`noteId1`: RustBuffer.ByValue,`noteId2`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_rename_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,`newName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_reparent_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,`newParentId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_reset_sync_timestamps(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -881,6 +913,10 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_sync_now(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_toggle_note_marked(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_unmark_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_update_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_update_transcription(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,`state`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1009,11 +1045,15 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_configure_sync(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_create_tag(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_debug_sync_state(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_delete_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_delete_tag(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_filter_notes(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files(
     ): Short
@@ -1041,6 +1081,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_sync_config(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_system_tag_id_hex(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_tags_for_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_transcription(
@@ -1051,11 +1093,19 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_initial_sync(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_is_note_marked(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_mark_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_merge_notes(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_rename_tag(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_reparent_tag(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps(
     ): Short
@@ -1068,6 +1118,10 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_set_device_name(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_sync_now(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_toggle_note_marked(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_unmark_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_update_note(
     ): Short
@@ -1106,6 +1160,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_configure_sync() != 51278.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_create_tag() != 50745.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_debug_sync_state() != 55360.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1113,6 +1170,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_delete_tag() != 8239.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_filter_notes() != 10478.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files() != 5578.toShort()) {
@@ -1154,6 +1214,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_sync_config() != 64316.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_system_tag_id_hex() != 7141.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_tags_for_note() != 28551.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1169,13 +1232,25 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 5382.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_is_note_marked() != 43314.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_sync_configured() != 19345.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_mark_note() != 26647.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_merge_notes() != 17846.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 60477.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_rename_tag() != 40579.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_reparent_tag() != 47914.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps() != 4442.toShort()) {
@@ -1194,6 +1269,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_sync_now() != 57614.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_toggle_note_marked() != 49189.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_unmark_note() != 55529.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_update_note() != 14280.toShort()) {
@@ -1547,6 +1628,18 @@ public interface VoiceClientInterface {
     fun `configureSync`(`syncConfig`: SyncServerConfig)
     
     /**
+     * Create a new tag
+     *
+     * # Arguments
+     * * `name` - The tag name
+     * * `parent_id` - Optional parent tag ID (None for root-level tag)
+     *
+     * # Returns
+     * The ID of the newly created tag
+     */
+    fun `createTag`(`name`: kotlin.String, `parentId`: kotlin.String?): kotlin.String
+    
+    /**
      * Debug method to see sync state details
      */
     fun `debugSyncState`(): kotlin.String
@@ -1560,6 +1653,13 @@ public interface VoiceClientInterface {
      * Delete a tag (soft delete - sets deleted_at timestamp)
      */
     fun `deleteTag`(`tagId`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Filter notes by tag IDs.
+     *
+     * Returns notes that have ALL the specified tags.
+     */
+    fun `filterNotes`(`tagIds`: List<kotlin.String>): List<NoteData>
     
     /**
      * Get all audio files in the database (for debugging)
@@ -1630,6 +1730,14 @@ public interface VoiceClientInterface {
     fun `getSyncConfig`(): SyncServerConfig?
     
     /**
+     * Get the _system tag ID as a hex string
+     *
+     * Used for filtering system tags from UI display.
+     * Returns None if the _system tag doesn't exist yet.
+     */
+    fun `getSystemTagIdHex`(): kotlin.String?
+    
+    /**
      * Get all tags for a specific note
      */
     fun `getTagsForNote`(`noteId`: kotlin.String): List<TagData>
@@ -1658,9 +1766,21 @@ public interface VoiceClientInterface {
     fun `initialSync`(): SyncResultData
     
     /**
+     * Check if a note is marked (starred/bookmarked)
+     */
+    fun `isNoteMarked`(`noteId`: kotlin.String): kotlin.Boolean
+    
+    /**
      * Check if sync is configured
      */
     fun `isSyncConfigured`(): kotlin.Boolean
+    
+    /**
+     * Mark a note (add the _system/_marked tag)
+     *
+     * Returns true if the note was marked, false if already marked.
+     */
+    fun `markNote`(`noteId`: kotlin.String): kotlin.Boolean
     
     /**
      * Merge two notes into one.
@@ -1675,6 +1795,30 @@ public interface VoiceClientInterface {
      * Returns true if the tag was removed, false if the association didn't exist.
      */
     fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Rename a tag
+     *
+     * # Arguments
+     * * `tag_id` - The tag ID
+     * * `new_name` - The new name for the tag
+     *
+     * # Returns
+     * True if the tag was renamed, false if not found
+     */
+    fun `renameTag`(`tagId`: kotlin.String, `newName`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Move a tag to a different parent (or make it a root tag)
+     *
+     * # Arguments
+     * * `tag_id` - The tag ID to move
+     * * `new_parent_id` - The new parent ID, or None to make it a root tag
+     *
+     * # Returns
+     * True if the tag was moved, false if not found
+     */
+    fun `reparentTag`(`tagId`: kotlin.String, `newParentId`: kotlin.String?): kotlin.Boolean
     
     /**
      * Reset sync timestamps to force re-fetching all data from peers
@@ -1711,6 +1855,20 @@ public interface VoiceClientInterface {
      * Perform sync with the configured server
      */
     fun `syncNow`(): SyncResultData
+    
+    /**
+     * Toggle a note's marked state
+     *
+     * Returns the new marked state (true if now marked, false if now unmarked).
+     */
+    fun `toggleNoteMarked`(`noteId`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Unmark a note (remove the _system/_marked tag)
+     *
+     * Returns true if the note was unmarked, false if not marked.
+     */
+    fun `unmarkNote`(`noteId`: kotlin.String): kotlin.Boolean
     
     /**
      * Update a note's content
@@ -1881,6 +2039,29 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Create a new tag
+     *
+     * # Arguments
+     * * `name` - The tag name
+     * * `parent_id` - Optional parent tag ID (None for root-level tag)
+     *
+     * # Returns
+     * The ID of the newly created tag
+     */
+    @Throws(VoiceCoreException::class)override fun `createTag`(`name`: kotlin.String, `parentId`: kotlin.String?): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_create_tag(
+        it, FfiConverterString.lower(`name`),FfiConverterOptionalString.lower(`parentId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Debug method to see sync state details
      */
     @Throws(VoiceCoreException::class)override fun `debugSyncState`(): kotlin.String {
@@ -1921,6 +2102,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_delete_tag(
         it, FfiConverterString.lower(`tagId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Filter notes by tag IDs.
+     *
+     * Returns notes that have ALL the specified tags.
+     */
+    @Throws(VoiceCoreException::class)override fun `filterNotes`(`tagIds`: List<kotlin.String>): List<NoteData> {
+            return FfiConverterSequenceTypeNoteData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_filter_notes(
+        it, FfiConverterSequenceString.lower(`tagIds`),_status)
 }
     }
     )
@@ -2136,6 +2335,25 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Get the _system tag ID as a hex string
+     *
+     * Used for filtering system tags from UI display.
+     * Returns None if the _system tag doesn't exist yet.
+     */
+    @Throws(VoiceCoreException::class)override fun `getSystemTagIdHex`(): kotlin.String? {
+            return FfiConverterOptionalString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_system_tag_id_hex(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Get all tags for a specific note
      */
     @Throws(VoiceCoreException::class)override fun `getTagsForNote`(`noteId`: kotlin.String): List<TagData> {
@@ -2219,6 +2437,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Check if a note is marked (starred/bookmarked)
+     */
+    @Throws(VoiceCoreException::class)override fun `isNoteMarked`(`noteId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_is_note_marked(
+        it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Check if sync is configured
      */override fun `isSyncConfigured`(): kotlin.Boolean {
             return FfiConverterBoolean.lift(
@@ -2226,6 +2460,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_is_sync_configured(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Mark a note (add the _system/_marked tag)
+     *
+     * Returns true if the note was marked, false if already marked.
+     */
+    @Throws(VoiceCoreException::class)override fun `markNote`(`noteId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_mark_note(
+        it, FfiConverterString.lower(`noteId`),_status)
 }
     }
     )
@@ -2262,6 +2514,52 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(
         it, FfiConverterString.lower(`noteId`),FfiConverterString.lower(`tagId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Rename a tag
+     *
+     * # Arguments
+     * * `tag_id` - The tag ID
+     * * `new_name` - The new name for the tag
+     *
+     * # Returns
+     * True if the tag was renamed, false if not found
+     */
+    @Throws(VoiceCoreException::class)override fun `renameTag`(`tagId`: kotlin.String, `newName`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_rename_tag(
+        it, FfiConverterString.lower(`tagId`),FfiConverterString.lower(`newName`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Move a tag to a different parent (or make it a root tag)
+     *
+     * # Arguments
+     * * `tag_id` - The tag ID to move
+     * * `new_parent_id` - The new parent ID, or None to make it a root tag
+     *
+     * # Returns
+     * True if the tag was moved, false if not found
+     */
+    @Throws(VoiceCoreException::class)override fun `reparentTag`(`tagId`: kotlin.String, `newParentId`: kotlin.String?): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_reparent_tag(
+        it, FfiConverterString.lower(`tagId`),FfiConverterOptionalString.lower(`newParentId`),_status)
 }
     }
     )
@@ -2360,6 +2658,42 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_sync_now(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Toggle a note's marked state
+     *
+     * Returns the new marked state (true if now marked, false if now unmarked).
+     */
+    @Throws(VoiceCoreException::class)override fun `toggleNoteMarked`(`noteId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_toggle_note_marked(
+        it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Unmark a note (remove the _system/_marked tag)
+     *
+     * Returns true if the note was unmarked, false if not marked.
+     */
+    @Throws(VoiceCoreException::class)override fun `unmarkNote`(`noteId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_unmark_note(
+        it, FfiConverterString.lower(`noteId`),_status)
 }
     }
     )

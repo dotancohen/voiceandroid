@@ -818,6 +818,84 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
+    // =========================================================================
+    // Note Marking (Star/Bookmark) Methods
+    // =========================================================================
+
+    /**
+     * Check if a note is marked (starred/bookmarked).
+     */
+    suspend fun isNoteMarked(noteId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.isNoteMarked(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Mark a note (add the _system/_marked tag).
+     * Returns true if the note was marked, false if already marked.
+     */
+    suspend fun markNote(noteId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.markNote(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Unmark a note (remove the _system/_marked tag).
+     * Returns true if the note was unmarked, false if not marked.
+     */
+    suspend fun unmarkNote(noteId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.unmarkNote(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Toggle a note's marked state.
+     * Returns the new marked state (true if now marked, false if now unmarked).
+     */
+    suspend fun toggleNoteMarked(noteId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.toggleNoteMarked(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get the _system tag ID as a hex string.
+     * Used for filtering system tags from UI display.
+     */
+    suspend fun getSystemTagIdHex(): Result<String?> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getSystemTagIdHex())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /**
      * Execute a search query.
      * Supports "tag:Name" syntax for tag filtering and free text search.

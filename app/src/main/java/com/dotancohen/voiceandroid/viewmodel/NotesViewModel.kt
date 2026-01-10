@@ -12,11 +12,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Data class combining a note with its audio file attachments.
+ * Data class combining a note with its audio file attachments and marked state.
  */
 data class NoteWithAudioFiles(
     val note: Note,
-    val audioFiles: List<AudioFile> = emptyList()
+    val audioFiles: List<AudioFile> = emptyList(),
+    val isMarked: Boolean = false
 )
 
 class NotesViewModel(application: Application) : AndroidViewModel(application) {
@@ -88,13 +89,14 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
 
             notesResult
                 .onSuccess { filteredNotes ->
-                    // Load audio files for each note
+                    // Load audio files and marked state for each note
                     val notesWithAudio = filteredNotes.map { note ->
                         val audioFiles = repository.getAudioFilesForNote(note.id)
                             .getOrNull()
                             ?.filter { it.deletedAt == null }
                             ?: emptyList()
-                        NoteWithAudioFiles(note, audioFiles)
+                        val isMarked = repository.isNoteMarked(note.id).getOrNull() ?: false
+                        NoteWithAudioFiles(note, audioFiles, isMarked)
                     }
 
                     _notes.value = notesWithAudio
@@ -119,5 +121,28 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun refresh() {
         loadNotes(_currentSearchQuery.value)
+    }
+
+    /**
+     * Toggle the marked (starred) state of a note.
+     * Updates the local state optimistically, then persists to database.
+     */
+    fun toggleNoteMarked(noteId: String) {
+        viewModelScope.launch {
+            // Toggle in the database
+            val result = repository.toggleNoteMarked(noteId)
+            result.onSuccess { newMarkedState ->
+                // Update local state
+                _notes.value = _notes.value.map { noteWithAudio ->
+                    if (noteWithAudio.note.id == noteId) {
+                        noteWithAudio.copy(isMarked = newMarkedState)
+                    } else {
+                        noteWithAudio
+                    }
+                }
+            }.onFailure { exception ->
+                _error.value = "Failed to toggle star: ${exception.message}"
+            }
+        }
     }
 }

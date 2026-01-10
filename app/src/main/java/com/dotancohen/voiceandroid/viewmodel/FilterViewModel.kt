@@ -44,6 +44,9 @@ class FilterViewModel(application: Application) : AndroidViewModel(application) 
     private val _expandedTagIds = MutableStateFlow<Set<String>>(emptySet())
     val expandedTagIds: StateFlow<Set<String>> = _expandedTagIds.asStateFlow()
 
+    // System tag ID for filtering
+    private var systemTagId: String? = null
+
     init {
         loadTags()
     }
@@ -56,10 +59,22 @@ class FilterViewModel(application: Application) : AndroidViewModel(application) 
             _isLoading.value = true
             _error.value = null
 
+            // Get the system tag ID for filtering
+            systemTagId = repository.getSystemTagIdHex().getOrNull()
+
             repository.getAllTags()
                 .onSuccess { tags ->
-                    _allTags.value = tags
-                    _tagTree.value = buildTagTree(tags)
+                    // Filter out _system tag and its children
+                    val filteredTags = if (systemTagId != null) {
+                        tags.filter { tag ->
+                            tag.id != systemTagId && tag.parentId != systemTagId
+                        }
+                    } else {
+                        tags
+                    }
+
+                    _allTags.value = filteredTags
+                    _tagTree.value = buildTagTree(filteredTags)
                     // Expand all root nodes by default
                     _expandedTagIds.value = _tagTree.value.map { it.tag.id }.toSet()
                 }

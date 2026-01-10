@@ -27,6 +27,8 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -46,6 +48,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
@@ -57,6 +60,9 @@ import com.dotancohen.voiceandroid.viewmodel.FilterViewModel
 import com.dotancohen.voiceandroid.viewmodel.NoteWithAudioFiles
 import com.dotancohen.voiceandroid.viewmodel.NotesViewModel
 import com.dotancohen.voiceandroid.viewmodel.SharedFilterViewModel
+
+// Gold color for filled star
+private val StarGold = Color(0xFFFFD700)
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -97,6 +103,24 @@ fun NotesScreen(
         focusManager.clearFocus()
     }
 
+    // Check if is:marked is in the search text
+    val hasMarkedFilter = searchText.lowercase().contains("is:marked")
+
+    // Function to toggle is:marked filter
+    fun toggleMarkedFilter() {
+        if (hasMarkedFilter) {
+            // Remove is:marked from search text
+            searchText = searchText
+                .replace(Regex("\\bis:marked\\b", RegexOption.IGNORE_CASE), "")
+                .replace(Regex("\\s+"), " ")
+                .trim()
+        } else {
+            // Add is:marked to search text
+            searchText = "is:marked $searchText".trim()
+        }
+        executeSearch()
+    }
+
     // Sync local search text when active query changes externally
     LaunchedEffect(activeSearchQuery) {
         searchText = activeSearchQuery ?: ""
@@ -111,6 +135,18 @@ fun NotesScreen(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Star filter button
+            IconButton(
+                onClick = { toggleMarkedFilter() },
+                modifier = Modifier.size(40.dp)
+            ) {
+                Icon(
+                    imageVector = if (hasMarkedFilter) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                    contentDescription = if (hasMarkedFilter) "Remove starred filter" else "Show only starred",
+                    tint = if (hasMarkedFilter) StarGold else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+
             OutlinedTextField(
                 value = searchText,
                 onValueChange = { searchText = it },
@@ -123,7 +159,7 @@ fun NotesScreen(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(onSearch = { executeSearch() }),
-                trailingIcon = {
+                leadingIcon = {
                     if (searchText.isNotEmpty()) {
                         IconButton(onClick = {
                             searchText = ""
@@ -265,7 +301,8 @@ fun NotesScreen(
                         items(notes) { noteWithAudio ->
                             NoteCard(
                                 noteWithAudio = noteWithAudio,
-                                onClick = { onNoteClick(noteWithAudio.note.id) }
+                                onClick = { onNoteClick(noteWithAudio.note.id) },
+                                onStarClick = { viewModel.toggleNoteMarked(noteWithAudio.note.id) }
                             )
                         }
                     }
@@ -278,10 +315,12 @@ fun NotesScreen(
 @Composable
 fun NoteCard(
     noteWithAudio: NoteWithAudioFiles,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    onStarClick: () -> Unit = {}
 ) {
     val note = noteWithAudio.note
     val audioFiles = noteWithAudio.audioFiles
+    val isMarked = noteWithAudio.isMarked
     var isExpanded by remember { mutableStateOf(false) }
     val hasAttachments = audioFiles.isNotEmpty()
 
@@ -294,12 +333,30 @@ fun NoteCard(
         Column(
             modifier = Modifier.padding(5.dp)
         ) {
-            // Date on top
-            Text(
-                text = note.createdAt,
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            // Star and date row
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Star icon (clickable)
+                IconButton(
+                    onClick = onStarClick,
+                    modifier = Modifier.size(20.dp)
+                ) {
+                    Icon(
+                        imageVector = if (isMarked) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                        contentDescription = if (isMarked) "Unstar note" else "Star note",
+                        modifier = Modifier.size(16.dp),
+                        tint = if (isMarked) StarGold else MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                // Date
+                Text(
+                    text = note.createdAt,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
 
             // Content preview (newlines replaced with spaces)
             Text(

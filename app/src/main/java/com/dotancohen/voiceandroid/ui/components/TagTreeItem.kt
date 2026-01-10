@@ -47,12 +47,7 @@ fun TagTreeItem(
     val indentPadding = (depth * 24).dp
 
     Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            ),
+        modifier = modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surface
     ) {
         Row(
@@ -82,22 +77,33 @@ fun TagTreeItem(
                 Spacer(modifier = Modifier.width(32.dp))
             }
 
-            // Tag icon
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.Label,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.primary
-            )
+            // Tag icon and name - clickable area for adding to search
+            Row(
+                modifier = Modifier
+                    .weight(1f)
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongClick
+                    ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // Tag icon
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.Label,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
 
-            Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
-            // Tag name
-            Text(
-                text = tag.name,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface
-            )
+                // Tag name
+                Text(
+                    text = tag.name,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
         }
     }
 }
