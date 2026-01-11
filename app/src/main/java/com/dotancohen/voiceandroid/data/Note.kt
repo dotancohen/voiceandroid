@@ -9,7 +9,9 @@ data class Note(
     val content: String,
     val createdAt: String,
     val modifiedAt: String? = null,
-    val deletedAt: String? = null
+    val deletedAt: String? = null,
+    /** Cache for notes list pane display (JSON with date, marked, content_preview) */
+    val listDisplayCache: String? = null
 )
 
 /**

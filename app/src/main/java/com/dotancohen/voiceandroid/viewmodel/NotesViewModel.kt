@@ -95,7 +95,15 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
                             .getOrNull()
                             ?.filter { it.deletedAt == null }
                             ?: emptyList()
-                        val isMarked = repository.isNoteMarked(note.id).getOrNull() ?: false
+                        // Use cached marked state if available, otherwise query
+                        val isMarked = note.listDisplayCache?.let { cache ->
+                            try {
+                                val json = org.json.JSONObject(cache)
+                                json.optBoolean("marked", false)
+                            } catch (e: Exception) {
+                                null
+                            }
+                        } ?: repository.isNoteMarked(note.id).getOrNull() ?: false
                         NoteWithAudioFiles(note, audioFiles, isMarked)
                     }
 

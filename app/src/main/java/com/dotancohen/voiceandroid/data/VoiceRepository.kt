@@ -154,7 +154,8 @@ class VoiceRepository(private val context: Context) {
                     content = noteData.content,
                     createdAt = noteData.createdAt,
                     modifiedAt = noteData.modifiedAt,
-                    deletedAt = noteData.deletedAt
+                    deletedAt = noteData.deletedAt,
+                    listDisplayCache = noteData.listDisplayCache
                 )
             }
             Result.success(notes)
@@ -727,7 +728,8 @@ class VoiceRepository(private val context: Context) {
                     content = data.content,
                     createdAt = data.createdAt,
                     modifiedAt = data.modifiedAt,
-                    deletedAt = data.deletedAt
+                    deletedAt = data.deletedAt,
+                    listDisplayCache = data.listDisplayCache
                 )
             }
             Result.success(notes)
@@ -912,7 +914,8 @@ class VoiceRepository(private val context: Context) {
                         content = data.content,
                         createdAt = data.createdAt,
                         modifiedAt = data.modifiedAt,
-                        deletedAt = data.deletedAt
+                        deletedAt = data.deletedAt,
+                        listDisplayCache = data.listDisplayCache
                     )
                 },
                 ambiguousTags = result.ambiguousTags,
