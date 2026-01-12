@@ -808,6 +808,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -834,7 +838,7 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_constructor_voiceclient_new(`dataDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
     fun uniffi_voicecore_fn_method_voiceclient_add_tag_to_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Byte
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_clear_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -895,8 +899,12 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_merge_notes(`ptr`: Pointer,`noteId1`: RustBuffer.ByValue,`noteId2`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_rebuild_all_note_list_caches(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
+    fun uniffi_voicecore_fn_method_voiceclient_rebuild_note_list_cache(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Byte
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_rename_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,`newName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_reparent_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,`newParentId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1101,6 +1109,10 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_merge_notes(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_rebuild_all_note_list_caches(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_rebuild_note_list_cache(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_rename_tag(
@@ -1151,7 +1163,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_func_generate_device_id() != 30760.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note() != 63485.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note() != 54360.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_sync_state() != 33205.toShort()) {
@@ -1244,7 +1256,13 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_merge_notes() != 17846.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 60477.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_rebuild_all_note_list_caches() != 42123.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_rebuild_note_list_cache() != 57931.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 22162.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_rename_tag() != 40579.toShort()) {
@@ -1335,6 +1353,29 @@ inline fun <T : Disposable?, R> T.use(block: (T) -> R) =
  * @suppress
  * */
 object NoPointer
+
+/**
+ * @suppress
+ */
+public object FfiConverterUInt: FfiConverter<UInt, Int> {
+    override fun lift(value: Int): UInt {
+        return value.toUInt()
+    }
+
+    override fun read(buf: ByteBuffer): UInt {
+        return lift(buf.getInt())
+    }
+
+    override fun lower(value: UInt): Int {
+        return value.toInt()
+    }
+
+    override fun allocationSize(value: UInt) = 4UL
+
+    override fun write(value: UInt, buf: ByteBuffer) {
+        buf.putInt(value.toInt())
+    }
+}
 
 /**
  * @suppress
@@ -1610,9 +1651,10 @@ public interface VoiceClientInterface {
      * Add a tag to a note
      *
      * Creates a note_tag association between the note and tag.
-     * Returns true if successful, false if the association already exists.
+     * Returns TagChangeResultData with changed=true if tag was added,
+     * changed=false if it already existed.
      */
-    fun `addTagToNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean
+    fun `addTagToNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): TagChangeResultData
     
     /**
      * Clear sync state to force a full re-sync from scratch
@@ -1789,12 +1831,28 @@ public interface VoiceClientInterface {
     fun `mergeNotes`(`noteId1`: kotlin.String, `noteId2`: kotlin.String): kotlin.String
     
     /**
+     * Rebuild the list pane display cache for all notes
+     *
+     * Returns the number of notes processed.
+     */
+    fun `rebuildAllNoteListCaches`(): kotlin.UInt
+    
+    /**
+     * Rebuild the list pane display cache for a single note
+     *
+     * The cache stores pre-computed data for the Notes List display:
+     * date, marked status, and content preview (first 100 chars).
+     */
+    fun `rebuildNoteListCache`(`noteId`: kotlin.String)
+    
+    /**
      * Remove a tag from a note
      *
      * Soft-deletes the note_tag association between the note and tag.
-     * Returns true if the tag was removed, false if the association didn't exist.
+     * Returns TagChangeResultData with changed=true if tag was removed,
+     * changed=false if the association didn't exist.
      */
-    fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean
+    fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): TagChangeResultData
     
     /**
      * Rename a tag
@@ -1990,10 +2048,11 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
      * Add a tag to a note
      *
      * Creates a note_tag association between the note and tag.
-     * Returns true if successful, false if the association already exists.
+     * Returns TagChangeResultData with changed=true if tag was added,
+     * changed=false if it already existed.
      */
-    @Throws(VoiceCoreException::class)override fun `addTagToNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean {
-            return FfiConverterBoolean.lift(
+    @Throws(VoiceCoreException::class)override fun `addTagToNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): TagChangeResultData {
+            return FfiConverterTypeTagChangeResultData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_add_tag_to_note(
@@ -2503,13 +2562,50 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Rebuild the list pane display cache for all notes
+     *
+     * Returns the number of notes processed.
+     */
+    @Throws(VoiceCoreException::class)override fun `rebuildAllNoteListCaches`(): kotlin.UInt {
+            return FfiConverterUInt.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_rebuild_all_note_list_caches(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Rebuild the list pane display cache for a single note
+     *
+     * The cache stores pre-computed data for the Notes List display:
+     * date, marked status, and content preview (first 100 chars).
+     */
+    @Throws(VoiceCoreException::class)override fun `rebuildNoteListCache`(`noteId`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_rebuild_note_list_cache(
+        it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    
+    
+
+    
+    /**
      * Remove a tag from a note
      *
      * Soft-deletes the note_tag association between the note and tag.
-     * Returns true if the tag was removed, false if the association didn't exist.
+     * Returns TagChangeResultData with changed=true if tag was removed,
+     * changed=false if the association didn't exist.
      */
-    @Throws(VoiceCoreException::class)override fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): kotlin.Boolean {
-            return FfiConverterBoolean.lift(
+    @Throws(VoiceCoreException::class)override fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): TagChangeResultData {
+            return FfiConverterTypeTagChangeResultData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(
@@ -2915,7 +3011,11 @@ data class NoteData (
     var `content`: kotlin.String, 
     var `createdAt`: kotlin.String, 
     var `modifiedAt`: kotlin.String?, 
-    var `deletedAt`: kotlin.String?
+    var `deletedAt`: kotlin.String?, 
+    /**
+     * Cache for notes list pane display (JSON with date, marked, content_preview)
+     */
+    var `listDisplayCache`: kotlin.String?
 ) {
     
     companion object
@@ -2932,6 +3032,7 @@ public object FfiConverterTypeNoteData: FfiConverterRustBuffer<NoteData> {
             FfiConverterString.read(buf),
             FfiConverterOptionalString.read(buf),
             FfiConverterOptionalString.read(buf),
+            FfiConverterOptionalString.read(buf),
         )
     }
 
@@ -2940,7 +3041,8 @@ public object FfiConverterTypeNoteData: FfiConverterRustBuffer<NoteData> {
             FfiConverterString.allocationSize(value.`content`) +
             FfiConverterString.allocationSize(value.`createdAt`) +
             FfiConverterOptionalString.allocationSize(value.`modifiedAt`) +
-            FfiConverterOptionalString.allocationSize(value.`deletedAt`)
+            FfiConverterOptionalString.allocationSize(value.`deletedAt`) +
+            FfiConverterOptionalString.allocationSize(value.`listDisplayCache`)
     )
 
     override fun write(value: NoteData, buf: ByteBuffer) {
@@ -2949,6 +3051,7 @@ public object FfiConverterTypeNoteData: FfiConverterRustBuffer<NoteData> {
             FfiConverterString.write(value.`createdAt`, buf)
             FfiConverterOptionalString.write(value.`modifiedAt`, buf)
             FfiConverterOptionalString.write(value.`deletedAt`, buf)
+            FfiConverterOptionalString.write(value.`listDisplayCache`, buf)
     }
 }
 
@@ -3074,6 +3177,54 @@ public object FfiConverterTypeSyncServerConfig: FfiConverterRustBuffer<SyncServe
             FfiConverterString.write(value.`serverPeerId`, buf)
             FfiConverterString.write(value.`deviceId`, buf)
             FfiConverterString.write(value.`deviceName`, buf)
+    }
+}
+
+
+
+/**
+ * Result of a tag change operation (add/remove tag from note)
+ */
+data class TagChangeResultData (
+    /**
+     * Whether the tag association was actually changed
+     */
+    var `changed`: kotlin.Boolean, 
+    /**
+     * The note ID that was affected
+     */
+    var `noteId`: kotlin.String, 
+    /**
+     * Whether the list pane cache was rebuilt
+     */
+    var `listCacheRebuilt`: kotlin.Boolean
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTagChangeResultData: FfiConverterRustBuffer<TagChangeResultData> {
+    override fun read(buf: ByteBuffer): TagChangeResultData {
+        return TagChangeResultData(
+            FfiConverterBoolean.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TagChangeResultData) = (
+            FfiConverterBoolean.allocationSize(value.`changed`) +
+            FfiConverterString.allocationSize(value.`noteId`) +
+            FfiConverterBoolean.allocationSize(value.`listCacheRebuilt`)
+    )
+
+    override fun write(value: TagChangeResultData, buf: ByteBuffer) {
+            FfiConverterBoolean.write(value.`changed`, buf)
+            FfiConverterString.write(value.`noteId`, buf)
+            FfiConverterBoolean.write(value.`listCacheRebuilt`, buf)
     }
 }
 

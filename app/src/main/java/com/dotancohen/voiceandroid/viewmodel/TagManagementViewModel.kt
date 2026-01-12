@@ -6,8 +6,11 @@ import androidx.lifecycle.viewModelScope
 import com.dotancohen.voiceandroid.data.Tag
 import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.util.AppLogger
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
@@ -52,6 +55,11 @@ class TagManagementViewModel(application: Application) : AndroidViewModel(applic
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    // Event emitted when tags are changed (noteId that was modified)
+    // Observers should refresh the notes list for this note
+    private val _tagsChanged = MutableSharedFlow<String>()
+    val tagsChanged: SharedFlow<String> = _tagsChanged.asSharedFlow()
 
     // Map of tag ID to its children IDs (for collapse/expand)
     private var childrenByParentId: Map<String, Set<String>> = emptyMap()
@@ -173,11 +181,12 @@ class TagManagementViewModel(application: Application) : AndroidViewModel(applic
      */
     fun toggleCollapse(tagId: String) {
         val current = _collapsedTagIds.value
-        _collapsedTagIds.value = if (current.contains(tagId)) {
+        val newCollapsed = if (current.contains(tagId)) {
             current - tagId
         } else {
             current + tagId
         }
+        _collapsedTagIds.value = newCollapsed
         updateFilteredTags()
     }
 
@@ -226,9 +235,13 @@ class TagManagementViewModel(application: Application) : AndroidViewModel(applic
             if (isCurrentlySelected) {
                 // Remove tag from note
                 repository.removeTagFromNote(currentNoteId, tagId)
-                    .onSuccess {
+                    .onSuccess { result ->
                         _noteTagIds.value = _noteTagIds.value - tagId
-                        AppLogger.i(TAG, "Removed tag $tagId from note $currentNoteId")
+                        AppLogger.i(TAG, "Removed tag $tagId from note $currentNoteId (changed=${result.changed}, cacheRebuilt=${result.listCacheRebuilt})")
+                        // Notify observers to refresh the notes list
+                        if (result.listCacheRebuilt) {
+                            _tagsChanged.emit(result.noteId)
+                        }
                     }
                     .onFailure { e ->
                         _error.value = "Failed to remove tag: ${e.message}"
@@ -237,9 +250,13 @@ class TagManagementViewModel(application: Application) : AndroidViewModel(applic
             } else {
                 // Add tag to note
                 repository.addTagToNote(currentNoteId, tagId)
-                    .onSuccess {
+                    .onSuccess { result ->
                         _noteTagIds.value = _noteTagIds.value + tagId
-                        AppLogger.i(TAG, "Added tag $tagId to note $currentNoteId")
+                        AppLogger.i(TAG, "Added tag $tagId to note $currentNoteId (changed=${result.changed}, cacheRebuilt=${result.listCacheRebuilt})")
+                        // Notify observers to refresh the notes list
+                        if (result.listCacheRebuilt) {
+                            _tagsChanged.emit(result.noteId)
+                        }
                     }
                     .onFailure { e ->
                         _error.value = "Failed to add tag: ${e.message}"

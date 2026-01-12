@@ -51,6 +51,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -89,7 +90,11 @@ fun NotesScreen(
 
     // Tag tree state
     val expandedTagIds by filterViewModel.expandedTagIds.collectAsState()
-    val visibleTags = filterViewModel.getFlattenedVisibleTags()
+    val tagTree by filterViewModel.tagTree.collectAsState()
+    // Use remember with keys to recalculate when expandedTagIds or tagTree change
+    val visibleTags = remember(expandedTagIds, tagTree) {
+        filterViewModel.getFlattenedVisibleTags()
+    }
 
     val focusManager = LocalFocusManager.current
 
@@ -312,6 +317,20 @@ fun NotesScreen(
     }
 }
 
+/**
+ * Format duration in seconds to a human-readable string (h:mm:ss or mm:ss).
+ */
+private fun formatDuration(seconds: Int): String {
+    val hours = seconds / 3600
+    val minutes = (seconds % 3600) / 60
+    val secs = seconds % 60
+    return if (hours > 0) {
+        "%d:%02d:%02d".format(hours, minutes, secs)
+    } else {
+        "%d:%02d".format(minutes, secs)
+    }
+}
+
 @Composable
 fun NoteCard(
     noteWithAudio: NoteWithAudioFiles,
@@ -321,6 +340,8 @@ fun NoteCard(
     val note = noteWithAudio.note
     val audioFiles = noteWithAudio.audioFiles
     val isMarked = noteWithAudio.isMarked
+    val durationSeconds = noteWithAudio.durationSeconds
+    val tags = noteWithAudio.tags
     var isExpanded by remember { mutableStateOf(false) }
     val hasAttachments = audioFiles.isNotEmpty()
 
@@ -333,7 +354,7 @@ fun NoteCard(
         Column(
             modifier = Modifier.padding(5.dp)
         ) {
-            // Star and date row
+            // Star, date, duration, and tags row
             Row(
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -350,12 +371,32 @@ fun NoteCard(
                     )
                 }
                 Spacer(modifier = Modifier.width(4.dp))
-                // Date
+                // Date (bold)
                 Text(
                     text = note.createdAt,
                     style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                // Duration (if available)
+                if (durationSeconds != null && durationSeconds > 0) {
+                    Text(
+                        text = " | ${formatDuration(durationSeconds)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                // Tags (if available)
+                if (tags.isNotEmpty()) {
+                    Text(
+                        text = " | ${tags.joinToString(", ")}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                }
             }
 
             // Content preview (newlines replaced with spaces)

@@ -16,6 +16,7 @@ import uniffi.voicecore.NoteAttachmentData as UniFFINoteAttachmentData
 import uniffi.voicecore.TranscriptionData as UniFFITranscriptionData
 import uniffi.voicecore.TagData as UniFFITagData
 import uniffi.voicecore.SearchResultData as UniFFISearchResultData
+import uniffi.voicecore.TagChangeResultData as UniFFITagChangeResultData
 import uniffi.voicecore.generateDeviceId as uniffiGenerateDeviceId
 import java.io.File
 
@@ -87,6 +88,15 @@ class VoiceRepository(private val context: Context) {
             // Configure audiofile directory for sync
             ensureInitialized().setAudiofileDirectory(audioFileDir)
             AppLogger.i(TAG, "Audio file directory set to: $audioFileDir")
+
+            // Rebuild list caches to ensure duration/tags/marked are populated
+            try {
+                val count = ensureInitialized().rebuildAllNoteListCaches()
+                AppLogger.i(TAG, "Rebuilt list caches for $count notes")
+            } catch (e: Exception) {
+                AppLogger.w(TAG, "Failed to rebuild list caches: ${e.message}")
+            }
+
             Result.success(Unit)
         } catch (e: VoiceCoreException) {
             AppLogger.e(TAG, "Failed to initialize VoiceClient", e)
@@ -97,11 +107,21 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
+    @Synchronized
     private fun ensureInitialized(): VoiceClient {
         return client ?: VoiceClient(dataDir).also {
             client = it
             // Configure audiofile directory for the new client
             it.setAudiofileDirectory(audioFileDir)
+            AppLogger.i(TAG, "VoiceClient created, dataDir=$dataDir, audioFileDir=$audioFileDir")
+
+            // Rebuild list caches to ensure duration/tags/marked are populated
+            try {
+                val count = it.rebuildAllNoteListCaches()
+                AppLogger.i(TAG, "Rebuilt list caches for $count notes")
+            } catch (e: Exception) {
+                AppLogger.w(TAG, "Failed to rebuild list caches: ${e.message}")
+            }
         }
     }
 
@@ -793,11 +813,18 @@ class VoiceRepository(private val context: Context) {
     /**
      * Add a tag to a note.
      * Creates a note_tag association between the note and tag.
+     *
+     * @return TagChangeResult with changed (true if tag was added), noteId, and listCacheRebuilt
      */
-    suspend fun addTagToNote(noteId: String, tagId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+    suspend fun addTagToNote(noteId: String, tagId: String): Result<TagChangeResult> = withContext(Dispatchers.IO) {
         try {
             val voiceClient = ensureInitialized()
-            Result.success(voiceClient.addTagToNote(noteId, tagId))
+            val result = voiceClient.addTagToNote(noteId, tagId)
+            Result.success(TagChangeResult(
+                changed = result.changed,
+                noteId = result.noteId,
+                listCacheRebuilt = result.listCacheRebuilt
+            ))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -808,11 +835,18 @@ class VoiceRepository(private val context: Context) {
     /**
      * Remove a tag from a note.
      * Soft-deletes the note_tag association between the note and tag.
+     *
+     * @return TagChangeResult with changed (true if tag was removed), noteId, and listCacheRebuilt
      */
-    suspend fun removeTagFromNote(noteId: String, tagId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+    suspend fun removeTagFromNote(noteId: String, tagId: String): Result<TagChangeResult> = withContext(Dispatchers.IO) {
         try {
             val voiceClient = ensureInitialized()
-            Result.success(voiceClient.removeTagFromNote(noteId, tagId))
+            val result = voiceClient.removeTagFromNote(noteId, tagId)
+            Result.success(TagChangeResult(
+                changed = result.changed,
+                noteId = result.noteId,
+                listCacheRebuilt = result.listCacheRebuilt
+            ))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -975,4 +1009,16 @@ data class SyncServerConfig(
     val serverPeerId: String,
     val deviceId: String,
     val deviceName: String
+)
+
+/**
+ * Result of a tag change operation (add/remove tag from note).
+ */
+data class TagChangeResult(
+    /** Whether the tag association was actually changed */
+    val changed: Boolean,
+    /** The note ID that was affected */
+    val noteId: String,
+    /** Whether the list pane cache was rebuilt */
+    val listCacheRebuilt: Boolean
 )

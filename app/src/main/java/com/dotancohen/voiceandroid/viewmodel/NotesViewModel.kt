@@ -12,12 +12,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 /**
- * Data class combining a note with its audio file attachments and marked state.
+ * Data class combining a note with its audio file attachments, marked state, and display info.
  */
 data class NoteWithAudioFiles(
     val note: Note,
     val audioFiles: List<AudioFile> = emptyList(),
-    val isMarked: Boolean = false
+    val isMarked: Boolean = false,
+    val durationSeconds: Int? = null,
+    val tags: List<String> = emptyList()
 )
 
 class NotesViewModel(application: Application) : AndroidViewModel(application) {
@@ -89,22 +91,41 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
 
             notesResult
                 .onSuccess { filteredNotes ->
-                    // Load audio files and marked state for each note
+                    // Load audio files and display info for each note
                     val notesWithAudio = filteredNotes.map { note ->
                         val audioFiles = repository.getAudioFilesForNote(note.id)
                             .getOrNull()
                             ?.filter { it.deletedAt == null }
                             ?: emptyList()
-                        // Use cached marked state if available, otherwise query
-                        val isMarked = note.listDisplayCache?.let { cache ->
+
+                        // Parse cached display data if available
+                        var isMarked = false
+                        var durationSeconds: Int? = null
+                        var tags: List<String> = emptyList()
+
+                        note.listDisplayCache?.let { cache ->
                             try {
                                 val json = org.json.JSONObject(cache)
-                                json.optBoolean("marked", false)
+                                isMarked = json.optBoolean("marked", false)
+                                durationSeconds = if (json.has("duration_seconds")) {
+                                    json.optInt("duration_seconds", 0).takeIf { it > 0 }
+                                } else null
+                                val tagsArray = json.optJSONArray("tags")
+                                if (tagsArray != null) {
+                                    tags = (0 until tagsArray.length()).mapNotNull { i ->
+                                        tagsArray.optString(i).takeIf { it.isNotEmpty() }
+                                    }
+                                }
                             } catch (e: Exception) {
-                                null
+                                // Fall back to query for marked state
+                                isMarked = repository.isNoteMarked(note.id).getOrNull() ?: false
                             }
-                        } ?: repository.isNoteMarked(note.id).getOrNull() ?: false
-                        NoteWithAudioFiles(note, audioFiles, isMarked)
+                        } ?: run {
+                            // No cache available, query marked state
+                            isMarked = repository.isNoteMarked(note.id).getOrNull() ?: false
+                        }
+
+                        NoteWithAudioFiles(note, audioFiles, isMarked, durationSeconds, tags)
                     }
 
                     _notes.value = notesWithAudio
