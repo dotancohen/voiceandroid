@@ -17,6 +17,7 @@ import uniffi.voicecore.TranscriptionData as UniFFITranscriptionData
 import uniffi.voicecore.TagData as UniFFITagData
 import uniffi.voicecore.SearchResultData as UniFFISearchResultData
 import uniffi.voicecore.TagChangeResultData as UniFFITagChangeResultData
+import uniffi.voicecore.ImportAudioResultData as UniFFIImportAudioResultData
 import uniffi.voicecore.generateDeviceId as uniffiGenerateDeviceId
 import java.io.File
 
@@ -978,6 +979,87 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
+    // =========================================================================
+    // Audio Import Methods
+    // =========================================================================
+
+    /**
+     * Import an audio file, creating all necessary database records.
+     *
+     * This creates:
+     * 1. An AudioFile record
+     * 2. A Note record (with created_at = file_created_at if provided)
+     * 3. A NoteAttachment linking them
+     *
+     * @param filename Original filename of the audio file
+     * @param fileCreatedAt Unix timestamp of when the file was created (optional)
+     * @param durationSeconds Duration of the audio file in seconds (optional)
+     * @return ImportAudioResult with noteId and audioFileId
+     */
+    suspend fun importAudioFile(
+        filename: String,
+        fileCreatedAt: Long?,
+        durationSeconds: Long?
+    ): Result<ImportAudioResult> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val result = voiceClient.importAudioFile(filename, fileCreatedAt, durationSeconds)
+            Result.success(ImportAudioResult(
+                noteId = result.noteId,
+                audioFileId = result.audioFileId
+            ))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Copy an audio file from a source URI to the audio file storage directory.
+     *
+     * @param context Application context for content resolver
+     * @param sourceUri The URI of the source audio file
+     * @param audioFileId The ID of the audio file record (used as the destination filename)
+     * @param extension The file extension (e.g., "mp3", "m4a")
+     * @return Result indicating success or failure
+     */
+    suspend fun copyAudioFileToStorage(
+        context: Context,
+        sourceUri: android.net.Uri,
+        audioFileId: String,
+        extension: String
+    ): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val destFile = File(audioFileDir, "$audioFileId.$extension")
+            context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                destFile.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            } ?: return@withContext Result.failure(Exception("Could not open source file"))
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Create a new note with empty content.
+     *
+     * @param content Initial content for the note (can be empty)
+     * @return The ID of the created note
+     */
+    suspend fun createNote(content: String = ""): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.createNote(content))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /**
      * Close the client and release resources.
      */
@@ -1021,4 +1103,14 @@ data class TagChangeResult(
     val noteId: String,
     /** Whether the list pane cache was rebuilt */
     val listCacheRebuilt: Boolean
+)
+
+/**
+ * Result of importing an audio file.
+ */
+data class ImportAudioResult(
+    /** The ID of the created note */
+    val noteId: String,
+    /** The ID of the created audio file record */
+    val audioFileId: String
 )

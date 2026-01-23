@@ -812,6 +812,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -843,6 +847,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_create_note(`ptr`: Pointer,`content`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_create_tag(`ptr`: Pointer,`name`: RustBuffer.ByValue,`parentId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_debug_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -889,6 +895,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_has_unsynced_changes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_import_audio_file(`ptr`: Pointer,`filename`: RustBuffer.ByValue,`fileCreatedAt`: RustBuffer.ByValue,`durationSeconds`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_is_note_marked(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1053,6 +1061,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_configure_sync(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_create_note(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_create_tag(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_debug_sync_state(
@@ -1098,6 +1108,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_get_transcriptions_for_audio_file(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_has_unsynced_changes(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_import_audio_file(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_initial_sync(
     ): Short
@@ -1172,6 +1184,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_configure_sync() != 51278.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_create_note() != 37357.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_create_tag() != 50745.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1239,6 +1254,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_has_unsynced_changes() != 18836.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_import_audio_file() != 1998.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 5382.toShort()) {
@@ -1397,6 +1415,29 @@ public object FfiConverterInt: FfiConverter<Int, Int> {
 
     override fun write(value: Int, buf: ByteBuffer) {
         buf.putInt(value)
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterLong: FfiConverter<Long, Long> {
+    override fun lift(value: Long): Long {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Long {
+        return buf.getLong()
+    }
+
+    override fun lower(value: Long): Long {
+        return value
+    }
+
+    override fun allocationSize(value: Long) = 8UL
+
+    override fun write(value: Long, buf: ByteBuffer) {
+        buf.putLong(value)
     }
 }
 
@@ -1670,6 +1711,13 @@ public interface VoiceClientInterface {
     fun `configureSync`(`syncConfig`: SyncServerConfig)
     
     /**
+     * Create a new note with empty content
+     *
+     * Returns the ID of the created note as a hex string.
+     */
+    fun `createNote`(`content`: kotlin.String): kotlin.String
+    
+    /**
      * Create a new tag
      *
      * # Arguments
@@ -1797,6 +1845,26 @@ public interface VoiceClientInterface {
      * Check if there are local changes that haven't been synced
      */
     fun `hasUnsyncedChanges`(): kotlin.Boolean
+    
+    /**
+     * Import an audio file, creating all necessary database records.
+     *
+     * This creates:
+     * 1. An AudioFile record
+     * 2. A Note record (with created_at = file_created_at if provided)
+     * 3. A NoteAttachment linking them
+     *
+     * The Note's created_at will be set to file_created_at (the file's filesystem date).
+     *
+     * # Arguments
+     * * `filename` - Original filename of the audio file
+     * * `file_created_at` - Unix timestamp of when the file was created (optional)
+     * * `duration_seconds` - Duration of the audio file in seconds (optional)
+     *
+     * # Returns
+     * ImportAudioResultData with note_id and audio_file_id
+     */
+    fun `importAudioFile`(`filename`: kotlin.String, `fileCreatedAt`: kotlin.Long?, `durationSeconds`: kotlin.Long?): ImportAudioResultData
     
     /**
      * Perform initial sync - fetches full dataset from server
@@ -2093,6 +2161,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 }
     }
     
+    
+
+    
+    /**
+     * Create a new note with empty content
+     *
+     * Returns the ID of the created note as a hex string.
+     */
+    @Throws(VoiceCoreException::class)override fun `createNote`(`content`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_create_note(
+        it, FfiConverterString.lower(`content`),_status)
+}
+    }
+    )
+    }
     
 
     
@@ -2467,6 +2553,37 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_has_unsynced_changes(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Import an audio file, creating all necessary database records.
+     *
+     * This creates:
+     * 1. An AudioFile record
+     * 2. A Note record (with created_at = file_created_at if provided)
+     * 3. A NoteAttachment linking them
+     *
+     * The Note's created_at will be set to file_created_at (the file's filesystem date).
+     *
+     * # Arguments
+     * * `filename` - Original filename of the audio file
+     * * `file_created_at` - Unix timestamp of when the file was created (optional)
+     * * `duration_seconds` - Duration of the audio file in seconds (optional)
+     *
+     * # Returns
+     * ImportAudioResultData with note_id and audio_file_id
+     */
+    @Throws(VoiceCoreException::class)override fun `importAudioFile`(`filename`: kotlin.String, `fileCreatedAt`: kotlin.Long?, `durationSeconds`: kotlin.Long?): ImportAudioResultData {
+            return FfiConverterTypeImportAudioResultData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_import_audio_file(
+        it, FfiConverterString.lower(`filename`),FfiConverterOptionalLong.lower(`fileCreatedAt`),FfiConverterOptionalLong.lower(`durationSeconds`),_status)
 }
     }
     )
@@ -2937,6 +3054,47 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
             FfiConverterString.write(value.`deviceId`, buf)
             FfiConverterOptionalString.write(value.`modifiedAt`, buf)
             FfiConverterOptionalString.write(value.`deletedAt`, buf)
+    }
+}
+
+
+
+/**
+ * Result of importing an audio file
+ */
+data class ImportAudioResultData (
+    /**
+     * The ID of the created note
+     */
+    var `noteId`: kotlin.String, 
+    /**
+     * The ID of the created audio file record
+     */
+    var `audioFileId`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeImportAudioResultData: FfiConverterRustBuffer<ImportAudioResultData> {
+    override fun read(buf: ByteBuffer): ImportAudioResultData {
+        return ImportAudioResultData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ImportAudioResultData) = (
+            FfiConverterString.allocationSize(value.`noteId`) +
+            FfiConverterString.allocationSize(value.`audioFileId`)
+    )
+
+    override fun write(value: ImportAudioResultData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`noteId`, buf)
+            FfiConverterString.write(value.`audioFileId`, buf)
     }
 }
 
@@ -3492,6 +3650,38 @@ public object FfiConverterTypeVoiceCoreError : FfiConverterRustBuffer<VoiceCoreE
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
     }
 
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalLong: FfiConverterRustBuffer<kotlin.Long?> {
+    override fun read(buf: ByteBuffer): kotlin.Long? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterLong.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.Long?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterLong.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.Long?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterLong.write(value, buf)
+        }
+    }
 }
 
 

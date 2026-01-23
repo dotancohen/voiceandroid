@@ -2,6 +2,7 @@ package com.dotancohen.voiceandroid
 
 import android.app.Application
 import com.dotancohen.voiceandroid.util.AppLogger
+import com.dotancohen.voiceandroid.util.CriticalLog
 
 class VoiceApplication : Application() {
 
@@ -10,6 +11,7 @@ class VoiceApplication : Application() {
 
         // Initialize logging first
         AppLogger.init(this)
+        CriticalLog.init(this)
         AppLogger.i(TAG, "VoiceApplication starting")
 
         // Load native library

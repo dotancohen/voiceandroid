@@ -81,6 +81,9 @@ dependencies {
     // JNA for UniFFI bindings
     implementation("net.java.dev.jna:jna:5.14.0@aar")
 
+    // DocumentFile for accessing files via SAF
+    implementation("androidx.documentfile:documentfile:1.0.1")
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 

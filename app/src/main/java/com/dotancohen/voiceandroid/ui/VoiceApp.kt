@@ -23,6 +23,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.dotancohen.voiceandroid.ui.screens.ImportAudioScreen
 import com.dotancohen.voiceandroid.ui.screens.NoteDetailScreen
 import com.dotancohen.voiceandroid.ui.screens.NotesScreen
 import com.dotancohen.voiceandroid.ui.screens.SettingsScreen
@@ -42,6 +43,7 @@ sealed class Screen(val route: String, val title: String) {
         fun createRoute(noteId: String) = "tags/$noteId"
     }
     data object TagHierarchy : Screen("tag_hierarchy", "Manage Tags")
+    data object ImportAudio : Screen("import_audio", "Import Audio")
 }
 
 @Composable
@@ -132,6 +134,9 @@ fun VoiceApp() {
                     },
                     onNavigateToManageTags = {
                         navController.navigate(Screen.TagHierarchy.route)
+                    },
+                    onNavigateToImportAudio = {
+                        navController.navigate(Screen.ImportAudio.route)
                     }
                 )
             }
@@ -143,6 +148,14 @@ fun VoiceApp() {
             composable(Screen.TagHierarchy.route) {
                 TagHierarchyScreen(
                     onBack = { navController.popBackStack() }
+                )
+            }
+            composable(Screen.ImportAudio.route) {
+                ImportAudioScreen(
+                    onBack = { navController.popBackStack() },
+                    onImportComplete = {
+                        navController.popBackStack()
+                    }
                 )
             }
         }

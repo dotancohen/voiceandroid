@@ -22,6 +22,8 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.AudioFile
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
@@ -52,6 +54,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dotancohen.voiceandroid.util.CriticalLog
 import com.dotancohen.voiceandroid.viewmodel.SettingsViewModel
 import java.io.File
 
@@ -60,7 +63,8 @@ import java.io.File
 fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel(),
     onNavigateToSyncSettings: () -> Unit = {},
-    onNavigateToManageTags: () -> Unit = {}
+    onNavigateToManageTags: () -> Unit = {},
+    onNavigateToImportAudio: () -> Unit = {}
 ) {
     val audiofileDirectory by viewModel.audiofileDirectory.collectAsState()
     val defaultAudiofileDirectory by viewModel.defaultAudiofileDirectory.collectAsState()
@@ -83,6 +87,9 @@ fun SettingsScreen(
     var showPermissionDialog by remember { mutableStateOf(false) }
     // State for log dialog
     var showLogDialog by remember { mutableStateOf(false) }
+    // State for critical log dialog
+    var showCriticalLogDialog by remember { mutableStateOf(false) }
+    var criticalLogContent by remember { mutableStateOf("") }
     // Pending audio path is stored in ViewModel to survive activity recreation
     val pendingAudioPath by viewModel.pendingAudioPath.collectAsState()
 
@@ -287,6 +294,19 @@ fun SettingsScreen(
                 Text("Manage Tags")
             }
 
+            // Import Audio Files
+            OutlinedButton(
+                onClick = onNavigateToImportAudio,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AudioFile,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Import Audio Files")
+            }
+
             // Audio Files Storage
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -375,20 +395,39 @@ fun SettingsScreen(
                 }
             }
 
-            // Log Button
-            OutlinedButton(
-                onClick = {
-                    viewModel.loadLogContent()
-                    showLogDialog = true
-                },
-                modifier = Modifier.fillMaxWidth()
+            // Log Buttons
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Filled.List,
-                    contentDescription = null,
-                    modifier = Modifier.padding(end = 8.dp)
-                )
-                Text("View Log")
+                OutlinedButton(
+                    onClick = {
+                        viewModel.loadLogContent()
+                        showLogDialog = true
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.List,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text("View Log")
+                }
+                OutlinedButton(
+                    onClick = {
+                        criticalLogContent = CriticalLog.getLogContents()
+                        showCriticalLogDialog = true
+                    },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.BugReport,
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 8.dp)
+                    )
+                    Text("Critical Log")
+                }
             }
         }
     }
@@ -425,6 +464,53 @@ fun SettingsScreen(
             confirmButton = {
                 TextButton(onClick = { showLogDialog = false }) {
                     Text("Close")
+                }
+            }
+        )
+    }
+
+    // Critical Log Dialog
+    if (showCriticalLogDialog) {
+        AlertDialog(
+            onDismissRequest = { showCriticalLogDialog = false },
+            title = { Text("Critical Log") },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(400.dp)
+                ) {
+                    Text(
+                        text = "Log file: ${CriticalLog.getLogFilePath()}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    SelectionContainer {
+                        Text(
+                            text = criticalLogContent.ifEmpty { "No critical errors logged" },
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .horizontalScroll(rememberScrollState())
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { showCriticalLogDialog = false }) {
+                    Text("Close")
+                }
+            },
+            dismissButton = {
+                if (criticalLogContent.isNotEmpty()) {
+                    TextButton(onClick = {
+                        CriticalLog.clearLog()
+                        criticalLogContent = ""
+                    }) {
+                        Text("Clear Log")
+                    }
                 }
             }
         )
