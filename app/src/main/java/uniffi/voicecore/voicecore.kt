@@ -1226,7 +1226,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_sync_config() != 64316.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_system_tag_id_hex() != 7141.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_system_tag_id_hex() != 50810.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_tags_for_note() != 28551.toShort()) {
@@ -1775,9 +1775,8 @@ public interface VoiceClientInterface {
      * Get the _system tag ID as a hex string
      *
      * Used for filtering system tags from UI display.
-     * Returns None if the _system tag doesn't exist yet.
      */
-    fun `getSystemTagIdHex`(): kotlin.String?
+    fun `getSystemTagIdHex`(): kotlin.String
     
     /**
      * Get all tags for a specific note
@@ -2397,10 +2396,9 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
      * Get the _system tag ID as a hex string
      *
      * Used for filtering system tags from UI display.
-     * Returns None if the _system tag doesn't exist yet.
      */
-    @Throws(VoiceCoreException::class)override fun `getSystemTagIdHex`(): kotlin.String? {
-            return FfiConverterOptionalString.lift(
+    @Throws(VoiceCoreException::class)override fun `getSystemTagIdHex`(): kotlin.String {
+            return FfiConverterString.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_system_tag_id_hex(
