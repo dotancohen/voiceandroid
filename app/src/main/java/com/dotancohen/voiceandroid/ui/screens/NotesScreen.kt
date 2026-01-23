@@ -56,11 +56,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dotancohen.voiceandroid.data.AudioFile
+import com.dotancohen.voiceandroid.ui.components.CompactAudioPlayer
 import com.dotancohen.voiceandroid.ui.components.TagTreeItem
 import com.dotancohen.voiceandroid.viewmodel.FilterViewModel
 import com.dotancohen.voiceandroid.viewmodel.NoteWithAudioFiles
 import com.dotancohen.voiceandroid.viewmodel.NotesViewModel
 import com.dotancohen.voiceandroid.viewmodel.SharedFilterViewModel
+import kotlinx.coroutines.runBlocking
 
 // Gold color for filled star
 private val StarGold = Color(0xFFFFD700)
@@ -298,6 +300,9 @@ fun NotesScreen(
                     )
                 }
                 else -> {
+                    // Track which audio file is currently expanded for playback
+                    var expandedAudioFileId by remember { mutableStateOf<String?>(null) }
+
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(horizontal = 1.dp, vertical = 1.dp),
@@ -307,7 +312,18 @@ fun NotesScreen(
                             NoteCard(
                                 noteWithAudio = noteWithAudio,
                                 onClick = { onNoteClick(noteWithAudio.note.id) },
-                                onStarClick = { viewModel.toggleNoteMarked(noteWithAudio.note.id) }
+                                onStarClick = { viewModel.toggleNoteMarked(noteWithAudio.note.id) },
+                                expandedAudioFileId = expandedAudioFileId,
+                                onAudioFileClick = { audioFileId ->
+                                    expandedAudioFileId = if (expandedAudioFileId == audioFileId) {
+                                        null // Collapse if already expanded
+                                    } else {
+                                        audioFileId // Expand this one
+                                    }
+                                },
+                                getAudioFilePath = { audioFileId ->
+                                    runBlocking { viewModel.getAudioFilePath(audioFileId) }
+                                }
                             )
                         }
                     }
@@ -335,14 +351,18 @@ private fun formatDuration(seconds: Int): String {
 fun NoteCard(
     noteWithAudio: NoteWithAudioFiles,
     onClick: () -> Unit = {},
-    onStarClick: () -> Unit = {}
+    onStarClick: () -> Unit = {},
+    expandedAudioFileId: String? = null,
+    onAudioFileClick: (String) -> Unit = {},
+    getAudioFilePath: (String) -> String? = { null }
 ) {
     val note = noteWithAudio.note
     val audioFiles = noteWithAudio.audioFiles
     val isMarked = noteWithAudio.isMarked
     val durationSeconds = noteWithAudio.durationSeconds
     val tags = noteWithAudio.tags
-    var isExpanded by remember { mutableStateOf(false) }
+    // Audio files are now expanded by default
+    var isExpanded by remember { mutableStateOf(true) }
     val hasAttachments = audioFiles.isNotEmpty()
 
     Card(
@@ -444,7 +464,12 @@ fun NoteCard(
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         audioFiles.forEach { audioFile ->
-                            AudioFileCard(audioFile = audioFile)
+                            AudioFileCard(
+                                audioFile = audioFile,
+                                isPlayerExpanded = expandedAudioFileId == audioFile.id,
+                                onTogglePlayer = { onAudioFileClick(audioFile.id) },
+                                getFilePath = { getAudioFilePath(audioFile.id) }
+                            )
                         }
                     }
                 }
@@ -454,7 +479,12 @@ fun NoteCard(
 }
 
 @Composable
-fun AudioFileCard(audioFile: AudioFile) {
+fun AudioFileCard(
+    audioFile: AudioFile,
+    isPlayerExpanded: Boolean = false,
+    onTogglePlayer: () -> Unit = {},
+    getFilePath: () -> String? = { null }
+) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = MaterialTheme.colorScheme.surfaceVariant,
@@ -463,24 +493,37 @@ fun AudioFileCard(audioFile: AudioFile) {
         Column(
             modifier = Modifier.padding(5.dp)
         ) {
+            // Header row - clickable to expand/collapse player
             Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onTogglePlayer() },
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
                     imageVector = Icons.Filled.PlayArrow,
                     contentDescription = null,
-                    modifier = Modifier.size(12.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    modifier = Modifier.size(14.dp),
+                    tint = if (isPlayerExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = audioFile.filename,
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f)
+                )
+                // Show expand/collapse indicator
+                Icon(
+                    imageVector = if (isPlayerExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
+                    contentDescription = if (isPlayerExpanded) "Collapse player" else "Expand player",
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
 
+            // Summary (if available)
             audioFile.summary?.let { summary ->
                 Text(
                     text = summary,
@@ -488,6 +531,19 @@ fun AudioFileCard(audioFile: AudioFile) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
+                )
+            }
+
+            // Compact audio player (expanded)
+            AnimatedVisibility(
+                visible = isPlayerExpanded,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                val filePath = remember(audioFile.id) { getFilePath() }
+                CompactAudioPlayer(
+                    filePath = filePath,
+                    modifier = Modifier.padding(top = 8.dp)
                 )
             }
         }
