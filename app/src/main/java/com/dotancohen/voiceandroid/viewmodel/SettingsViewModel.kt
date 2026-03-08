@@ -318,6 +318,132 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    // Cloud storage (S3) configuration
+    private val _s3Enabled = MutableStateFlow(false)
+    val s3Enabled: StateFlow<Boolean> = _s3Enabled.asStateFlow()
+
+    private val _s3Bucket = MutableStateFlow("")
+    val s3Bucket: StateFlow<String> = _s3Bucket.asStateFlow()
+
+    private val _s3Region = MutableStateFlow("")
+    val s3Region: StateFlow<String> = _s3Region.asStateFlow()
+
+    private val _s3AccessKeyId = MutableStateFlow("")
+    val s3AccessKeyId: StateFlow<String> = _s3AccessKeyId.asStateFlow()
+
+    private val _s3SecretAccessKey = MutableStateFlow("")
+    val s3SecretAccessKey: StateFlow<String> = _s3SecretAccessKey.asStateFlow()
+
+    private val _s3Prefix = MutableStateFlow("")
+    val s3Prefix: StateFlow<String> = _s3Prefix.asStateFlow()
+
+    private val _s3Endpoint = MutableStateFlow("")
+    val s3Endpoint: StateFlow<String> = _s3Endpoint.asStateFlow()
+
+    private val _s3SaveError = MutableStateFlow<String?>(null)
+    val s3SaveError: StateFlow<String?> = _s3SaveError.asStateFlow()
+
+    private val _s3SaveSuccess = MutableStateFlow(false)
+    val s3SaveSuccess: StateFlow<Boolean> = _s3SaveSuccess.asStateFlow()
+
+    /**
+     * Load the current S3 configuration from the database.
+     */
+    fun loadS3Config() {
+        viewModelScope.launch {
+            repository.isFileStorageEnabled()
+                .onSuccess { enabled ->
+                    _s3Enabled.value = enabled
+                }
+
+            repository.getFileStorageConfig()
+                .onSuccess { configJson ->
+                    if (configJson != null) {
+                        try {
+                            val json = org.json.JSONObject(configJson)
+                            val config = json.optJSONObject("config")
+                            if (config != null) {
+                                _s3Bucket.value = config.optString("bucket", "")
+                                _s3Region.value = config.optString("region", "")
+                                _s3AccessKeyId.value = config.optString("access_key_id", "")
+                                _s3SecretAccessKey.value = config.optString("secret_access_key", "")
+                                _s3Prefix.value = config.optString("prefix", "")
+                                _s3Endpoint.value = config.optString("endpoint", "")
+                            }
+                        } catch (e: Exception) {
+                            AppLogger.w(TAG, "Failed to parse S3 config: ${e.message}")
+                        }
+                    }
+                }
+        }
+    }
+
+    /**
+     * Save S3 configuration.
+     */
+    fun saveS3Config(
+        bucket: String,
+        region: String,
+        accessKeyId: String,
+        secretAccessKey: String,
+        prefix: String,
+        endpoint: String
+    ) {
+        viewModelScope.launch {
+            _s3SaveError.value = null
+            _s3SaveSuccess.value = false
+
+            if (bucket.isBlank() || region.isBlank() || accessKeyId.isBlank() || secretAccessKey.isBlank()) {
+                _s3SaveError.value = "Bucket, Region, Access Key ID, and Secret Access Key are required"
+                return@launch
+            }
+
+            val configJson = org.json.JSONObject().apply {
+                put("bucket", bucket)
+                put("region", region)
+                put("access_key_id", accessKeyId)
+                put("secret_access_key", secretAccessKey)
+                if (prefix.isNotBlank()) put("prefix", prefix)
+                if (endpoint.isNotBlank()) put("endpoint", endpoint)
+            }.toString()
+
+            repository.setFileStorageConfig("s3", configJson)
+                .onSuccess {
+                    _s3Enabled.value = true
+                    _s3Bucket.value = bucket
+                    _s3Region.value = region
+                    _s3AccessKeyId.value = accessKeyId
+                    _s3SecretAccessKey.value = secretAccessKey
+                    _s3Prefix.value = prefix
+                    _s3Endpoint.value = endpoint
+                    _s3SaveSuccess.value = true
+                    AppLogger.i(TAG, "S3 configuration saved successfully")
+                }
+                .onFailure { e ->
+                    _s3SaveError.value = "Failed to save: ${e.message}"
+                    AppLogger.e(TAG, "Failed to save S3 config", e)
+                }
+        }
+    }
+
+    /**
+     * Disable S3 cloud storage.
+     */
+    fun disableS3() {
+        viewModelScope.launch {
+            repository.setFileStorageConfig("none", null)
+                .onSuccess {
+                    _s3Enabled.value = false
+                    _s3SaveSuccess.value = false
+                    AppLogger.i(TAG, "S3 cloud storage disabled")
+                }
+                .onFailure { e ->
+                    _s3SaveError.value = "Failed to disable: ${e.message}"
+                    AppLogger.e(TAG, "Failed to disable S3", e)
+                }
+        }
+    }
+
     // Log viewing
     private val _logContent = MutableStateFlow("")
     val logContent: StateFlow<String> = _logContent.asStateFlow()

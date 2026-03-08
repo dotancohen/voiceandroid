@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -39,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dotancohen.voiceandroid.viewmodel.SettingsViewModel
@@ -59,15 +61,35 @@ fun SyncSettingsScreen(
     val debugInfo by viewModel.debugInfo.collectAsState()
     val hasUnsyncedChanges by viewModel.hasUnsyncedChanges.collectAsState()
 
+    // S3 config state
+    val s3Enabled by viewModel.s3Enabled.collectAsState()
+    val s3Bucket by viewModel.s3Bucket.collectAsState()
+    val s3Region by viewModel.s3Region.collectAsState()
+    val s3AccessKeyId by viewModel.s3AccessKeyId.collectAsState()
+    val s3SecretAccessKey by viewModel.s3SecretAccessKey.collectAsState()
+    val s3Prefix by viewModel.s3Prefix.collectAsState()
+    val s3Endpoint by viewModel.s3Endpoint.collectAsState()
+    val s3SaveError by viewModel.s3SaveError.collectAsState()
+    val s3SaveSuccess by viewModel.s3SaveSuccess.collectAsState()
+
     var editedServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
     var editedServerPeerId by remember(serverPeerId) { mutableStateOf(serverPeerId) }
     var editedDeviceId by remember(deviceId) { mutableStateOf(deviceId) }
     var editedDeviceName by remember(deviceName) { mutableStateOf(deviceName) }
 
+    // S3 form fields
+    var editedS3Bucket by remember(s3Bucket) { mutableStateOf(s3Bucket) }
+    var editedS3Region by remember(s3Region) { mutableStateOf(s3Region) }
+    var editedS3AccessKeyId by remember(s3AccessKeyId) { mutableStateOf(s3AccessKeyId) }
+    var editedS3SecretAccessKey by remember(s3SecretAccessKey) { mutableStateOf(s3SecretAccessKey) }
+    var editedS3Prefix by remember(s3Prefix) { mutableStateOf(s3Prefix) }
+    var editedS3Endpoint by remember(s3Endpoint) { mutableStateOf(s3Endpoint) }
+
     // Check for unsynced changes and update debug info when this screen becomes visible
     LaunchedEffect(Unit) {
         viewModel.checkUnsyncedChanges()
         viewModel.updateDebugInfo()
+        viewModel.loadS3Config()
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -306,6 +328,146 @@ fun SyncSettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Reset Sync Timestamps")
+                    }
+                }
+            }
+
+            // Cloud Storage (S3) Configuration
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Cloud Storage (S3)",
+                            style = MaterialTheme.typography.titleMedium
+                        )
+                        if (s3Enabled) {
+                            Text(
+                                text = "Enabled",
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                    }
+
+                    Text(
+                        text = "When configured, audio files are uploaded to S3 and downloaded on demand. Config syncs automatically to all connected devices.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    OutlinedTextField(
+                        value = editedS3Bucket,
+                        onValueChange = { editedS3Bucket = it },
+                        label = { Text("Bucket") },
+                        placeholder = { Text("my-voice-bucket") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = editedS3Region,
+                        onValueChange = { editedS3Region = it },
+                        label = { Text("Region") },
+                        placeholder = { Text("us-east-1") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = editedS3AccessKeyId,
+                        onValueChange = { editedS3AccessKeyId = it },
+                        label = { Text("Access Key ID") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = editedS3SecretAccessKey,
+                        onValueChange = { editedS3SecretAccessKey = it },
+                        label = { Text("Secret Access Key") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation()
+                    )
+
+                    OutlinedTextField(
+                        value = editedS3Prefix,
+                        onValueChange = { editedS3Prefix = it },
+                        label = { Text("Prefix (optional)") },
+                        placeholder = { Text("audio/") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
+
+                    OutlinedTextField(
+                        value = editedS3Endpoint,
+                        onValueChange = { editedS3Endpoint = it },
+                        label = { Text("Custom Endpoint (optional)") },
+                        placeholder = { Text("https://nyc3.digitaloceanspaces.com") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri)
+                    )
+
+                    // Save / Disable buttons
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                viewModel.saveS3Config(
+                                    bucket = editedS3Bucket,
+                                    region = editedS3Region,
+                                    accessKeyId = editedS3AccessKeyId,
+                                    secretAccessKey = editedS3SecretAccessKey,
+                                    prefix = editedS3Prefix,
+                                    endpoint = editedS3Endpoint
+                                )
+                            },
+                            modifier = Modifier.weight(1f)
+                        ) {
+                            Text("Save")
+                        }
+
+                        if (s3Enabled) {
+                            OutlinedButton(
+                                onClick = { viewModel.disableS3() },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    contentColor = MaterialTheme.colorScheme.error
+                                )
+                            ) {
+                                Text("Disable")
+                            }
+                        }
+                    }
+
+                    // Status messages
+                    if (s3SaveSuccess) {
+                        Text(
+                            text = "S3 configuration saved successfully",
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+
+                    s3SaveError?.let { error ->
+                        Text(
+                            text = error,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
                 }
             }

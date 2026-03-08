@@ -37,7 +37,11 @@ data class AudioFile(
     val summary: String? = null,
     val deviceId: String,
     val modifiedAt: String? = null,
-    val deletedAt: String? = null
+    val deletedAt: String? = null,
+    /** Cloud storage provider ("s3", etc.) or null for local-only */
+    val storageProvider: String? = null,
+    /** Object key/path in cloud storage */
+    val storageKey: String? = null
 )
 
 /**

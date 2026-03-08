@@ -68,6 +68,8 @@ fun NoteDetailScreen(
     val isDeleting by viewModel.isDeleting.collectAsState()
     val deleteSuccess by viewModel.deleteSuccess.collectAsState()
     val conflictTypes by viewModel.conflictTypes.collectAsState()
+    val downloadingAudioFileId by viewModel.downloadingAudioFileId.collectAsState()
+    val downloadError by viewModel.downloadError.collectAsState()
 
     // Confirmation dialog state
     var showDeleteConfirmation by remember { mutableStateOf(false) }
@@ -261,8 +263,22 @@ fun NoteDetailScreen(
                             getFilePath = { audioId ->
                                 viewModel.getAudioFilePath(audioId)
                             },
+                            downloadingAudioFileId = downloadingAudioFileId,
+                            onDownloadRequested = { audioId ->
+                                viewModel.downloadAndPlay(audioId) { /* auto-play handled by refresh */ }
+                            },
                             modifier = Modifier.fillMaxWidth()
                         )
+
+                        // Show download error if any
+                        if (downloadError != null) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = downloadError!!,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                        }
                     }
 
                     // Transcriptions section (if there are any)

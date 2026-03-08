@@ -57,6 +57,13 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
     private val _conflictTypes = MutableStateFlow<List<String>>(emptyList())
     val conflictTypes: StateFlow<List<String>> = _conflictTypes.asStateFlow()
 
+    // Cloud download state
+    private val _downloadingAudioFileId = MutableStateFlow<String?>(null)
+    val downloadingAudioFileId: StateFlow<String?> = _downloadingAudioFileId.asStateFlow()
+
+    private val _downloadError = MutableStateFlow<String?>(null)
+    val downloadError: StateFlow<String?> = _downloadError.asStateFlow()
+
     /**
      * Load a note and its audio files by ID.
      */
@@ -130,6 +137,44 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
      */
     suspend fun getAudioFilePath(audioFileId: String): String? {
         return repository.getAudioFilePath(audioFileId).getOrNull()
+    }
+
+    /**
+     * Download an audio file from cloud storage and play it.
+     * Called when the user taps a cloud-only audio file.
+     */
+    fun downloadAndPlay(audioFileId: String, onDownloaded: (String) -> Unit) {
+        viewModelScope.launch {
+            _downloadingAudioFileId.value = audioFileId
+            _downloadError.value = null
+
+            AppLogger.i(TAG, "Downloading audio file from cloud: $audioFileId")
+            repository.downloadAudioFileFromCloud(audioFileId)
+                .onSuccess { localPath ->
+                    AppLogger.i(TAG, "Downloaded audio file to: $localPath")
+                    _downloadingAudioFileId.value = null
+                    // Refresh audio files list to update local paths
+                    _note.value?.id?.let { noteId ->
+                        repository.getAudioFilesForNote(noteId)
+                            .onSuccess { files ->
+                                _audioFiles.value = files.filter { it.deletedAt == null }
+                            }
+                    }
+                    onDownloaded(localPath)
+                }
+                .onFailure { e ->
+                    AppLogger.e(TAG, "Failed to download audio file: $audioFileId", e)
+                    _downloadError.value = "Download failed: ${e.message}"
+                    _downloadingAudioFileId.value = null
+                }
+        }
+    }
+
+    /**
+     * Clear the download error.
+     */
+    fun clearDownloadError() {
+        _downloadError.value = null
     }
 
     /**

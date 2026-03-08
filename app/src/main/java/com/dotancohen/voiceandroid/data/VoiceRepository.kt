@@ -435,7 +435,9 @@ class VoiceRepository(private val context: Context) {
                     summary = data.summary,
                     deviceId = data.deviceId,
                     modifiedAt = data.modifiedAt,
-                    deletedAt = data.deletedAt
+                    deletedAt = data.deletedAt,
+                    storageProvider = data.storageProvider,
+                    storageKey = data.storageKey
                 )
             }
             Result.success(audioFiles)
@@ -461,7 +463,9 @@ class VoiceRepository(private val context: Context) {
                     summary = data.summary,
                     deviceId = data.deviceId,
                     modifiedAt = data.modifiedAt,
-                    deletedAt = data.deletedAt
+                    deletedAt = data.deletedAt,
+                    storageProvider = data.storageProvider,
+                    storageKey = data.storageKey
                 )
             }
             Result.success(audioFile)
@@ -501,7 +505,9 @@ class VoiceRepository(private val context: Context) {
                     summary = data.summary,
                     deviceId = data.deviceId,
                     modifiedAt = data.modifiedAt,
-                    deletedAt = data.deletedAt
+                    deletedAt = data.deletedAt,
+                    storageProvider = data.storageProvider,
+                    storageKey = data.storageKey
                 )
             }
             Result.success(audioFiles)
@@ -558,6 +564,67 @@ class VoiceRepository(private val context: Context) {
      * Get the audio file directory path.
      */
     fun getAudioFileDirectory(): String = audioFileDir
+
+    /**
+     * Download a single audio file from cloud storage on demand.
+     * Returns the local file path on success.
+     */
+    suspend fun downloadAudioFileFromCloud(audioFileId: String): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val path = voiceClient.downloadAudioFileFromCloud(audioFileId)
+            Result.success(path)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Check if cloud file storage is enabled (S3 configured).
+     */
+    suspend fun isFileStorageEnabled(): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.isFileStorageEnabled())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get the file storage configuration as JSON string.
+     */
+    suspend fun getFileStorageConfig(): Result<String?> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getFileStorageConfig())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Set the file storage configuration.
+     * @param provider Storage provider ("s3" or "none")
+     * @param config Optional JSON string with provider-specific configuration
+     */
+    suspend fun setFileStorageConfig(provider: String, config: String?): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            voiceClient.setFileStorageConfig(provider, config)
+            Result.success(Unit)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     // =========================================================================
     // Transcription Methods

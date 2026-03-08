@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay10
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.Replay5
 import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -64,11 +66,14 @@ import kotlinx.coroutines.delay
  * - Speed control button (placeholder)
  * - Time display (MM:SS or HH:MM:SS for long files)
  * - List of audio files with selection highlighting
+ * - Cloud-only files shown with download icon
  */
 @Composable
 fun AudioPlayerWidget(
     audioFiles: List<AudioFile>,
     getFilePath: suspend (String) -> String?,
+    downloadingAudioFileId: String? = null,
+    onDownloadRequested: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
@@ -80,20 +85,39 @@ fun AudioPlayerWidget(
     // State
     val playbackState by playerManager.playbackState.collectAsState()
     var waveforms by remember { mutableStateOf<Map<Int, List<Float>>>(emptyMap()) }
-    var filePaths by remember { mutableStateOf<List<String>>(emptyList()) }
+    // Map of audio file ID to local path (null means cloud-only)
+    var filePathMap by remember { mutableStateOf<Map<String, String?>>(emptyMap()) }
+    // Ordered list of local paths for the player (only files with local paths)
+    var localPaths by remember { mutableStateOf<List<String>>(emptyList()) }
+    // Mapping from audioFiles index to player index (-1 = cloud-only)
+    var indexToPlayerIndex by remember { mutableStateOf<Map<Int, Int>>(emptyMap()) }
 
     // Load file paths and set up player
     LaunchedEffect(audioFiles) {
-        val paths = audioFiles.mapNotNull { audioFile ->
-            getFilePath(audioFile.id)
+        val pathMap = mutableMapOf<String, String?>()
+        val paths = mutableListOf<String>()
+        val idxMap = mutableMapOf<Int, Int>()
+
+        audioFiles.forEachIndexed { index, audioFile ->
+            val path = getFilePath(audioFile.id)
+            pathMap[audioFile.id] = path
+            if (path != null) {
+                idxMap[index] = paths.size
+                paths.add(path)
+            } else {
+                idxMap[index] = -1
+            }
         }
-        filePaths = paths
+
+        filePathMap = pathMap
+        localPaths = paths
+        indexToPlayerIndex = idxMap
         playerManager.setAudioFiles(paths)
     }
 
-    // Extract waveforms for all files
-    LaunchedEffect(filePaths) {
-        filePaths.forEachIndexed { index, path ->
+    // Extract waveforms for local files
+    LaunchedEffect(localPaths) {
+        localPaths.forEachIndexed { index, path ->
             if (!waveforms.containsKey(index)) {
                 val waveform = waveformExtractor.extractWaveform(path)
                 waveforms = waveforms + (index to waveform)
@@ -243,11 +267,23 @@ fun AudioPlayerWidget(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 itemsIndexed(audioFiles) { index, audioFile ->
+                    val playerIdx = indexToPlayerIndex[index] ?: -1
+                    val isCloudOnly = playerIdx == -1
+                    val isDownloading = downloadingAudioFileId == audioFile.id
+
                     AudioFileListItem(
                         audioFile = audioFile,
-                        isSelected = index == playbackState.currentFileIndex,
-                        isPlaying = index == playbackState.currentFileIndex && playbackState.isPlaying,
-                        onClick = { playerManager.playFile(index) }
+                        isSelected = !isCloudOnly && playerIdx == playbackState.currentFileIndex,
+                        isPlaying = !isCloudOnly && playerIdx == playbackState.currentFileIndex && playbackState.isPlaying,
+                        isCloudOnly = isCloudOnly,
+                        isDownloading = isDownloading,
+                        onClick = {
+                            if (isCloudOnly) {
+                                onDownloadRequested?.invoke(audioFile.id)
+                            } else {
+                                playerManager.playFile(playerIdx)
+                            }
+                        }
                     )
                 }
             }
@@ -342,12 +378,14 @@ fun AudioFileListItem(
     audioFile: AudioFile,
     isSelected: Boolean,
     isPlaying: Boolean,
+    isCloudOnly: Boolean = false,
+    isDownloading: Boolean = false,
     onClick: () -> Unit
 ) {
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick),
+            .clickable(enabled = !isDownloading, onClick = onClick),
         color = if (isSelected) {
             MaterialTheme.colorScheme.primaryContainer
         } else {
@@ -359,16 +397,30 @@ fun AudioFileListItem(
             modifier = Modifier.padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(
-                imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                contentDescription = null,
-                modifier = Modifier.size(20.dp),
-                tint = if (isSelected) {
-                    MaterialTheme.colorScheme.primary
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                }
-            )
+            if (isDownloading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp
+                )
+            } else if (isCloudOnly) {
+                Icon(
+                    imageVector = Icons.Filled.CloudDownload,
+                    contentDescription = "Download from cloud",
+                    modifier = Modifier.size(20.dp),
+                    tint = MaterialTheme.colorScheme.tertiary
+                )
+            } else {
+                Icon(
+                    imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isSelected) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                )
+            }
 
             Spacer(modifier = Modifier.width(12.dp))
 
@@ -379,10 +431,21 @@ fun AudioFileListItem(
                 overflow = TextOverflow.Ellipsis,
                 color = if (isSelected) {
                     MaterialTheme.colorScheme.onPrimaryContainer
+                } else if (isCloudOnly) {
+                    MaterialTheme.colorScheme.onSurfaceVariant
                 } else {
                     MaterialTheme.colorScheme.onSurface
-                }
+                },
+                modifier = Modifier.weight(1f)
             )
+
+            if (isCloudOnly && !isDownloading) {
+                Text(
+                    text = "Cloud",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+            }
         }
     }
 }
