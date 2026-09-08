@@ -11,6 +11,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,6 +29,12 @@ import com.dotancohen.voiceandroid.ui.screens.NoteDetailScreen
 import com.dotancohen.voiceandroid.ui.screens.NotesScreen
 import com.dotancohen.voiceandroid.ui.screens.SettingsScreen
 import com.dotancohen.voiceandroid.ui.screens.SyncSettingsScreen
+import com.dotancohen.voiceandroid.ui.screens.RecordingScreen
+import com.dotancohen.voiceandroid.ui.screens.RecorderSettingsScreen
+import com.dotancohen.voiceandroid.ui.screens.TranscriptionSettingsScreen
+import com.dotancohen.voiceandroid.data.VoiceRepository
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 import com.dotancohen.voiceandroid.ui.screens.TagHierarchyScreen
 import com.dotancohen.voiceandroid.ui.screens.TagManagementScreen
 import com.dotancohen.voiceandroid.viewmodel.SharedFilterViewModel
@@ -44,11 +51,25 @@ sealed class Screen(val route: String, val title: String) {
     }
     data object TagHierarchy : Screen("tag_hierarchy", "Manage Tags")
     data object ImportAudio : Screen("import_audio", "Import Audio")
+    data object RecorderSettings : Screen("recorder_settings", "Recorder")
+    data object TranscriptionSettings : Screen("transcription_settings", "Transcription")
+    data object Recording : Screen("recording", "New voice recording")
 }
 
 @Composable
-fun VoiceApp() {
+fun VoiceApp(
+    pendingRoute: String? = null,
+    onRouteConsumed: () -> Unit = {}
+) {
     val navController = rememberNavController()
+
+    // Navigation requested from outside the UI (ADB automation in debug builds)
+    LaunchedEffect(pendingRoute) {
+        if (pendingRoute != null) {
+            navController.navigate(pendingRoute) { launchSingleTop = true }
+            onRouteConsumed()
+        }
+    }
     val screens = listOf(Screen.Notes, Screen.Settings)
 
     // Get SharedFilterViewModel scoped to activity
@@ -99,12 +120,37 @@ fun VoiceApp() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Screen.Notes.route) {
+                val scope = rememberCoroutineScope()
                 NotesScreen(
                     sharedFilterViewModel = sharedFilterViewModel,
                     onNoteClick = { noteId ->
                         navController.navigate(Screen.NoteDetail.createRoute(noteId))
+                    },
+                    onNewNote = {
+                        scope.launch {
+                            VoiceRepository.getInstance(context).createNote("").onSuccess { id ->
+                                navController.navigate(Screen.NoteDetail.createRoute(id))
+                            }
+                        }
+                    },
+                    onNewRecording = { navController.navigate(Screen.Recording.route) }
+                )
+            }
+            composable(Screen.Recording.route) {
+                RecordingScreen(
+                    onCancel = { navController.popBackStack() },
+                    onSaved = { noteId ->
+                        navController.navigate(Screen.NoteDetail.createRoute(noteId)) {
+                            popUpTo(Screen.Notes.route)
+                        }
                     }
                 )
+            }
+            composable(Screen.RecorderSettings.route) {
+                RecorderSettingsScreen(onBack = { navController.popBackStack() })
+            }
+            composable(Screen.TranscriptionSettings.route) {
+                TranscriptionSettingsScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 route = Screen.NoteDetail.route,
@@ -114,7 +160,8 @@ fun VoiceApp() {
                 NoteDetailScreen(
                     noteId = noteId,
                     onBack = { navController.popBackStack() },
-                    onNavigateToTags = { navController.navigate(Screen.TagManagement.createRoute(noteId)) }
+                    onNavigateToTags = { navController.navigate(Screen.TagManagement.createRoute(noteId)) },
+                    onNavigateToTranscriptionSettings = { navController.navigate(Screen.TranscriptionSettings.route) }
                 )
             }
             composable(
@@ -137,6 +184,12 @@ fun VoiceApp() {
                     },
                     onNavigateToImportAudio = {
                         navController.navigate(Screen.ImportAudio.route)
+                    },
+                    onNavigateToRecorder = {
+                        navController.navigate(Screen.RecorderSettings.route)
+                    },
+                    onNavigateToTranscription = {
+                        navController.navigate(Screen.TranscriptionSettings.route)
                     }
                 )
             }

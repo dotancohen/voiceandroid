@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Debug builds only: lets a tester drive the app from ADB.
+             adb shell am broadcast -a com.dotancohen.voiceandroid.action.SYNC_NOW -n com.dotancohen.voiceandroid/.automation.AdbCommandReceiver
+             See tools/voice-adb for the friendly wrapper. -->
+        <receiver
+            android:name=".automation.AdbCommandReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.dotancohen.voiceandroid.action.PING" />
+                <action android:name="com.dotancohen.voiceandroid.action.SYNC_NOW" />
+                <action android:name="com.dotancohen.voiceandroid.action.INITIAL_SYNC" />
+                <action android:name="com.dotancohen.voiceandroid.action.SET_SYNC" />
+                <action android:name="com.dotancohen.voiceandroid.action.SET_DEVICE_NAME" />
+                <action android:name="com.dotancohen.voiceandroid.action.STATUS" />
+                <action android:name="com.dotancohen.voiceandroid.action.CREATE_NOTE" />
+                <action android:name="com.dotancohen.voiceandroid.action.EDIT_NOTE" />
+                <action android:name="com.dotancohen.voiceandroid.action.DELETE_NOTE" />
+                <action android:name="com.dotancohen.voiceandroid.action.LIST_NOTES" />
+                <action android:name="com.dotancohen.voiceandroid.action.SHOW_NOTE" />
+                <action android:name="com.dotancohen.voiceandroid.action.HISTORY" />
+                <action android:name="com.dotancohen.voiceandroid.action.RESTORE_VERSION" />
+                <action android:name="com.dotancohen.voiceandroid.action.LIST_TAGS" />
+                <action android:name="com.dotancohen.voiceandroid.action.CREATE_TAG" />
+                <action android:name="com.dotancohen.voiceandroid.action.RENAME_TAG" />
+                <action android:name="com.dotancohen.voiceandroid.action.MOVE_TAG" />
+                <action android:name="com.dotancohen.voiceandroid.action.DELETE_TAG" />
+                <action android:name="com.dotancohen.voiceandroid.action.TAG_NOTE" />
+                <action android:name="com.dotancohen.voiceandroid.action.UNTAG_NOTE" />
+                <action android:name="com.dotancohen.voiceandroid.action.IMPORT_AUDIO" />
+                <action android:name="com.dotancohen.voiceandroid.action.DOWNLOAD_MEDIA" />
+                <action android:name="com.dotancohen.voiceandroid.action.LIST_CONFLICTS" />
+                <action android:name="com.dotancohen.voiceandroid.action.ACCEPT_CONFLICTS" />
+                <action android:name="com.dotancohen.voiceandroid.action.RESOLVE_CONFLICT" />
+                <action android:name="com.dotancohen.voiceandroid.action.GET_SETTING" />
+                <action android:name="com.dotancohen.voiceandroid.action.SET_SETTING" />
+                <action android:name="com.dotancohen.voiceandroid.action.SET_TRANSCRIPTION_STATE" />
+                <action android:name="com.dotancohen.voiceandroid.action.LIST_TRANSCRIPTIONS" />
+                <action android:name="com.dotancohen.voiceandroid.action.TRANSCRIBE" />
+                <action android:name="com.dotancohen.voiceandroid.action.LIST_MODELS" />
+                <action android:name="com.dotancohen.voiceandroid.action.DOWNLOAD_MODEL" />
+                <action android:name="com.dotancohen.voiceandroid.action.SET_TRANSCRIPTION" />
+                <action android:name="com.dotancohen.voiceandroid.action.SET_RECORDING_FORMAT" />
+                <action android:name="com.dotancohen.voiceandroid.action.OPEN_SCREEN" />
+                <action android:name="com.dotancohen.voiceandroid.action.OPEN_NOTE" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

@@ -1,0 +1,150 @@
+#!/usr/bin/env bash
+# Drive the Voice Android app (debug build) from a computer over ADB.
+#
+#   voice-adb ping
+#   voice-adb sync-now
+#   voice-adb create-note "פתק מהטלפון"
+#   voice-adb list-notes
+#   voice-adb open settings
+#
+# Every command prints the app's reply, which starts with OK or ERROR.
+# Run `voice-adb help` for the full list.
+set -euo pipefail
+
+PKG=com.dotancohen.voiceandroid
+RECEIVER="$PKG/.automation.AdbCommandReceiver"
+PREFIX="$PKG.action."
+TIMEOUT="${VOICE_ADB_TIMEOUT:-120}"
+
+usage() {
+cat <<'USAGE'
+Usage: voice-adb <command> [arguments]
+
+Device and sync
+  ping                               is the app reachable; prints device name and id
+  status                             device, server, note count, unresolved conflicts, pending changes
+  set-sync <url> <peer-id> [name]    set Server URL, Server Peer ID (and optionally the device name)
+  set-device-name <name>
+  sync-now                           same as tapping Sync Now
+  initial-sync                       same as tapping Full Re-sync
+  airplane on|off                    airplane mode (no app involved)
+
+Notes (a <note> is an id, an id prefix, or the exact first line of the note)
+  create-note <text>                 prints id=<note id>
+  edit-note <note> <text>            replaces the whole content
+  delete-note <note>
+  list-notes                         one NOTE {...} JSON line per note: id, first_line, tags, conflicts, media state
+  show-note <note>                   the same JSON plus the full content and the number of history versions
+  history <note>                     one VERSION {...} line per version
+  restore-version <note> <version-id-prefix>
+
+Tags (a <tag> is an exact name or an id prefix)
+  list-tags
+  create-tag <name> [parent-tag]
+  rename-tag <tag> <new-name>
+  move-tag <tag> [parent-tag]        no parent = move to the top level
+  delete-tag <tag>
+  tag-note <note> <tag>
+  untag-note <note> <tag>
+
+Audio and transcriptions
+  import-audio <folder-on-phone>     e.g. /sdcard/VoiceTestStorage; prints IMPORTED [...] then OK imported=N
+  download-media <note>              same as tapping Download on the note
+  set-transcription-state <note> "<state>"   e.g. "original verified"
+  list-transcriptions <note>         one TRANSCRIPTION {...} line per transcription of the note's recordings
+  transcribe <note> [language] [file]  transcribe one recording of the note on the phone (language: he, en,
+                                     ar, ru, auto; file: 1, 2, ... or part of the file name; default the first);
+                                     opens the note first: the screen must be on and unlocked
+  list-models                        one MODEL {...} line per Whisper model: id, size, installed, selected
+  download-model <model-id>          download a model (may take minutes; prints PROGRESS lines)
+  set-transcription [model=<id>] [language=<code>] [beam_size=<n>]
+  set-recording-format opus|aac|wav16
+
+Conflicts and settings
+  list-conflicts                     one CONFLICT {...} line per unresolved conflict
+  accept-conflicts <note>            same as tapping Accept merge
+  resolve-conflict <conflict-id-prefix> <text>
+  get-setting <key>
+  set-setting <key> <value>
+
+Screens (open the app on a screen, for steps that must be done by hand)
+  open notes|settings|sync|tags|import|recorder|recording
+  open-note <note>
+
+Logs
+  log                                the app's last VoiceAdb lines
+USAGE
+}
+
+send() {
+    local action="$1"; shift
+    adb logcat -c
+    adb shell am broadcast -n "$RECEIVER" -a "${PREFIX}${action}" "$@" >/dev/null
+    # Wait for the OK/ERROR line for this action
+    local i=0 line=""
+    while [ $i -lt $((TIMEOUT * 4)) ]; do
+        line="$(adb logcat -d -s VoiceAdb:I 2>/dev/null | grep -E "VoiceAdb: ${action} (OK|ERROR)" | tail -1 || true)"
+        if [ -n "$line" ]; then break; fi
+        sleep 0.25; i=$((i + 1))
+    done
+    # Print listing lines (NOTE / TAG / VERSION / CONFLICT / IMPORTED / MODEL / PROGRESS / TRANSCRIPTION) then the result
+    adb logcat -d -s VoiceAdb:I 2>/dev/null | sed -n 's/.*VoiceAdb: //p' | grep -E "^(NOTE|TAG|VERSION|CONFLICT|IMPORTED|MODEL|PROGRESS|TRANSCRIPTION) " || true
+    if [ -z "$line" ]; then
+        echo "ERROR no reply from the app within ${TIMEOUT}s (is the debug build installed and the phone connected?)"
+        exit 1
+    fi
+    echo "${line#*VoiceAdb: }"
+    case "$line" in *" ERROR "*) exit 1;; esac
+}
+
+cmd="${1:-help}"; shift || true
+case "$cmd" in
+    help|-h|--help) usage ;;
+    ping) send PING ;;
+    status) send STATUS ;;
+    set-sync) send SET_SYNC --es url "$1" --es peer "$2" ${3:+--es name "$3"} ;;
+    set-device-name) send SET_DEVICE_NAME --es name "$1" ;;
+    sync-now) send SYNC_NOW ;;
+    initial-sync) send INITIAL_SYNC ;;
+    airplane)
+        case "${1:-}" in
+            on) adb shell cmd connectivity airplane-mode enable && echo "OK airplane mode on" ;;
+            off) adb shell cmd connectivity airplane-mode disable && echo "OK airplane mode off" ;;
+            *) echo "usage: voice-adb airplane on|off"; exit 1 ;;
+        esac ;;
+    create-note) send CREATE_NOTE --es text "$1" ;;
+    edit-note) send EDIT_NOTE --es note "$1" --es text "$2" ;;
+    delete-note) send DELETE_NOTE --es note "$1" ;;
+    list-notes) send LIST_NOTES ;;
+    show-note) send SHOW_NOTE --es note "$1" ;;
+    history) send HISTORY --es note "$1" ;;
+    restore-version) send RESTORE_VERSION --es note "$1" --es version "$2" ;;
+    list-tags) send LIST_TAGS ;;
+    create-tag) send CREATE_TAG --es name "$1" ${2:+--es parent "$2"} ;;
+    rename-tag) send RENAME_TAG --es tag "$1" --es name "$2" ;;
+    move-tag) send MOVE_TAG --es tag "$1" ${2:+--es parent "$2"} ;;
+    delete-tag) send DELETE_TAG --es tag "$1" ;;
+    tag-note) send TAG_NOTE --es note "$1" --es tag "$2" ;;
+    untag-note) send UNTAG_NOTE --es note "$1" --es tag "$2" ;;
+    import-audio) send IMPORT_AUDIO --es folder "$1" ;;
+    download-media) send DOWNLOAD_MEDIA --es note "$1" ;;
+    set-transcription-state) send SET_TRANSCRIPTION_STATE --es note "$1" --es state "$2" ;;
+    list-transcriptions) send LIST_TRANSCRIPTIONS --es note "$1" ;;
+    transcribe) send TRANSCRIBE --es note "$1" ${2:+--es language "$2"} ${3:+--es file "$3"} ;;
+    list-models) send LIST_MODELS ;;
+    download-model) TIMEOUT=${VOICE_ADB_TIMEOUT:-3600} send DOWNLOAD_MODEL --es model "$1" ;;
+    set-transcription)
+        args=()
+        for kv in "$@"; do args+=(--es "${kv%%=*}" "${kv#*=}"); done
+        send SET_TRANSCRIPTION "${args[@]}" ;;
+    set-recording-format) send SET_RECORDING_FORMAT --es format "$1" ;;
+    list-conflicts) send LIST_CONFLICTS ;;
+    accept-conflicts) send ACCEPT_CONFLICTS --es note "$1" ;;
+    resolve-conflict) send RESOLVE_CONFLICT --es conflict "$1" --es text "$2" ;;
+    get-setting) send GET_SETTING --es key "$1" ;;
+    set-setting) send SET_SETTING --es key "$1" --es value "$2" ;;
+    open) send OPEN_SCREEN --es screen "$1" ;;
+    open-note) send OPEN_NOTE --es note "$1" ;;
+    log) adb logcat -d -s VoiceAdb:I | sed -n 's/.*VoiceAdb: //p' | tail -40 ;;
+    *) echo "unknown command: $cmd"; usage; exit 1 ;;
+esac

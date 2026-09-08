@@ -58,11 +58,13 @@ fun SyncSettingsScreen(
     val syncError by viewModel.syncError.collectAsState()
     val debugInfo by viewModel.debugInfo.collectAsState()
     val hasUnsyncedChanges by viewModel.hasUnsyncedChanges.collectAsState()
+    val maxSyncFileSizeMb by viewModel.maxSyncFileSizeMb.collectAsState()
 
     var editedServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
     var editedServerPeerId by remember(serverPeerId) { mutableStateOf(serverPeerId) }
     var editedDeviceId by remember(deviceId) { mutableStateOf(deviceId) }
     var editedDeviceName by remember(deviceName) { mutableStateOf(deviceName) }
+    var editedMaxFileSizeMb by remember(maxSyncFileSizeMb) { mutableStateOf(maxSyncFileSizeMb.toString()) }
 
     // Check for unsynced changes and update debug info when this screen becomes visible
     LaunchedEffect(Unit) {
@@ -179,6 +181,54 @@ fun SyncSettingsScreen(
                 Text("Save Settings")
             }
 
+            // Sync Limits Section
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Sync Limits",
+                        style = MaterialTheme.typography.titleMedium
+                    )
+
+                    Text(
+                        text = "Files larger than this limit will not be synced. They will be tagged with '_system/_nonsynced/_too-big' and remain local only.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+
+                    OutlinedTextField(
+                        value = editedMaxFileSizeMb,
+                        onValueChange = { newValue ->
+                            // Only allow numeric input
+                            if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
+                                editedMaxFileSizeMb = newValue
+                            }
+                        },
+                        label = { Text("Max File Size (MB)") },
+                        placeholder = { Text("100") },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        supportingText = { Text("Default: 100 MB. Set to 0 for unlimited.") }
+                    )
+
+                    Button(
+                        onClick = {
+                            val sizeMb = editedMaxFileSizeMb.toUIntOrNull() ?: 100u
+                            viewModel.saveMaxSyncFileSizeMb(sizeMb)
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Save File Size Limit")
+                    }
+                }
+            }
+
             // Sync Actions Section
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -242,6 +292,12 @@ fun SyncSettingsScreen(
                             Text(
                                 text = "Sync failed: ${result.errorMessage ?: "Unknown error"}",
                                 color = MaterialTheme.colorScheme.error
+                            )
+                        }
+                        result.warnings.forEach { warning ->
+                            Text(
+                                text = "Warning: $warning",
+                                color = MaterialTheme.colorScheme.tertiary
                             )
                         }
                     }

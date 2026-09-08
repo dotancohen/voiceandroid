@@ -23,7 +23,7 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.Replay5
-import androidx.compose.material.icons.filled.Speed
+import androidx.compose.material.icons.filled.Transcribe
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -61,15 +61,19 @@ import kotlinx.coroutines.delay
  * - Waveform display that doubles as a seek bar
  * - Play/pause button
  * - Skip back 3s and 10s buttons
- * - Speed control button (placeholder)
+ * - Playback speed slider and presets under the waveform
  * - Time display (MM:SS or HH:MM:SS for long files)
- * - List of audio files with selection highlighting
+ * - List of audio files with selection highlighting and a transcribe icon each
  */
 @Composable
 fun AudioPlayerWidget(
     audioFiles: List<AudioFile>,
     getFilePath: suspend (String) -> String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    /** Shown as a transcribe icon at the left of every file; null hides it. */
+    onTranscribe: ((AudioFile) -> Unit)? = null,
+    /** Index of the file the player is on (0 before anything was played). */
+    onCurrentFileChanged: ((Int) -> Unit)? = null
 ) {
     val context = LocalContext.current
 
@@ -109,6 +113,11 @@ fun AudioPlayerWidget(
         }
     }
 
+    // Tell the screen which file is current, so it can show that file's transcriptions
+    LaunchedEffect(playbackState.currentFileIndex) {
+        onCurrentFileChanged?.invoke(playbackState.currentFileIndex.coerceAtLeast(0))
+    }
+
     // Cleanup
     DisposableEffect(Unit) {
         onDispose {
@@ -125,7 +134,7 @@ fun AudioPlayerWidget(
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Column(
-            modifier = Modifier.padding(16.dp)
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
         ) {
             // Waveform display
             val currentWaveform = waveforms[playbackState.currentFileIndex] ?: emptyList()
@@ -139,36 +148,27 @@ fun AudioPlayerWidget(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(80.dp)
+                    .height(64.dp)
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // Playback speed, right under the waveform
+            PlaybackSpeedControl(
+                speed = playbackState.playbackSpeed,
+                onSpeedChange = { playerManager.setPlaybackSpeed(it) }
+            )
 
-            // Time display
+            // Position, controls and length on one row
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
                     text = formatTime(playbackState.currentPosition),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                Text(
-                    text = formatTime(playbackState.duration),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Playback controls
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
+                Spacer(modifier = Modifier.weight(1f))
                 // Skip back 10s
                 IconButton(onClick = { playerManager.skipBack(10) }) {
                     Icon(
@@ -187,13 +187,13 @@ fun AudioPlayerWidget(
                     )
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
+                Spacer(modifier = Modifier.width(8.dp))
 
                 // Play/Pause button
                 Surface(
                     shape = CircleShape,
                     color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(56.dp)
+                    modifier = Modifier.size(44.dp)
                 ) {
                     IconButton(
                         onClick = { playerManager.togglePlayPause() },
@@ -207,47 +207,34 @@ fun AudioPlayerWidget(
                             },
                             contentDescription = if (playbackState.isPlaying) "Pause" else "Play",
                             tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(32.dp)
+                            modifier = Modifier.size(26.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.width(16.dp))
-
-                // Speed control (placeholder)
-                IconButton(onClick = { /* TODO: Show speed options */ }) {
-                    Icon(
-                        imageVector = Icons.Filled.Speed,
-                        contentDescription = "Playback speed (not yet implemented)",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                // Empty spacer to balance layout
-                Spacer(modifier = Modifier.width(48.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                // Same width as the two skip buttons, so play stays centred
+                Spacer(modifier = Modifier.width(96.dp))
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = formatTime(playbackState.duration),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // Audio file list
-            Text(
-                text = "Audio Files",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-
+            // The files: transcribe icon, play state, name
             LazyColumn(
-                modifier = Modifier.height((audioFiles.size * 48).coerceAtMost(200).dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                modifier = Modifier.height((audioFiles.size * 36).coerceAtMost(180).dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
                 itemsIndexed(audioFiles) { index, audioFile ->
                     AudioFileListItem(
                         audioFile = audioFile,
-                        isSelected = index == playbackState.currentFileIndex,
+                        isSelected = index == playbackState.currentFileIndex || (playbackState.currentFileIndex < 0 && index == 0),
                         isPlaying = index == playbackState.currentFileIndex && playbackState.isPlaying,
-                        onClick = { playerManager.playFile(index) }
+                        onClick = { playerManager.playFile(index) },
+                        onTranscribe = onTranscribe?.let { cb -> { cb(audioFile) } }
                     )
                 }
             }
@@ -342,7 +329,8 @@ fun AudioFileListItem(
     audioFile: AudioFile,
     isSelected: Boolean,
     isPlaying: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onTranscribe: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier
@@ -356,13 +344,23 @@ fun AudioFileListItem(
         shape = MaterialTheme.shapes.small
     ) {
         Row(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(start = 2.dp, end = 8.dp, top = 2.dp, bottom = 2.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (onTranscribe != null) {
+                IconButton(onClick = onTranscribe, modifier = Modifier.size(32.dp)) {
+                    Icon(
+                        imageVector = Icons.Filled.Transcribe,
+                        contentDescription = "Transcribe ${audioFile.filename}",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
             Icon(
                 imageVector = if (isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
                 contentDescription = null,
-                modifier = Modifier.size(20.dp),
+                modifier = Modifier.size(18.dp),
                 tint = if (isSelected) {
                     MaterialTheme.colorScheme.primary
                 } else {
@@ -370,11 +368,11 @@ fun AudioFileListItem(
                 }
             )
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
             Text(
                 text = audioFile.filename,
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodySmall,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 color = if (isSelected) {

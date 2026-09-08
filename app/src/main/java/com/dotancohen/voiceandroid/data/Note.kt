@@ -22,7 +22,9 @@ data class SyncResult(
     val success: Boolean,
     val notesReceived: Int,
     val notesSent: Int,
-    val errorMessage: String? = null
+    val errorMessage: String? = null,
+    /** Non-fatal problems, e.g. a cloud upload that will be retried on the next sync */
+    val warnings: List<String> = emptyList()
 )
 
 /**
@@ -37,8 +39,16 @@ data class AudioFile(
     val summary: String? = null,
     val deviceId: String,
     val modifiedAt: String? = null,
-    val deletedAt: String? = null
-)
+    val deletedAt: String? = null,
+    /** Cloud storage provider ("s3") once the owning device uploaded the file */
+    val storageProvider: String? = null,
+    /** Object key in cloud storage once uploaded */
+    val storageKey: String? = null
+) {
+    /** True once the binary is available in cloud storage. */
+    val isInCloud: Boolean
+        get() = storageProvider != null && storageKey != null
+}
 
 /**
  * Data class representing a note-attachment association.

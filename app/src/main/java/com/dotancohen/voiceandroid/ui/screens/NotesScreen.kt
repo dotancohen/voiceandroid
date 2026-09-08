@@ -34,6 +34,13 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.ui.platform.LocalContext
+import com.dotancohen.voiceandroid.audio.RecorderPreferences
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -72,9 +79,13 @@ private val StarGold = Color(0xFFFFD700)
 fun NotesScreen(
     sharedFilterViewModel: SharedFilterViewModel,
     onNoteClick: (String) -> Unit = {},
+    onNewNote: () -> Unit = {},
+    onNewRecording: () -> Unit = {},
     viewModel: NotesViewModel = viewModel(),
     filterViewModel: FilterViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    var showNewMenu by remember { mutableStateOf(false) }
     val notes by viewModel.notes.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -142,6 +153,31 @@ fun NotesScreen(
                 .padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // New: tap does the default (Settings → Recorder), long-press shows both
+            Box {
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .combinedClickable(
+                            onClick = {
+                                if (RecorderPreferences(context).defaultNewAction == RecorderPreferences.ACTION_RECORDING) onNewRecording() else onNewNote()
+                            },
+                            onLongClick = { showNewMenu = true }
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "New",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+                DropdownMenu(expanded = showNewMenu, onDismissRequest = { showNewMenu = false }) {
+                    DropdownMenuItem(text = { Text("New Note") }, onClick = { showNewMenu = false; onNewNote() })
+                    DropdownMenuItem(text = { Text("New Voice Recording") }, onClick = { showNewMenu = false; onNewRecording() })
+                }
+            }
+
             // Star filter button
             IconButton(
                 onClick = { toggleMarkedFilter() },
@@ -361,9 +397,6 @@ fun NoteCard(
     val isMarked = noteWithAudio.isMarked
     val durationSeconds = noteWithAudio.durationSeconds
     val tags = noteWithAudio.tags
-    // Audio files are now expanded by default
-    var isExpanded by remember { mutableStateOf(true) }
-    val hasAttachments = audioFiles.isNotEmpty()
 
     Card(
         modifier = Modifier
@@ -389,6 +422,24 @@ fun NoteCard(
                         modifier = Modifier.size(16.dp),
                         tint = if (isMarked) StarGold else MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+                // One small button per recording: 🔊1, 🔊2 ... opens the compact player
+                audioFiles.forEachIndexed { index, audioFile ->
+                    val open = expandedAudioFileId == audioFile.id
+                    Surface(
+                        modifier = Modifier
+                            .padding(start = 2.dp)
+                            .clickable { onAudioFileClick(audioFile.id) },
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = if (open) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+                    ) {
+                        Text(
+                            text = "\uD83D\uDD0A${index + 1}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (open) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.width(4.dp))
                 // Date (bold)
@@ -427,50 +478,27 @@ fun NoteCard(
                 overflow = TextOverflow.Ellipsis
             )
 
-            // Attachments section
-            if (hasAttachments) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { isExpanded = !isExpanded },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.PlayArrow,
-                        contentDescription = null,
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "${audioFiles.size} audio",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.weight(1f))
-                    Icon(
-                        imageVector = if (isExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                        contentDescription = if (isExpanded) "Collapse" else "Expand",
-                        modifier = Modifier.size(14.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                }
-
-                AnimatedVisibility(
-                    visible = isExpanded,
-                    enter = expandVertically(),
-                    exit = shrinkVertically()
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        audioFiles.forEach { audioFile ->
-                            AudioFileCard(
-                                audioFile = audioFile,
-                                isPlayerExpanded = expandedAudioFileId == audioFile.id,
-                                onTogglePlayer = { onAudioFileClick(audioFile.id) },
-                                getFilePath = { getAudioFilePath(audioFile.id) }
-                            )
-                        }
+            // The compact player of the recording whose button was tapped
+            val openFile = audioFiles.firstOrNull { it.id == expandedAudioFileId }
+            AnimatedVisibility(
+                visible = openFile != null,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                openFile?.let { audioFile ->
+                    Column {
+                        Text(
+                            text = audioFile.filename,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        val filePath = remember(audioFile.id) { getAudioFilePath(audioFile.id) }
+                        CompactAudioPlayer(
+                            filePath = filePath,
+                            modifier = Modifier.padding(top = 2.dp)
+                        )
                     }
                 }
             }
@@ -478,74 +506,3 @@ fun NoteCard(
     }
 }
 
-@Composable
-fun AudioFileCard(
-    audioFile: AudioFile,
-    isPlayerExpanded: Boolean = false,
-    onTogglePlayer: () -> Unit = {},
-    getFilePath: () -> String? = { null }
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surfaceVariant,
-        shape = MaterialTheme.shapes.small
-    ) {
-        Column(
-            modifier = Modifier.padding(5.dp)
-        ) {
-            // Header row - clickable to expand/collapse player
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onTogglePlayer() },
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.PlayArrow,
-                    contentDescription = null,
-                    modifier = Modifier.size(14.dp),
-                    tint = if (isPlayerExpanded) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = audioFile.filename,
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                // Show expand/collapse indicator
-                Icon(
-                    imageVector = if (isPlayerExpanded) Icons.Filled.KeyboardArrowUp else Icons.Filled.KeyboardArrowDown,
-                    contentDescription = if (isPlayerExpanded) "Collapse player" else "Expand player",
-                    modifier = Modifier.size(16.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-
-            // Summary (if available)
-            audioFile.summary?.let { summary ->
-                Text(
-                    text = summary,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-
-            // Compact audio player (expanded)
-            AnimatedVisibility(
-                visible = isPlayerExpanded,
-                enter = expandVertically(),
-                exit = shrinkVertically()
-            ) {
-                val filePath = remember(audioFile.id) { getFilePath() }
-                CompactAudioPlayer(
-                    filePath = filePath,
-                    modifier = Modifier.padding(top = 8.dp)
-                )
-            }
-        }
-    }
-}

@@ -21,6 +21,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Transcribe
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.BugReport
@@ -64,7 +66,9 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel(),
     onNavigateToSyncSettings: () -> Unit = {},
     onNavigateToManageTags: () -> Unit = {},
-    onNavigateToImportAudio: () -> Unit = {}
+    onNavigateToImportAudio: () -> Unit = {},
+    onNavigateToRecorder: () -> Unit = {},
+    onNavigateToTranscription: () -> Unit = {}
 ) {
     val audiofileDirectory by viewModel.audiofileDirectory.collectAsState()
     val defaultAudiofileDirectory by viewModel.defaultAudiofileDirectory.collectAsState()
@@ -292,6 +296,32 @@ fun SettingsScreen(
                     modifier = Modifier.padding(end = 8.dp)
                 )
                 Text("Manage Tags")
+            }
+
+            // Recorder: microphones and what the New button does
+            OutlinedButton(
+                onClick = onNavigateToRecorder,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Mic,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Recorder")
+            }
+
+            // Transcription: Whisper models on the phone, language, decoding
+            OutlinedButton(
+                onClick = onNavigateToTranscription,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Transcribe,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Transcription")
             }
 
             // Import Audio Files

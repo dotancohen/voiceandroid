@@ -7,6 +7,9 @@ Android client for the [Voice](https://github.com/dotancohen/voice) note-taking 
 - View notes synced from a Voice server
 - Configure sync server settings
 - Manual sync with the server
+- Record voice notes as Opus (128 kb/s, 48 kHz, `.ogg`), AAC (`.m4a`) or 16 kHz WAV (Settings → Recorder)
+- Play recordings at 0.5× to 3× with a slider and one-tap presets under the waveform (pitch unchanged)
+- Transcribe recordings on the phone with Whisper, no network needed (Settings → Transcription)
 - Material Design 3 / Material You theming
 - Follows system light/dark theme
 
@@ -94,6 +97,30 @@ In the app's Settings screen, configure:
 - **Device Name**: A friendly name for this device
 - **Device ID**: Auto-generated or paste an existing ID to link with another installation
 
+## On-device transcription
+
+Settings → Transcription lists the Whisper models the app can download (ggml files from
+Hugging Face, kept in the app's private storage and deleted with the app):
+
+| Model | Size | Notes |
+|-------|------|-------|
+| Whisper large-v3, 5-bit | 1.1 GB | Recommended. Hebrew, English, Arabic, Russian and 95 more |
+| ivrit.ai large-v3-turbo | 1.6 GB | Fine-tuned on Hebrew; the most accurate for Hebrew; Hebrew only |
+| ivrit.ai large-v3 | 3.1 GB | Full-size Hebrew fine-tune; needs about 4 GB of free memory |
+| Whisper large-v3, full | 3.1 GB | Needs about 4 GB of free memory |
+| Whisper large-v3-turbo, 5-bit | 0.6 GB | Several times faster, a little less accurate |
+| Whisper medium, 5-bit | 0.5 GB | Small and fast, weaker on Hebrew |
+
+Pick a language (Hebrew by default) and *Beam search* (accurate) or *Greedy* (fast), then open a
+note and tap **Transcribe on device** under its player. The work runs in a foreground service with
+a progress notification, so it continues with the screen off. The result is a normal transcription
+record (service `local_whisper`) and syncs to every other device.
+
+The native library is VoiceTranscription's `voice-transcription-android` crate (whisper.cpp),
+shipped for arm64 only in `app/src/main/jniLibs/arm64-v8a/` together with `libc++_shared.so`;
+see VoiceTranscription's README, "Build Android Bindings", to rebuild it and regenerate
+`app/src/main/java/uniffi/voice_transcription/voice_transcription.kt`.
+
 ## Architecture
 
 - **Kotlin + Jetpack Compose**: Modern Android UI toolkit
@@ -107,7 +134,9 @@ VoiceAndroid/
 ├── app/
 │   └── src/main/
 │       ├── java/com/dotancohen/voiceandroid/
+│       │   ├── audio/         # Player, recorder, microphone and playback preferences
 │       │   ├── data/          # Repository and data models
+│       │   ├── transcription/ # Whisper on the phone: models, WAV conversion, job runner, service
 │       │   ├── ui/            # Compose UI screens
 │       │   ├── viewmodel/     # ViewModels
 │       │   └── MainActivity.kt

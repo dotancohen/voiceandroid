@@ -3,6 +3,7 @@ package com.dotancohen.voiceandroid.audio
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
@@ -30,19 +31,21 @@ data class PlaybackState(
  * - Auto-advancement to next file
  * - Seeking via position or waveform tap
  * - Skip back 3s and 10s
- * - Playback speed control (placeholder for now)
+ * - Playback speed (0.5× to 3×, pitch kept), remembered across players
  */
 class AudioPlayerManager(context: Context) {
 
     private val player: ExoPlayer = ExoPlayer.Builder(context).build()
+    private val prefs = PlaybackPreferences(context)
 
-    private val _playbackState = MutableStateFlow(PlaybackState())
+    private val _playbackState = MutableStateFlow(PlaybackState(playbackSpeed = prefs.speed))
     val playbackState: StateFlow<PlaybackState> = _playbackState.asStateFlow()
 
     private var audioFiles: List<String> = emptyList()
     private var currentIndex: Int = -1
 
     init {
+        player.playbackParameters = PlaybackParameters(prefs.speed, 1f)
         player.addListener(object : Player.Listener {
             override fun onIsPlayingChanged(isPlaying: Boolean) {
                 updateState { copy(isPlaying = isPlaying) }
@@ -78,7 +81,8 @@ class AudioPlayerManager(context: Context) {
             PlaybackState(
                 currentFileIndex = -1,
                 duration = 0L,
-                currentPosition = 0L
+                currentPosition = 0L,
+                playbackSpeed = playbackSpeed
             )
         }
     }
@@ -128,16 +132,23 @@ class AudioPlayerManager(context: Context) {
      * Seek to a specific position in milliseconds.
      */
     fun seekTo(positionMs: Long) {
-        player.seekTo(positionMs.coerceIn(0L, player.duration))
+        // Until the media is prepared ExoPlayer reports C.TIME_UNSET (a huge
+        // negative number) as the duration; clamping to it throws. A seek
+        // before anything is loaded is simply ignored.
+        val duration = player.duration
+        if (duration <= 0L) return
+        player.seekTo(positionMs.coerceIn(0L, duration))
         updateState { copy(currentPosition = player.currentPosition) }
     }
 
     /**
      * Seek to a fraction of the duration (0.0 to 1.0).
-     * Used for waveform tap seeking.
+     * Used for waveform tap seeking. Does nothing before media is loaded.
      */
     fun seekToFraction(fraction: Float) {
-        val position = (fraction * player.duration).toLong()
+        val duration = player.duration
+        if (duration <= 0L) return
+        val position = (fraction.coerceIn(0f, 1f) * duration).toLong()
         seekTo(position)
     }
 
@@ -159,12 +170,16 @@ class AudioPlayerManager(context: Context) {
     }
 
     /**
-     * Set playback speed (placeholder - not functional yet).
+     * Set the playback speed. ExoPlayer time-stretches the audio in its own
+     * pipeline while the pitch stays the same, so the change is applied
+     * mid-playback without any restart, gap or crackle. The value is kept in
+     * the preferences so the next player starts at the same speed.
      */
     fun setPlaybackSpeed(speed: Float) {
-        // TODO: Implement playback speed control
-        // player.setPlaybackSpeed(speed)
-        updateState { copy(playbackSpeed = speed) }
+        val clamped = speed.coerceIn(PlaybackPreferences.MIN_SPEED, PlaybackPreferences.MAX_SPEED)
+        player.playbackParameters = PlaybackParameters(clamped, 1f)
+        prefs.speed = clamped
+        updateState { copy(playbackSpeed = clamped) }
     }
 
     /**

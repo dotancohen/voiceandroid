@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.dotancohen.voiceandroid.data.SyncResult
 import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.util.AppLogger
+import com.dotancohen.voiceandroid.util.CriticalLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -48,6 +49,10 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _debugInfo = MutableStateFlow<String?>(null)
     val debugInfo: StateFlow<String?> = _debugInfo.asStateFlow()
 
+    // Max sync file size (in MB)
+    private val _maxSyncFileSizeMb = MutableStateFlow<UInt>(100u)
+    val maxSyncFileSizeMb: StateFlow<UInt> = _maxSyncFileSizeMb.asStateFlow()
+
     // Unsynced changes indicator
     private val _hasUnsyncedChanges = MutableStateFlow(false)
     val hasUnsyncedChanges: StateFlow<Boolean> = _hasUnsyncedChanges.asStateFlow()
@@ -61,6 +66,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     init {
         loadSettings()
         checkUnsyncedChanges()
+        loadMaxSyncFileSize()
     }
 
     /**
@@ -120,6 +126,32 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             // Load audiofile directory
             _defaultAudiofileDirectory.value = repository.defaultAudioFileDir
             _audiofileDirectory.value = repository.audioFileDir
+        }
+    }
+
+    private fun loadMaxSyncFileSize() {
+        viewModelScope.launch {
+            repository.getMaxSyncFileSizeMb()
+                .onSuccess { _maxSyncFileSizeMb.value = it }
+                .onFailure { AppLogger.e(TAG, "Failed to load max sync file size", it) }
+        }
+    }
+
+    /**
+     * Save the maximum file size (in MB) that will be synced.
+     * Files larger than this will be tagged with _system/_nonsynced/_too-big.
+     */
+    fun saveMaxSyncFileSizeMb(sizeMb: UInt) {
+        viewModelScope.launch {
+            repository.setMaxSyncFileSizeMb(sizeMb)
+                .onSuccess {
+                    _maxSyncFileSizeMb.value = sizeMb
+                    AppLogger.i(TAG, "Max sync file size set to $sizeMb MB")
+                }
+                .onFailure { e ->
+                    _syncError.value = "Failed to set max sync file size: ${e.message}"
+                    AppLogger.e(TAG, "Failed to set max sync file size", e)
+                }
         }
     }
 
@@ -218,6 +250,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 .onFailure { exception ->
                     _syncError.value = exception.message
                     AppLogger.e(TAG, "Sync failed", exception)
+                    CriticalLog.logSyncError("syncNow", exception.message ?: "Unknown error")
                 }
 
             // Get debug info about audio files
@@ -281,6 +314,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 .onFailure { exception ->
                     _syncError.value = exception.message
                     AppLogger.e(TAG, "Full resync failed", exception)
+                    CriticalLog.logSyncError("fullResync", exception.message ?: "Unknown error")
                 }
 
             // Get debug info about audio files

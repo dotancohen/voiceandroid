@@ -50,6 +50,7 @@ import kotlinx.coroutines.delay
  * - Compact waveform display that doubles as a seek bar
  * - Play/pause button
  * - Skip back 3s button
+ * - Playback speed slider and presets under the waveform
  * - Time display
  *
  * @param filePath Path to the audio file
@@ -143,6 +144,13 @@ fun CompactAudioPlayer(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(48.dp)
+        )
+
+        // Playback speed, right under the waveform
+        PlaybackSpeedControl(
+            speed = playbackState.playbackSpeed,
+            onSpeedChange = { localPlayerManager.setPlaybackSpeed(it) },
+            compact = true
         )
 
         // Controls row

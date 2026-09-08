@@ -8,6 +8,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import uniffi.voicecore.VoiceClient
 import uniffi.voicecore.VoiceCoreException
+import uniffi.voicecore.ConflictData
+import uniffi.voicecore.VersionData
 import uniffi.voicecore.SyncServerConfig as UniFFISyncServerConfig
 import uniffi.voicecore.NoteData as UniFFINoteData
 import uniffi.voicecore.SyncResultData as UniFFISyncResultData
@@ -226,7 +228,8 @@ class VoiceRepository(private val context: Context) {
                 success = result.success,
                 notesReceived = result.notesReceived,
                 notesSent = result.notesSent,
-                errorMessage = result.errorMessage
+                errorMessage = result.errorMessage,
+                warnings = result.warnings
             ))
         } catch (e: VoiceCoreException) {
             AppLogger.e(TAG, "Sync failed", e)
@@ -282,7 +285,8 @@ class VoiceRepository(private val context: Context) {
                 success = result.success,
                 notesReceived = result.notesReceived,
                 notesSent = result.notesSent,
-                errorMessage = result.errorMessage
+                errorMessage = result.errorMessage,
+                warnings = result.warnings
             ))
         } catch (e: VoiceCoreException) {
             AppLogger.e(TAG, "Initial sync failed", e)
@@ -435,7 +439,9 @@ class VoiceRepository(private val context: Context) {
                     summary = data.summary,
                     deviceId = data.deviceId,
                     modifiedAt = data.modifiedAt,
-                    deletedAt = data.deletedAt
+                    deletedAt = data.deletedAt,
+                    storageProvider = data.storageProvider,
+                    storageKey = data.storageKey
                 )
             }
             Result.success(audioFiles)
@@ -461,7 +467,9 @@ class VoiceRepository(private val context: Context) {
                     summary = data.summary,
                     deviceId = data.deviceId,
                     modifiedAt = data.modifiedAt,
-                    deletedAt = data.deletedAt
+                    deletedAt = data.deletedAt,
+                    storageProvider = data.storageProvider,
+                    storageKey = data.storageKey
                 )
             }
             Result.success(audioFile)
@@ -501,7 +509,9 @@ class VoiceRepository(private val context: Context) {
                     summary = data.summary,
                     deviceId = data.deviceId,
                     modifiedAt = data.modifiedAt,
-                    deletedAt = data.deletedAt
+                    deletedAt = data.deletedAt,
+                    storageProvider = data.storageProvider,
+                    storageKey = data.storageKey
                 )
             }
             Result.success(audioFiles)
@@ -631,6 +641,46 @@ class VoiceRepository(private val context: Context) {
         try {
             val voiceClient = ensureInitialized()
             Result.success(voiceClient.updateTranscriptionState(transcriptionId, state))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Create a transcription record (on-device transcription writes a
+     * "Pending..." row first, then the result). Returns the transcription id.
+     */
+    suspend fun createTranscription(
+        audioFileId: String,
+        content: String,
+        service: String,
+        serviceArguments: String?,
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.createTranscription(audioFileId, content, null, service, serviceArguments, null))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Store a finished (or failed) transcription: text, segments JSON and the
+     * service response, the same fields the desktop fills in.
+     */
+    suspend fun updateTranscriptionResult(
+        transcriptionId: String,
+        content: String,
+        contentSegments: String?,
+        serviceResponse: String?,
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.updateTranscriptionResult(transcriptionId, content, contentSegments, serviceResponse))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -979,6 +1029,122 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
+    /**
+     * Every unresolved conflict that concerns a note: its content, deletion,
+     * tag links, attachments and their transcriptions. Each entry names the
+     * two devices that disagreed.
+     */
+    suspend fun getNoteConflicts(noteId: String): Result<List<ConflictData>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getNoteConflicts(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Accept the merged values of every conflict on a note as they stand.
+     * The acceptance is a new version and reaches every peer on the next sync.
+     * Returns how many conflicts were accepted.
+     */
+    suspend fun acceptNoteConflicts(noteId: String): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.acceptNoteConflicts(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Every version of a note's content, oldest first.
+     */
+    suspend fun getNoteHistory(noteId: String): Result<List<VersionData>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getFieldHistory("note", noteId, "content"))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * One version by id (the sides of a conflict, for example).
+     */
+    suspend fun getVersion(versionId: String): Result<VersionData?> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getVersion(versionId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Resolve a conflict by writing a new value for its field. Syncs to every peer.
+     */
+    suspend fun resolveConflictWithContent(conflictId: String, content: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.resolveConflictWithContent(conflictId, content))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Number of unresolved conflicts in the whole database.
+     */
+    suspend fun getUnresolvedConflictCount(): Result<Long> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getUnresolvedConflictCount())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * A synced setting shared by every device (e.g. transcription.preferred_languages), or null.
+     */
+    suspend fun getSetting(key: String): Result<String?> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getSetting(key))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Set a synced setting. Concurrent changes on two devices are merged and flagged.
+     */
+    suspend fun setSetting(key: String, value: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.setSetting(key, value))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     // =========================================================================
     // Audio Import Methods
     // =========================================================================
@@ -1060,6 +1226,244 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
+    // =========================================================================
+    // File Storage Configuration Methods
+    // =========================================================================
+
+    /**
+     * Get the current file storage configuration as JSON.
+     * Returns null if no configuration is set.
+     */
+    suspend fun getFileStorageConfig(): Result<String?> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getFileStorageConfig())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Set the file storage configuration.
+     *
+     * @param provider The storage provider name (e.g., "s3", "none")
+     * @param config Provider-specific configuration as JSON, or null to disable
+     */
+    suspend fun setFileStorageConfig(provider: String, config: String? = null): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            voiceClient.setFileStorageConfig(provider, config)
+            Result.success(Unit)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Get the current file storage provider name.
+     * Returns "none" if no provider is configured.
+     */
+    suspend fun getFileStorageProvider(): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getFileStorageProvider())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Check if file storage is enabled (provider is not "none").
+     */
+    suspend fun isFileStorageEnabled(): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.isFileStorageEnabled())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Update the storage info for an audio file after successful cloud upload.
+     *
+     * @param audioFileId The ID of the audio file
+     * @param storageProvider The provider name (e.g., "s3")
+     * @param storageKey The key/path in cloud storage
+     * @return True if the audio file was found and updated
+     */
+    suspend fun updateAudioFileStorage(
+        audioFileId: String,
+        storageProvider: String,
+        storageKey: String
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.updateAudioFileStorage(audioFileId, storageProvider, storageKey))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Clear the storage info for an audio file (marks it as pending upload again).
+     *
+     * @param audioFileId The ID of the audio file
+     * @return True if the audio file was found and updated
+     */
+    suspend fun clearAudioFileStorage(audioFileId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.clearAudioFileStorage(audioFileId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // =========================================================================
+    // Sync Configuration Methods
+    // =========================================================================
+
+    /**
+     * Get the maximum sync file size in MB.
+     * Files larger than this will be tagged as _system/_nonsynced/_too-big.
+     */
+    suspend fun getMaxSyncFileSizeMb(): Result<UInt> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getMaxSyncFileSizeMb())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Set the maximum sync file size in MB.
+     * Files larger than this will be tagged as _system/_nonsynced/_too-big.
+     *
+     * @param sizeMb The maximum file size in MB (e.g., 100 for 100MB)
+     */
+    suspend fun setMaxSyncFileSizeMb(sizeMb: UInt): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            voiceClient.setMaxSyncFileSizeMb(sizeMb)
+            Result.success(Unit)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // =========================================================================
+    // Cloud Storage Download Methods
+    // =========================================================================
+
+    private fun uniffi.voicecore.DownloadResultData.toModel() = DownloadResult(
+        downloaded = downloaded,
+        alreadyLocal = alreadyLocal,
+        notInCloud = notInCloud,
+        failed = failed,
+        errors = errors
+    )
+
+    /**
+     * Download every audio file of a note that is in cloud storage but not on
+     * this device. This is the on-demand "media missing, download" action.
+     *
+     * Fails (Result.failure) when the cloud configuration has not arrived via
+     * sync yet, when offline, or when an object is missing in the bucket.
+     */
+    suspend fun downloadAudioFilesForNote(noteId: String): Result<DownloadResult> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.downloadAudioFilesForNote(noteId).toModel())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Download a single audio file on demand.
+     */
+    suspend fun downloadAudioFile(audioFileId: String): Result<DownloadResult> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.downloadAudioFile(audioFileId).toModel())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Download every audio file that is in cloud storage but not on this device.
+     * Only for explicit "fetch everything" actions; sync never does this on Android.
+     *
+     * @return DownloadResult with count of downloaded files and any errors
+     */
+    suspend fun downloadMissingAudioFiles(): Result<DownloadResult> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.downloadMissingAudioFiles().toModel())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Check if an audio file exists locally on disk.
+     *
+     * @param audioFileId The audio file ID
+     * @return True if the file exists locally
+     */
+    suspend fun audioFileExistsLocally(audioFileId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.audioFileExistsLocally(audioFileId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Check if an audio file is available in cloud storage.
+     *
+     * @param audioFileId The audio file ID
+     * @return True if the file has been uploaded to cloud storage
+     */
+    suspend fun audioFileInCloud(audioFileId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.audioFileInCloud(audioFileId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /**
      * Close the client and release resources.
      */
@@ -1114,3 +1518,29 @@ data class ImportAudioResult(
     /** The ID of the created audio file record */
     val audioFileId: String
 )
+
+/**
+ * Result of downloading audio files from cloud storage.
+ */
+data class DownloadResult(
+    /** Number of files successfully downloaded and verified */
+    val downloaded: Int,
+    /** Number of files that were already on this device */
+    val alreadyLocal: Int = 0,
+    /** Number of files whose owning device has not uploaded them yet */
+    val notInCloud: Int = 0,
+    /** Number of downloads that failed */
+    val failed: Int = 0,
+    /** Error messages for any failed downloads */
+    val errors: List<String>
+) {
+    /** One-line human description of the outcome. */
+    fun describe(): String {
+        val parts = mutableListOf<String>()
+        if (downloaded > 0) parts.add("downloaded $downloaded")
+        if (alreadyLocal > 0) parts.add("$alreadyLocal already on this device")
+        if (notInCloud > 0) parts.add("$notInCloud not uploaded by their device yet")
+        if (failed > 0) parts.add("$failed failed")
+        return if (parts.isEmpty()) "nothing to download" else parts.joinToString(", ")
+    }
+}
