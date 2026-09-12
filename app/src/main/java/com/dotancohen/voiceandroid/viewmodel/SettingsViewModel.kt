@@ -239,6 +239,25 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         return repository.generateDeviceId()
     }
 
+    /** The outcome of the last join in one sentence, or null. */
+    private val _joinMessage = MutableStateFlow<String?>(null)
+    val joinMessage: StateFlow<String?> = _joinMessage.asStateFlow()
+
+    /** Join an account from a setup text pasted or scanned (PAIR-4). */
+    fun join(setupText: String) {
+        viewModelScope.launch {
+            _joinMessage.value = null
+            repository.join(setupText.trim())
+                .onSuccess { joined ->
+                    _joinMessage.value = "Joined account ${joined.accountId.take(8)} through ${joined.peerName}. Press Sync."
+                    _serverUrl.value = joined.peerUrl
+                    _serverPeerId.value = joined.peerId
+                    prefs.edit().putString("server_url", joined.peerUrl).putString("server_peer_id", joined.peerId).apply()
+                }
+                .onFailure { _joinMessage.value = "Could not join: ${it.message}" }
+        }
+    }
+
     /** Upload every recording the bucket does not hold yet. */
     fun upload() {
         if (_isUploading.value) return

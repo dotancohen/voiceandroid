@@ -55,6 +55,7 @@ fun SyncSettingsScreen(
     val deviceName by viewModel.deviceName.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
+    val joinMessage by viewModel.joinMessage.collectAsState()
     val uploadMessage by viewModel.uploadMessage.collectAsState()
     val syncResult by viewModel.syncResult.collectAsState()
     val syncError by viewModel.syncError.collectAsState()
@@ -281,6 +282,26 @@ fun SyncSettingsScreen(
                                 Text(if (hasUnsyncedChanges) "Sync (changes pending)" else "Sync")
                             }
                         }
+                    }
+
+                    // Join an account from a setup text shown by another device
+                    var setupText by remember { mutableStateOf("") }
+                    OutlinedTextField(
+                        value = setupText,
+                        onValueChange = { setupText = it },
+                        label = { Text("Setup text from another device") },
+                        placeholder = { Text("voice://pair?...") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedButton(
+                        onClick = { viewModel.join(setupText) },
+                        enabled = setupText.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Join account")
+                    }
+                    joinMessage?.let { message ->
+                        Text(text = message, color = MaterialTheme.colorScheme.primary)
                     }
 
                     // Upload button: recordings to the bucket, never part of a sync

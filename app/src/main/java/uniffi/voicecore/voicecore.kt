@@ -922,6 +922,12 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1069,6 +1075,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_join(`ptr`: Pointer,`setupText`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_list_devices(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_list_snapshots(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -1079,6 +1087,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_move_to_account(`ptr`: Pointer,`accountId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_offer_code(`ptr`: Pointer,`urls`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_purge_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_rebuild_all_caches_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1151,6 +1161,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_upload(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_withdraw_code(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_voicecore_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -1389,6 +1401,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_join(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_list_devices(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_list_snapshots(
@@ -1398,6 +1412,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_merge_notes(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_move_to_account(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_offer_code(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_purge_note(
     ): Short
@@ -1470,6 +1486,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_update_transcription_state(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_upload(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_withdraw_code(
     ): Short
     fun uniffi_voicecore_checksum_constructor_voiceclient_new(
     ): Short
@@ -1676,6 +1694,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_sync_configured() != 19345.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_join() != 27673.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_list_devices() != 22261.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1689,6 +1710,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_move_to_account() != 24734.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_offer_code() != 29742.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_purge_note() != 15686.toShort()) {
@@ -1797,6 +1821,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_upload() != 59683.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_withdraw_code() != 58304.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 26098.toShort()) {
@@ -2585,6 +2612,13 @@ public interface VoiceClientInterface {
     fun `isSyncConfigured`(): kotlin.Boolean
     
     /**
+     * Join an account from a setup text (PAIR-4): a scanned QR code or a
+     * pasted text. Refused before any network if this phone holds notes of
+     * another account.
+     */
+    fun `join`(`setupText`: kotlin.String): JoinedData
+    
+    /**
      * Every device of the account, by its card (CARD-1).
      */
     fun `listDevices`(): List<DeviceCardData>
@@ -2613,6 +2647,12 @@ public interface VoiceClientInterface {
      * peer is forgotten.
      */
     fun `moveToAccount`(`accountId`: kotlin.String)
+    
+    /**
+     * Show a code (PAIR-1): make a token and return the setup text. `urls`
+     * are where this phone listens.
+     */
+    fun `offerCode`(`urls`: List<kotlin.String>): kotlin.String
     
     /**
      * Empty one note out of the trash for good.
@@ -2874,6 +2914,11 @@ public interface VoiceClientInterface {
      * Runs only when the user asks; a sync never uploads.
      */
     fun `upload`(): UploadResultData
+    
+    /**
+     * Hide the code: withdraw the offer.
+     */
+    fun `withdrawCode`()
     
     companion object
 }
@@ -4034,6 +4079,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Join an account from a setup text (PAIR-4): a scanned QR code or a
+     * pasted text. Refused before any network if this phone holds notes of
+     * another account.
+     */
+    @Throws(VoiceCoreException::class)override fun `join`(`setupText`: kotlin.String): JoinedData {
+            return FfiConverterTypeJoinedData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_join(
+        it, FfiConverterString.lower(`setupText`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Every device of the account, by its card (CARD-1).
      */
     @Throws(VoiceCoreException::class)override fun `listDevices`(): List<DeviceCardData> {
@@ -4114,6 +4177,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 }
     }
     
+    
+
+    
+    /**
+     * Show a code (PAIR-1): make a token and return the setup text. `urls`
+     * are where this phone listens.
+     */
+    @Throws(VoiceCoreException::class)override fun `offerCode`(`urls`: List<kotlin.String>): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_offer_code(
+        it, FfiConverterSequenceString.lower(`urls`),_status)
+}
+    }
+    )
+    }
     
 
     
@@ -4761,6 +4841,21 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     
 
     
+    /**
+     * Hide the code: withdraw the offer.
+     */
+    @Throws(VoiceCoreException::class)override fun `withdrawCode`()
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_withdraw_code(
+        it, _status)
+}
+    }
+    
+    
+
+    
 
     
     
@@ -5143,6 +5238,49 @@ public object FfiConverterTypeImportAudioResultData: FfiConverterRustBuffer<Impo
     override fun write(value: ImportAudioResultData, buf: ByteBuffer) {
             FfiConverterString.write(value.`noteId`, buf)
             FfiConverterString.write(value.`audioFileId`, buf)
+    }
+}
+
+
+
+/**
+ * What a successful join gives back
+ */
+data class JoinedData (
+    var `accountId`: kotlin.String, 
+    var `peerId`: kotlin.String, 
+    var `peerName`: kotlin.String, 
+    var `peerUrl`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeJoinedData: FfiConverterRustBuffer<JoinedData> {
+    override fun read(buf: ByteBuffer): JoinedData {
+        return JoinedData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: JoinedData) = (
+            FfiConverterString.allocationSize(value.`accountId`) +
+            FfiConverterString.allocationSize(value.`peerId`) +
+            FfiConverterString.allocationSize(value.`peerName`) +
+            FfiConverterString.allocationSize(value.`peerUrl`)
+    )
+
+    override fun write(value: JoinedData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`accountId`, buf)
+            FfiConverterString.write(value.`peerId`, buf)
+            FfiConverterString.write(value.`peerName`, buf)
+            FfiConverterString.write(value.`peerUrl`, buf)
     }
 }
 

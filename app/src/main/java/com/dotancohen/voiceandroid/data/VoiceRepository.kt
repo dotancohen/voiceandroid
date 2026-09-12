@@ -317,6 +317,42 @@ class VoiceRepository(private val context: Context) {
     /**
      * Get the current device ID.
      */
+    /** Join an account from a setup text: a scanned code or a pasted text. */
+    suspend fun join(setupText: String): Result<Joined> = withContext(Dispatchers.IO) {
+        try {
+            val joined = ensureInitialized().join(setupText)
+            AppLogger.i(TAG, "Joined account ${joined.accountId.take(8)} through ${joined.peerName}")
+            Result.success(Joined(joined.accountId, joined.peerId, joined.peerName, joined.peerUrl))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Show a code for another device to join this phone's account. */
+    suspend fun offerCode(urls: List<String>): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().offerCode(urls))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Withdraw the code. */
+    suspend fun withdrawCode(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            ensureInitialized().withdrawCode()
+            Result.success(Unit)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /** The account this phone's database belongs to: 32 hex characters. */
     suspend fun getAccountId(): Result<String> = withContext(Dispatchers.IO) {
         try {
@@ -1870,6 +1906,9 @@ data class ImportAudioResult(
     /** The ID of the created audio file record */
     val audioFileId: String
 )
+
+/** What a successful join gives back. */
+data class Joined(val accountId: String, val peerId: String, val peerName: String, val peerUrl: String)
 
 /**
  * One snapshot of the database, as listed by [VoiceRepository.listSnapshots].
