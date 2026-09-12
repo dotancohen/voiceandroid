@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+#
+# Copy everything the Voice app holds on the phone to this computer, and prove
+# the copy is good before anything is allowed to touch the phone.
+#
+# This exists because on 2026-09-12 a Gradle instrumented-test run replaced the
+# app on the phone; Android deletes an app's private *and* external data when the
+# app is replaced, and a week of recordings and notes was destroyed. There was no
+# backup.
+#
+# What is copied:
+#   /data/data/<package>/files              the database, the config, the log
+#   /storage/emulated/0/Android/data/<package>/files   the recordings
+#
+# Both are deleted by an uninstall, so both are copied. The app must be a debug
+# build (run-as needs it). Exits non-zero if anything is missing or the archive
+# does not verify — so it can be used as a gate:
+#
+#   tools/voice-phone-backup && <the command that might destroy data>
+#
+set -euo pipefail
+
+PACKAGE=${VOICE_PACKAGE:-com.dotancohen.voiceandroid}
+WHERE=${1:-$HOME/voice-phone-backups}
+STAMP=$(date +%Y-%m-%d-%H%M%S)
+OUT="$WHERE/$PACKAGE-$STAMP"
+
+say() { printf '%s\n' "$*"; }
+die() { printf 'BACKUP FAILED: %s\n' "$*" >&2; exit 1; }
+
+command -v adb >/dev/null || die "adb is not installed"
+devices=$(adb devices | awk 'NR>1 && $2=="device" {print $1}')
+[ -n "$devices" ] || die "no phone is connected (adb devices is empty)"
+[ "$(printf '%s\n' "$devices" | wc -l)" -eq 1 ] || die "more than one device is connected; unplug one"
+
+adb shell "pm list packages $PACKAGE" | grep -q "$PACKAGE" || die "$PACKAGE is not installed on the phone"
+adb shell "run-as $PACKAGE true" >/dev/null 2>&1 || die "$PACKAGE is not debuggable, so its private data cannot be read"
+
+mkdir -p "$OUT"
+say "Backing up $PACKAGE to $OUT"
+
+# --- the private data: database, config, log -------------------------------
+# Piped through run-as and tar, because adb pull cannot read a private directory.
+say "  private data (database, configuration, log)"
+adb exec-out "run-as $PACKAGE tar -cf - -C /data/data/$PACKAGE files" > "$OUT/private-files.tar" \
+  || die "could not read the private data"
+
+# --- the recordings -------------------------------------------------------
+AUDIO="/storage/emulated/0/Android/data/$PACKAGE/files"
+say "  recordings"
+if adb shell "[ -d '$AUDIO' ]" ; then
+    adb exec-out "tar -cf - -C $(dirname "$AUDIO") $(basename "$AUDIO")" > "$OUT/external-files.tar" \
+      || die "could not read the recordings"
+else
+    say "    (no external files directory on the phone)"
+    : > "$OUT/external-files.tar"
+fi
+
+# --- prove it ------------------------------------------------------------
+say "Verifying"
+for archive in "$OUT"/private-files.tar "$OUT"/external-files.tar; do
+    tar -tf "$archive" >/dev/null 2>&1 || die "$archive is not a readable archive"
+done
+
+DB_ENTRY=$(tar -tf "$OUT/private-files.tar" | grep -c 'files/notes\.db$' || true)
+[ "$DB_ENTRY" -ge 1 ] || die "the database is not in the archive"
+
+# The database is worth nothing without its write-ahead log: a large -wal and a
+# small notes.db is the normal state, and the notes live in the -wal.
+WAL=$(tar -tf "$OUT/private-files.tar" | grep -c 'files/notes\.db-wal$' || true)
+[ "$WAL" -ge 1 ] || say "    note: no notes.db-wal in the archive (the app may have checkpointed it)"
+
+RECORDINGS=$(tar -tf "$OUT/external-files.tar" | grep -cE '\.(opus|m4a|wav|mp3|ogg)$' || true)
+PRIVATE_BYTES=$(stat -c %s "$OUT/private-files.tar")
+EXTERNAL_BYTES=$(stat -c %s "$OUT/external-files.tar")
+
+cat > "$OUT/what-is-in-here.txt" <<EOF
+Voice backup from the phone
+  taken          $(date --iso-8601=seconds)
+  package        $PACKAGE
+  device         $devices
+  private data   $PRIVATE_BYTES bytes (database, configuration, log)
+  recordings     $EXTERNAL_BYTES bytes, $RECORDINGS audio file(s)
+
+To restore, with the app installed and stopped:
+  adb exec-out run-as $PACKAGE tar -xf - -C /data/data/$PACKAGE < private-files.tar
+  adb push --sync <extracted external files> /storage/emulated/0/Android/data/$PACKAGE/
+EOF
+
+say ""
+cat "$OUT/what-is-in-here.txt"
+say "Backup verified."
