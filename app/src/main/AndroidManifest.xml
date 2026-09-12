@@ -8,7 +8,12 @@
     <!-- On-device transcription runs as a foreground service with a progress notification -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROCESSING" />
+    <!-- Recording carries on when the user leaves the app or locks the phone -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <!-- The recording being listened to stays in the notification drawer, and
+         the process is not killed while it plays with the screen off -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Internet permission for sync -->
@@ -34,6 +39,22 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.VoiceAndroid">
 
+        <!--
+          Sharing a recording hands the other application a content:// URI
+          for that one file, granted for that one action. A plain file://
+          path is refused by Android and would take the application down.
+        -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.shared"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/shared_files" />
+        </provider>
+
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -45,10 +66,34 @@
             </intent-filter>
         </activity>
 
-        <!-- Whisper running on the phone; stops itself when the queue is empty -->
+        <!-- Holds the microphone while the user is elsewhere. It keeps
+             recording when the app is swiped out of the recent-apps list:
+             the recording is stopped from its notification or by returning
+             to the app, never by the phone tidying up. -->
+        <service
+            android:name=".audio.RecordingService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="microphone" />
+
+        <!-- The recording being listened to, in the notification drawer, with
+             Pause, Stop, and a tap that opens its note. stopWithTask="false"
+             so swiping the app out of the recent-apps list does not cut off a
+             recording that is still playing; Stop on the notification does. -->
+        <service
+            android:name=".audio.PlaybackService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <!-- Whisper running on the phone; stops itself when the queue is empty.
+             stopWithTask="false" keeps it transcribing after the app is swiped
+             out of the recent-apps list: the notification stays in the shade,
+             with a Stop button, until the queue is empty. -->
         <service
             android:name=".transcription.TranscriptionService"
             android:exported="false"
+            android:stopWithTask="false"
             android:foregroundServiceType="mediaProcessing|dataSync" />
     </application>
 

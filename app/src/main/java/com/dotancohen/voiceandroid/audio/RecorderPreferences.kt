@@ -1,6 +1,8 @@
 package com.dotancohen.voiceandroid.audio
 
 import android.content.Context
+import android.content.SharedPreferences
+import com.dotancohen.voiceandroid.util.UiPreferences
 import android.media.AudioDeviceInfo
 import android.media.AudioManager
 
@@ -9,14 +11,60 @@ import android.media.AudioManager
  * record with, the friendly names the user gave the microphones, and what
  * the toolbar "New" button does by default.
  */
-class RecorderPreferences(context: Context) {
-    private val prefs = context.getSharedPreferences("voice_settings", Context.MODE_PRIVATE)
-    private val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+class RecorderPreferences internal constructor(
+    private val prefs: SharedPreferences,
+    /** Null when there is no phone to ask, as in a test of the settings alone. */
+    private val audioManager: AudioManager?,
+) {
+    constructor(context: Context) : this(
+        context.getSharedPreferences(UiPreferences.SETTINGS_FILE, Context.MODE_PRIVATE),
+        context.getSystemService(Context.AUDIO_SERVICE) as AudioManager,
+    )
 
     /** "note" or "recording" */
     var defaultNewAction: String
         get() = prefs.getString(KEY_DEFAULT_NEW_ACTION, ACTION_NOTE) ?: ACTION_NOTE
         set(value) = prefs.edit().putString(KEY_DEFAULT_NEW_ACTION, value).apply()
+
+    /**
+     * What the **+** inside a note adds when it is tapped rather than held.
+     *
+     * It follows the same setting as the New button on the notes list, so
+     * the two behave alike; "a new note" has no meaning inside a note, so
+     * that answer means a voice recording here. Holding the button offers
+     * every kind, and there will be more of them (images, video).
+     */
+    val defaultAttachmentKind: String
+        get() = when (defaultNewAction) {
+            ACTION_RECORDING -> ATTACHMENT_RECORDING
+            else -> ATTACHMENT_RECORDING
+        }
+
+    /** Start recording the moment a new voice note opens its recorder. */
+    var startRecordingImmediately: Boolean
+        get() = prefs.getBoolean(KEY_START_IMMEDIATELY, false)
+        set(value) = prefs.edit().putBoolean(KEY_START_IMMEDIATELY, value).apply()
+
+    /**
+     * What a recording does while a telephone call is in progress, since
+     * Android gives the microphone to the telephone and leaves us silence:
+     * [CALL_SILENCE] keeps that silence in the recording, [CALL_PAUSE] stops
+     * until the call is over and then carries on.
+     */
+    /**
+     * Whether a recording is queued for transcription the moment it is saved.
+     *
+     * Still being tried out, so the setting is only offered in a debug build.
+     * A recording made where there is no model downloaded simply stays as it
+     * is: the queue reports that and nothing is lost.
+     */
+    var transcribeWhenSaved: Boolean
+        get() = prefs.getBoolean(KEY_TRANSCRIBE_WHEN_SAVED, false)
+        set(value) = prefs.edit().putBoolean(KEY_TRANSCRIBE_WHEN_SAVED, value).apply()
+
+    var duringCall: String
+        get() = prefs.getString(KEY_DURING_CALL, CALL_PAUSE)?.takeIf { it in CALL_BEHAVIOURS } ?: CALL_PAUSE
+        set(value) = prefs.edit().putString(KEY_DURING_CALL, value.takeIf { it in CALL_BEHAVIOURS } ?: CALL_PAUSE).apply()
 
     /** One of [FORMAT_OPUS], [FORMAT_AAC], [FORMAT_WAV16]. */
     var recordingFormat: String
@@ -37,7 +85,7 @@ class RecorderPreferences(context: Context) {
 
     /** Every microphone the phone reports right now. */
     fun microphones(): List<AudioDeviceInfo> =
-        audioManager.getDevices(AudioManager.GET_DEVICES_INPUTS).filter { it.isSource }.toList()
+        audioManager?.getDevices(AudioManager.GET_DEVICES_INPUTS)?.filter { it.isSource }.orEmpty()
 
     /** The selected microphone if it is still present, else null (system default). */
     fun selectedMic(): AudioDeviceInfo? {
@@ -46,10 +94,38 @@ class RecorderPreferences(context: Context) {
     }
 
     companion object {
+        /** A voice recording made here and now. */
+        const val ATTACHMENT_RECORDING = "recording"
+        /**
+         * Everything the **+** inside a note can add, in the order it is
+         * offered. Images and video will join this list; each needs a title,
+         * an icon and a branch in `NoteDetailScreen`.
+         */
+        val ATTACHMENT_KINDS = listOf(ATTACHMENT_RECORDING)
+
+        fun attachmentKindTitle(kind: String): String = when (kind) {
+            ATTACHMENT_RECORDING -> "Voice recording"
+            else -> kind
+        }
+
         const val ACTION_NOTE = "note"
         const val ACTION_RECORDING = "recording"
         private const val KEY_DEFAULT_NEW_ACTION = "default_new_action"
         private const val KEY_FORMAT = "recording_format"
+        private const val KEY_START_IMMEDIATELY = "start_recording_immediately"
+        private const val KEY_DURING_CALL = "recording_during_call"
+        private const val KEY_TRANSCRIBE_WHEN_SAVED = "transcribe_when_saved"
+
+        /** Keep recording through a call, silence and all. */
+        const val CALL_SILENCE = "silence"
+        /** Stop while the call lasts and carry on afterwards. */
+        const val CALL_PAUSE = "pause"
+        val CALL_BEHAVIOURS = listOf(CALL_PAUSE, CALL_SILENCE)
+
+        fun callBehaviourTitle(behaviour: String): String = when (behaviour) {
+            CALL_SILENCE -> "Keep recording (the call is recorded as silence)"
+            else -> "Pause, and carry on when the call ends"
+        }
 
         /** Opus 128 kb/s at 48 kHz in an Ogg container (.ogg). */
         const val FORMAT_OPUS = "opus"

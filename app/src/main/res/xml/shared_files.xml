@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The directories a recording may be shared out of.
+
+  Sharing hands another application a content:// URI for one file, granted for
+  that one action only. Recordings live wherever the user chose to keep them,
+  which is why the whole of external storage is listed as well as the app's
+  own directories.
+-->
+<paths>
+    <external-path name="external" path="." />
+    <external-files-path name="external_files" path="." />
+    <files-path name="files" path="." />
+    <cache-path name="cache" path="." />
+    <root-path name="root" path="/" />
+</paths>
