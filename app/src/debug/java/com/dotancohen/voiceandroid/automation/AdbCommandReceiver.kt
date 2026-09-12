@@ -12,6 +12,7 @@ import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.transcription.OnDeviceTranscriber
 import com.dotancohen.voiceandroid.transcription.TranscriptionPreferences
 import com.dotancohen.voiceandroid.transcription.WhisperModels
+import com.dotancohen.voiceandroid.util.format
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -108,7 +109,10 @@ class AdbCommandReceiver : BroadcastReceiver() {
                 val note = findNote(repo, intent.need("note"))
                 val versions = repo.getNoteHistory(note.id).getOrThrow()
                 for (v in versions) {
-                    Log.i(TAG, "VERSION " + JSONObject().put("id", v.id).put("created_at", v.createdAt)
+                    Log.i(TAG, "VERSION " + JSONObject().put("id", v.id)
+                        .put("created_at", v.createdAt.format(context))
+                        .put("created_at_offset", v.createdAt.offset ?: JSONObject.NULL)
+                        .put("created_at_zone", v.createdAt.zone ?: JSONObject.NULL)
                         .put("device", v.deviceLabel).put("kind", if (v.mergeParentId != null) "merge" else if (v.parentId == null) "original" else "edit")
                         .put("conflict", v.conflictKind).put("current", v.content == note.content)
                         .put("first_line", v.content.lineSequence().firstOrNull() ?: "").toString())
@@ -212,8 +216,17 @@ class AdbCommandReceiver : BroadcastReceiver() {
                 for (audio in repo.getAudioFilesForNote(note.id).getOrThrow().filter { it.deletedAt == null }) {
                     for (t in repo.getTranscriptionsForAudioFile(audio.id).getOrThrow()) {
                         count++
+                        // The settings the row was made with are stored as JSON;
+                        // language and model are the two that explain a result
+                        val args = t.serviceArguments?.let { runCatching { JSONObject(it) }.getOrNull() }
                         Log.i(TAG, "TRANSCRIPTION " + JSONObject().put("id", t.id).put("audio_id", audio.id).put("filename", audio.filename)
-                            .put("service", t.service).put("state", t.state).put("created_at", t.createdAt)
+                            .put("service", t.service)
+                            .put("language", args?.opt("language") ?: JSONObject.NULL)
+                            .put("model", args?.opt("model") ?: JSONObject.NULL)
+                            .put("state", t.state)
+                            .put("created_at", t.createdAt.format(context))
+                            .put("created_at_offset", t.createdAt.offset ?: JSONObject.NULL)
+                            .put("created_at_zone", t.createdAt.zone ?: JSONObject.NULL)
                             .put("has_segments", t.contentSegments != null).put("service_response", t.serviceResponse ?: JSONObject.NULL)
                             .put("content", t.content))
                     }
@@ -224,12 +237,14 @@ class AdbCommandReceiver : BroadcastReceiver() {
                 val note = findNote(repo, intent.need("note"))
                 val files = repo.getAudioFilesForNote(note.id).getOrThrow().filter { it.deletedAt == null }
                 if (files.isEmpty()) throw IllegalArgumentException("note has no audio file")
-                // --es file: 1-based position in the note, or part of the file name
+                // --es file: 1-based position in the note, part of the file
+                // name, or "all" for every recording of the note
                 val which = intent.arg("file")
-                val audio = when {
-                    which == null -> files.first()
-                    which.toIntOrNull() != null -> files.getOrNull(which.toInt() - 1) ?: throw IllegalArgumentException("note has only ${files.size} audio file(s)")
-                    else -> files.firstOrNull { it.filename.contains(which, ignoreCase = true) } ?: throw IllegalArgumentException("no audio file named like $which")
+                val chosen = when {
+                    which == null -> listOf(files.first())
+                    which.equals("all", ignoreCase = true) -> files
+                    which.toIntOrNull() != null -> listOf(files.getOrNull(which.toInt() - 1) ?: throw IllegalArgumentException("note has only ${files.size} audio file(s)"))
+                    else -> listOf(files.firstOrNull { it.filename.contains(which, ignoreCase = true) } ?: throw IllegalArgumentException("no audio file named like $which"))
                 }
                 // Android lets only an app with a visible activity start a
                 // foreground service, and it freezes a background app, which
@@ -237,9 +252,12 @@ class AdbCommandReceiver : BroadcastReceiver() {
                 // screen must be on and unlocked), then queue the work.
                 open(context, "note/${note.id}")
                 kotlinx.coroutines.delay(1500)
-                val problem = OnDeviceTranscriber.enqueue(context, audio.id, audio.filename, intent.arg("language"), intent.arg("model"))
-                if (problem != null) throw IllegalStateException(problem)
-                "queued audio=${audio.id} file=${audio.filename}"
+                // They run one at a time, in the order queued here
+                for (audio in chosen) {
+                    val problem = OnDeviceTranscriber.enqueue(context, audio.id, audio.filename, intent.arg("language"), intent.arg("model"))
+                    if (problem != null) throw IllegalStateException(problem)
+                }
+                "queued=${chosen.size} file=${chosen.joinToString(", ") { it.filename }}"
             }
             "LIST_MODELS" -> {
                 val prefs = TranscriptionPreferences(context)
@@ -269,6 +287,37 @@ class AdbCommandReceiver : BroadcastReceiver() {
                 intent.arg("beam_size")?.let { prefs.beamSize = it.toInt() }
                 "model=${prefs.modelId} language=${prefs.language} beam_size=${prefs.beamSize}"
             }
+            "MERGE_NOTES" -> {
+                // The oldest of them survives, exactly as the button does
+                val wanted = intent.need("notes").split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                if (wanted.size < 2) throw IllegalArgumentException("give at least two notes, separated by commas")
+                val notes = wanted.map { findNote(repo, it) }.sortedBy { it.createdAt.at }
+                var survivor = notes.first().id
+                for (other in notes.drop(1)) {
+                    survivor = repo.mergeNotes(survivor, other.id).getOrThrow()
+                }
+                "merged=${notes.size} survivor=$survivor"
+            }
+            "SET_RECORDER" -> {
+                val prefs = RecorderPreferences(context)
+                intent.arg("format")?.let {
+                    if (it !in RecorderPreferences.FORMATS) throw IllegalArgumentException("format must be opus, aac or wav16")
+                    prefs.recordingFormat = it
+                }
+                intent.arg("start_immediately")?.let { prefs.startRecordingImmediately = it.toBoolean() }
+                intent.arg("during_call")?.let {
+                    if (it !in RecorderPreferences.CALL_BEHAVIOURS) throw IllegalArgumentException("during_call must be pause or silence")
+                    prefs.duringCall = it
+                }
+                intent.arg("default_action")?.let {
+                    if (it != RecorderPreferences.ACTION_NOTE && it != RecorderPreferences.ACTION_RECORDING) {
+                        throw IllegalArgumentException("default_action must be note or recording")
+                    }
+                    prefs.defaultNewAction = it
+                }
+                "format=${prefs.recordingFormat} start_immediately=${prefs.startRecordingImmediately} " +
+                    "during_call=${prefs.duringCall} default_action=${prefs.defaultNewAction}"
+            }
             "SET_RECORDING_FORMAT" -> {
                 val f = intent.need("format")
                 if (f !in RecorderPreferences.FORMATS) throw IllegalArgumentException("format must be opus, aac or wav16")
@@ -276,19 +325,89 @@ class AdbCommandReceiver : BroadcastReceiver() {
                 "format=$f"
             }
 
+            "QUEUE" -> {
+                // The transcription queue as the screen shows it: one JSON line
+                // per row, in the three groups.
+                val queued = OnDeviceTranscriber.queued.value
+                val running = OnDeviceTranscriber.current.value
+                for ((index, job) in queued.withIndex()) {
+                    Log.i(TAG, "WAITING " + JSONObject().put("audio_file_id", job.audioFileId)
+                        .put("filename", job.filename).put("position", index + 1)
+                        .put("model", job.modelId).put("language", job.language)
+                        .put("audio_seconds", job.durationSeconds ?: JSONObject.NULL).toString())
+                }
+                running?.let { job ->
+                    Log.i(TAG, "PROCESSING " + JSONObject().put("audio_file_id", job.audioFileId)
+                        .put("filename", job.filename).put("stage", job.stage.name)
+                        .put("message", job.message).toString())
+                }
+                for (t in repo.getRecentTranscriptions(OnDeviceTranscriber.SERVICE_NAME, 20).getOrThrow()) {
+                    Log.i(TAG, "COMPLETED " + JSONObject().put("transcription_id", t.id)
+                        .put("audio_file_id", t.audioFileId)
+                        .put("characters", t.content.length)
+                        .put("service_response", t.serviceResponse ?: JSONObject.NULL).toString())
+                }
+                "waiting=${queued.size} processing=${if (running != null && running.stage < com.dotancohen.voiceandroid.transcription.TranscriptionStage.Done) 1 else 0}"
+            }
+            "QUEUE_NEXT" -> {
+                val audio = findAudioFile(repo, intent.need("recording"))
+                if (!OnDeviceTranscriber.doNext(audio.id)) {
+                    throw IllegalStateException("that recording is not waiting, or is already next")
+                }
+                "next=${audio.filename}"
+            }
+            "QUEUE_REMOVE" -> {
+                val audio = findAudioFile(repo, intent.need("recording"))
+                if (!OnDeviceTranscriber.remove(audio.id)) {
+                    throw IllegalStateException("that recording is not waiting")
+                }
+                "removed=${audio.filename}"
+            }
+            "MISSING_DATA" -> {
+                // What is missing, changing nothing. One JSON line per gap.
+                val store = com.dotancohen.voiceandroid.data.RepositoryMissingDataStore(repo)
+                val survey = com.dotancohen.voiceandroid.data.MissingData.survey(store)
+                for (gap in survey.gaps) {
+                    Log.i(TAG, "GAP " + JSONObject().put("key", gap.key)
+                        .put("count", gap.count).put("calculable", gap.calculable)
+                        .put("description", gap.description).toString())
+                }
+                "calculable=${survey.totalCalculable}"
+            }
+            "CALCULATE_MISSING_DATA" -> {
+                val store = com.dotancohen.voiceandroid.data.RepositoryMissingDataStore(repo)
+                val report = com.dotancohen.voiceandroid.data.MissingData.calculate(
+                    store,
+                    durations = intent.arg("durations") != "false",
+                    fileDates = intent.arg("dates") != "false",
+                    caches = intent.arg("caches") != "false",
+                    limit = intent.arg("limit")?.toIntOrNull(),
+                )
+                Log.i(TAG, "CALCULATED " + JSONObject(report.calculated as Map<*, *>).toString())
+                if (report.failed.isNotEmpty()) {
+                    Log.i(TAG, "FAILED " + JSONObject(report.failed as Map<*, *>).toString())
+                }
+                "calculated=${report.totalCalculated}"
+            }
             "OPEN_SCREEN" -> {
-                val route = when (intent.need("screen")) {
+                val screen = intent.need("screen")
+                // "recording" is no longer a screen of its own: recording
+                // happens inside a note, so this makes the note the New
+                // button would have made and opens it with its recorder.
+                val route = when (screen) {
                     "notes" -> "notes"; "settings" -> "settings"; "sync" -> "sync_settings"
                     "tags" -> "tag_hierarchy"; "import" -> "import_audio"
-                    "recorder" -> "recorder_settings"; "recording" -> "recording"
-                    "transcription" -> "transcription_settings"
-                    else -> throw IllegalArgumentException("screen must be notes, settings, sync, tags, import, recorder, recording or transcription")
+                    "recorder" -> "recorder_settings"
+                    "recording" -> "note/" + repo.createNote("").getOrThrow() + "?record=true"
+                    "transcription" -> "transcription_settings"; "advanced" -> "advanced_settings"
+                    "missing-data" -> "missing_data"
+                    else -> throw IllegalArgumentException("screen must be notes, settings, sync, tags, import, recorder, recording, transcription, advanced or missing-data")
                 }
                 open(context, route); "route=$route"
             }
             "OPEN_NOTE" -> {
                 val note = findNote(repo, intent.need("note"))
-                open(context, "note/${note.id}"); "route=note/${note.id}"
+                open(context, "note/${note.id}?record=false"); "route=note/${note.id}"
             }
             else -> throw IllegalArgumentException("unknown action $action")
         }
@@ -334,6 +453,20 @@ class AdbCommandReceiver : BroadcastReceiver() {
         val byText = notes.filter { (it.content.lineSequence().firstOrNull() ?: "") == ref }
         if (byText.size == 1) return byText[0]
         throw IllegalArgumentException(if (byText.isEmpty()) "no note with id prefix or first line '$ref'" else "${byText.size} notes have the first line '$ref'; use the id")
+    }
+
+    /** A recording by the first characters of its id, or by part of its name. */
+    private suspend fun findAudioFile(repo: VoiceRepository, ref: String): com.dotancohen.voiceandroid.data.AudioFile {
+        val recordings = repo.getAllAudioFiles().getOrThrow().filter { it.deletedAt == null }
+        val byId = recordings.filter { it.id.startsWith(ref.lowercase()) }
+        if (byId.size == 1) return byId[0]
+        if (byId.size > 1) throw IllegalArgumentException("recording prefix '$ref' matches ${byId.size} recordings")
+        val byName = recordings.filter { it.filename.contains(ref, ignoreCase = true) }
+        if (byName.size == 1) return byName[0]
+        throw IllegalArgumentException(
+            if (byName.isEmpty()) "no recording with id prefix or name like '$ref'"
+            else "${byName.size} recordings are named like '$ref'; use the id"
+        )
     }
 
     private suspend fun findTag(repo: VoiceRepository, ref: String): com.dotancohen.voiceandroid.data.Tag {

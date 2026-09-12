@@ -51,14 +51,19 @@ Audio and transcriptions
   import-audio <folder-on-phone>     e.g. /sdcard/VoiceTestStorage; prints IMPORTED [...] then OK imported=N
   download-media <note>              same as tapping Download on the note
   set-transcription-state <note> "<state>"   e.g. "original verified"
-  list-transcriptions <note>         one TRANSCRIPTION {...} line per transcription of the note's recordings
-  transcribe <note> [language] [file]  transcribe one recording of the note on the phone (language: he, en,
-                                     ar, ru, auto; file: 1, 2, ... or part of the file name; default the first);
+  list-transcriptions <note>         one TRANSCRIPTION {...} line per transcription of the note's recordings,
+                                     including the language and model each one was made with
+  transcribe <note> [language] [file]  transcribe recordings of the note on the phone (language: any ISO 639-1
+                                     code, e.g. he, en, ar, ru, es, el, or auto;
+                                     file: 1, 2, ..., part of a file name, or all; default the first);
+                                     several are queued and run one at a time;
                                      opens the note first: the screen must be on and unlocked
   list-models                        one MODEL {...} line per Whisper model: id, size, installed, selected
   download-model <model-id>          download a model (may take minutes; prints PROGRESS lines)
   set-transcription [model=<id>] [language=<code>] [beam_size=<n>]
   set-recording-format opus|aac|wav16
+  set-recorder [format=<f>] [start_immediately=true|false] [during_call=pause|silence] [default_action=note|recording]
+  merge-notes <note>,<note>[,...]    merge them into the oldest one, as the Merge button does
 
 Conflicts and settings
   list-conflicts                     one CONFLICT {...} line per unresolved conflict
@@ -67,8 +72,18 @@ Conflicts and settings
   get-setting <key>
   set-setting <key> <value>
 
+Transcription queue
+  queue                              WAITING/PROCESSING/COMPLETED {...} lines, as the queue screen shows them
+  queue-next <recording>             transcribe that recording next (id prefix or part of its name)
+  queue-remove <recording>           take that recording out of the queue
+
+Missing data (lengths, dates and caches that were never calculated)
+  missing-data                       one GAP {...} line per kind of missing data, changing nothing
+  calculate-missing-data [durations=false] [dates=false] [caches=false] [limit=<n>]
+                                     calculate what can be calculated; prints CALCULATED and FAILED lines
+
 Screens (open the app on a screen, for steps that must be done by hand)
-  open notes|settings|sync|tags|import|recorder|recording
+  open notes|settings|sync|tags|import|recorder|recording|transcription|advanced|missing-data
   open-note <note>
 
 Logs
@@ -76,10 +91,25 @@ Logs
 USAGE
 }
 
+# Everything after `adb shell` is joined into one line and taken apart again
+# by the shell on the phone, so a value with spaces in it (any sentence, in any
+# language) must be quoted for that second shell as well as for this one.
+quote_for_phone() {
+    printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
+}
+
 send() {
     local action="$1"; shift
+    local args=()
+    local argument
+    for argument in "$@"; do
+        case "$argument" in
+            --*) args+=("$argument") ;;
+            *) args+=("$(quote_for_phone "$argument")") ;;
+        esac
+    done
     adb logcat -c
-    adb shell am broadcast -n "$RECEIVER" -a "${PREFIX}${action}" "$@" >/dev/null
+    adb shell am broadcast -n "$RECEIVER" -a "${PREFIX}${action}" "${args[@]}" >/dev/null
     # Wait for the OK/ERROR line for this action
     local i=0 line=""
     while [ $i -lt $((TIMEOUT * 4)) ]; do
@@ -138,11 +168,24 @@ case "$cmd" in
         for kv in "$@"; do args+=(--es "${kv%%=*}" "${kv#*=}"); done
         send SET_TRANSCRIPTION "${args[@]}" ;;
     set-recording-format) send SET_RECORDING_FORMAT --es format "$1" ;;
+    set-recorder)
+        args=()
+        for kv in "$@"; do args+=(--es "${kv%%=*}" "${kv#*=}"); done
+        send SET_RECORDER "${args[@]}" ;;
+    merge-notes) send MERGE_NOTES --es notes "$1" ;;
     list-conflicts) send LIST_CONFLICTS ;;
     accept-conflicts) send ACCEPT_CONFLICTS --es note "$1" ;;
     resolve-conflict) send RESOLVE_CONFLICT --es conflict "$1" --es text "$2" ;;
     get-setting) send GET_SETTING --es key "$1" ;;
     set-setting) send SET_SETTING --es key "$1" --es value "$2" ;;
+    queue) send QUEUE ;;
+    queue-next) send QUEUE_NEXT --es recording "$1" ;;
+    queue-remove) send QUEUE_REMOVE --es recording "$1" ;;
+    missing-data) send MISSING_DATA ;;
+    calculate-missing-data)
+        args=()
+        for kv in "$@"; do args+=(--es "${kv%%=*}" "${kv#*=}"); done
+        TIMEOUT=${VOICE_ADB_TIMEOUT:-3600} send CALCULATE_MISSING_DATA "${args[@]}" ;;
     open) send OPEN_SCREEN --es screen "$1" ;;
     open-note) send OPEN_NOTE --es note "$1" ;;
     log) adb logcat -d -s VoiceAdb:I | sed -n 's/.*VoiceAdb: //p' | tail -40 ;;

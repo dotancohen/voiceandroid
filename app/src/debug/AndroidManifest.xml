@@ -42,6 +42,13 @@
                 <action android:name="com.dotancohen.voiceandroid.action.DOWNLOAD_MODEL" />
                 <action android:name="com.dotancohen.voiceandroid.action.SET_TRANSCRIPTION" />
                 <action android:name="com.dotancohen.voiceandroid.action.SET_RECORDING_FORMAT" />
+                <action android:name="com.dotancohen.voiceandroid.action.SET_RECORDER" />
+                <action android:name="com.dotancohen.voiceandroid.action.MERGE_NOTES" />
+                <action android:name="com.dotancohen.voiceandroid.action.QUEUE" />
+                <action android:name="com.dotancohen.voiceandroid.action.QUEUE_NEXT" />
+                <action android:name="com.dotancohen.voiceandroid.action.QUEUE_REMOVE" />
+                <action android:name="com.dotancohen.voiceandroid.action.MISSING_DATA" />
+                <action android:name="com.dotancohen.voiceandroid.action.CALCULATE_MISSING_DATA" />
                 <action android:name="com.dotancohen.voiceandroid.action.OPEN_SCREEN" />
                 <action android:name="com.dotancohen.voiceandroid.action.OPEN_NOTE" />
             </intent-filter>
