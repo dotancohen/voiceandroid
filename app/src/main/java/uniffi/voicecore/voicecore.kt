@@ -940,6 +940,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1108,6 +1110,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_offer_code(`ptr`: Pointer,`urls`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_operate(`ptr`: Pointer,`operation`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_pair_with(`ptr`: Pointer,`setupText`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_purge_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1447,6 +1451,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_operate(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_pair_with(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_purge_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_rebuild_all_caches_for_note(
@@ -1761,6 +1767,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_operate() != 28313.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_pair_with() != 32024.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_purge_note() != 15686.toShort()) {
@@ -2749,6 +2758,14 @@ public interface VoiceClientInterface {
      * send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
     fun `operate`(`operation`: kotlin.String): SyncResultData
+    
+    /**
+     * Use a setup text (Stage 9): a code shown by a device that holds the
+     * account joins this phone to it (PAIR-4); a grant text shown by a
+     * server that holds nothing gives that server this phone's account to
+     * host (PAIR-5). The text says which, in its `g` field.
+     */
+    fun `pairWith`(`setupText`: kotlin.String): JoinedData
     
     /**
      * Empty one note out of the trash for good.
@@ -4367,6 +4384,25 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Use a setup text (Stage 9): a code shown by a device that holds the
+     * account joins this phone to it (PAIR-4); a grant text shown by a
+     * server that holds nothing gives that server this phone's account to
+     * host (PAIR-5). The text says which, in its `g` field.
+     */
+    @Throws(VoiceCoreException::class)override fun `pairWith`(`setupText`: kotlin.String): JoinedData {
+            return FfiConverterTypeJoinedData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_pair_with(
+        it, FfiConverterString.lower(`setupText`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Empty one note out of the trash for good.
      *
      * Returns the ids of the recordings that went with it, so the app can
@@ -5451,7 +5487,12 @@ data class JoinedData (
     var `accountId`: kotlin.String, 
     var `peerId`: kotlin.String, 
     var `peerName`: kotlin.String, 
-    var `peerUrl`: kotlin.String
+    var `peerUrl`: kotlin.String, 
+    /**
+     * True when the text was a grant: the peer now hosts this account
+     * (PAIR-5); false when this device joined the peer's account (PAIR-4)
+     */
+    var `granted`: kotlin.Boolean
 ) {
     
     companion object
@@ -5467,6 +5508,7 @@ public object FfiConverterTypeJoinedData: FfiConverterRustBuffer<JoinedData> {
             FfiConverterString.read(buf),
             FfiConverterString.read(buf),
             FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
         )
     }
 
@@ -5474,7 +5516,8 @@ public object FfiConverterTypeJoinedData: FfiConverterRustBuffer<JoinedData> {
             FfiConverterString.allocationSize(value.`accountId`) +
             FfiConverterString.allocationSize(value.`peerId`) +
             FfiConverterString.allocationSize(value.`peerName`) +
-            FfiConverterString.allocationSize(value.`peerUrl`)
+            FfiConverterString.allocationSize(value.`peerUrl`) +
+            FfiConverterBoolean.allocationSize(value.`granted`)
     )
 
     override fun write(value: JoinedData, buf: ByteBuffer) {
@@ -5482,6 +5525,7 @@ public object FfiConverterTypeJoinedData: FfiConverterRustBuffer<JoinedData> {
             FfiConverterString.write(value.`peerId`, buf)
             FfiConverterString.write(value.`peerName`, buf)
             FfiConverterString.write(value.`peerUrl`, buf)
+            FfiConverterBoolean.write(value.`granted`, buf)
     }
 }
 

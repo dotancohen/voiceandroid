@@ -346,11 +346,15 @@ class VoiceRepository(private val context: Context) {
      * Get the current device ID.
      */
     /** Join an account from a setup text: a scanned code or a pasted text. */
-    suspend fun join(setupText: String): Result<Joined> = withContext(Dispatchers.IO) {
+    suspend fun pairWith(setupText: String): Result<Joined> = withContext(Dispatchers.IO) {
         try {
-            val joined = ensureInitialized().join(setupText)
-            AppLogger.i(TAG, "Joined account ${joined.accountId.take(8)} through ${joined.peerName}")
-            Result.success(Joined(joined.accountId, joined.peerId, joined.peerName, joined.peerUrl))
+            val joined = ensureInitialized().pairWith(setupText)
+            if (joined.granted) {
+                AppLogger.i(TAG, "${joined.peerName} now hosts account ${joined.accountId.take(8)}")
+            } else {
+                AppLogger.i(TAG, "Joined account ${joined.accountId.take(8)} through ${joined.peerName}")
+            }
+            Result.success(Joined(joined.accountId, joined.peerId, joined.peerName, joined.peerUrl, joined.granted))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -1978,7 +1982,7 @@ data class ImportAudioResult(
 )
 
 /** What a successful join gives back. */
-data class Joined(val accountId: String, val peerId: String, val peerName: String, val peerUrl: String)
+data class Joined(val accountId: String, val peerId: String, val peerName: String, val peerUrl: String, val granted: Boolean)
 
 /**
  * One snapshot of the database, as listed by [VoiceRepository.listSnapshots].

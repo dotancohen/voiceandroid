@@ -277,13 +277,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _joinMessage = MutableStateFlow<String?>(null)
     val joinMessage: StateFlow<String?> = _joinMessage.asStateFlow()
 
-    /** Join an account from a setup text pasted or scanned (PAIR-4). */
-    fun join(setupText: String) {
+    /** Use a setup text pasted or scanned: join its account (PAIR-4), or grant a server this one (PAIR-5). */
+    fun pairWith(setupText: String) {
         viewModelScope.launch {
             _joinMessage.value = null
-            repository.join(setupText.trim())
+            repository.pairWith(setupText.trim())
                 .onSuccess { joined ->
-                    _joinMessage.value = "Joined account ${joined.accountId.take(8)} through ${joined.peerName}. Press Sync."
+                    _joinMessage.value = if (joined.granted) {
+                        "${joined.peerName} now hosts this account. Press Deliver to send it your notes and recordings."
+                    } else {
+                        "Joined account ${joined.accountId.take(8)} through ${joined.peerName}. Press Sync."
+                    }
                     _serverUrl.value = joined.peerUrl
                     _serverPeerId.value = joined.peerId
                     prefs.edit().putString("server_url", joined.peerUrl).putString("server_peer_id", joined.peerId).apply()

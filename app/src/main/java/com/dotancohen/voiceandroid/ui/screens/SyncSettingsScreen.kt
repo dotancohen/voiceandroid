@@ -317,7 +317,8 @@ fun SyncSettingsScreen(
                         Text(if (isSyncing) "Working..." else "Exchange (notes and recordings)")
                     }
 
-                    // Join an account from a setup text shown by another device
+                    // A setup text shown by another device: a code to join
+                    // its account, or a server's grant text to host this one
                     var setupText by remember { mutableStateOf("") }
                     OutlinedTextField(
                         value = setupText,
@@ -327,11 +328,11 @@ fun SyncSettingsScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     OutlinedButton(
-                        onClick = { viewModel.join(setupText) },
+                        onClick = { viewModel.pairWith(setupText) },
                         enabled = setupText.isNotBlank(),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Join account")
+                        Text("Use setup text")
                     }
                     joinMessage?.let { message ->
                         Text(text = message, color = MaterialTheme.colorScheme.primary)
