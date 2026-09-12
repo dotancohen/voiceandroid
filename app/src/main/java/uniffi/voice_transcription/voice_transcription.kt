@@ -728,6 +728,12 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -763,8 +769,14 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voice_transcription_android_fn_method_transcriptionclient_transcribe_with_language(`ptr`: Pointer,`audioPath`: RustBuffer.ByValue,`language`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voice_transcription_android_fn_func_clear_transcription_cancel(uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voice_transcription_android_fn_func_create_local_whisper_client(`modelPath`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
+    fun uniffi_voice_transcription_android_fn_func_request_transcription_cancel(uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_voice_transcription_android_fn_func_transcription_cancel_requested(uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun ffi_voice_transcription_android_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_voice_transcription_android_rustbuffer_from_bytes(`bytes`: ForeignBytes.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -877,7 +889,13 @@ internal interface UniffiLib : Library {
     ): Unit
     fun ffi_voice_transcription_android_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voice_transcription_android_checksum_func_clear_transcription_cancel(
+    ): Short
     fun uniffi_voice_transcription_android_checksum_func_create_local_whisper_client(
+    ): Short
+    fun uniffi_voice_transcription_android_checksum_func_request_transcription_cancel(
+    ): Short
+    fun uniffi_voice_transcription_android_checksum_func_transcription_cancel_requested(
     ): Short
     fun uniffi_voice_transcription_android_checksum_method_transcriptionclient_backend_name(
     ): Short
@@ -908,7 +926,16 @@ private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
 
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: UniffiLib) {
+    if (lib.uniffi_voice_transcription_android_checksum_func_clear_transcription_cancel() != 42220.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voice_transcription_android_checksum_func_create_local_whisper_client() != 12440.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voice_transcription_android_checksum_func_request_transcription_cancel() != 49022.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voice_transcription_android_checksum_func_transcription_cancel_requested() != 9856.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voice_transcription_android_checksum_method_transcriptionclient_backend_name() != 63026.toShort()) {
@@ -1691,6 +1718,8 @@ sealed class TranscriptionException(message: String): kotlin.Exception(message) 
         
         class IoException(message: String) : TranscriptionException(message)
         
+        class Cancelled(message: String) : TranscriptionException(message)
+        
         class Other(message: String) : TranscriptionException(message)
         
 
@@ -1714,7 +1743,8 @@ public object FfiConverterTypeTranscriptionError : FfiConverterRustBuffer<Transc
             6 -> TranscriptionException.InvalidConfig(FfiConverterString.read(buf))
             7 -> TranscriptionException.ConversionFailed(FfiConverterString.read(buf))
             8 -> TranscriptionException.IoException(FfiConverterString.read(buf))
-            9 -> TranscriptionException.Other(FfiConverterString.read(buf))
+            9 -> TranscriptionException.Cancelled(FfiConverterString.read(buf))
+            10 -> TranscriptionException.Other(FfiConverterString.read(buf))
             else -> throw RuntimeException("invalid error enum value, something is very wrong!!")
         }
         
@@ -1758,8 +1788,12 @@ public object FfiConverterTypeTranscriptionError : FfiConverterRustBuffer<Transc
                 buf.putInt(8)
                 Unit
             }
-            is TranscriptionException.Other -> {
+            is TranscriptionException.Cancelled -> {
                 buf.putInt(9)
+                Unit
+            }
+            is TranscriptionException.Other -> {
+                buf.putInt(10)
                 Unit
             }
         }.let { /* this makes the `when` an expression, which ensures it is exhaustive */ }
@@ -1951,6 +1985,18 @@ public object FfiConverterSequenceTypeSegment: FfiConverterRustBuffer<List<Segme
     }
 }
         /**
+         * Lower the stop flag. Call this before starting a batch of work that
+         * should actually run.
+         */ fun `clearTranscriptionCancel`()
+        = 
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voice_transcription_android_fn_func_clear_transcription_cancel(
+        _status)
+}
+    
+    
+
+        /**
          * Load a ggml Whisper model from `model_path` (a file the app downloaded).
          */
     @Throws(TranscriptionException::class) fun `createLocalWhisperClient`(`modelPath`: kotlin.String): TranscriptionClient {
@@ -1958,6 +2004,36 @@ public object FfiConverterSequenceTypeSegment: FfiConverterRustBuffer<List<Segme
     uniffiRustCallWithError(TranscriptionException) { _status ->
     UniffiLib.INSTANCE.uniffi_voice_transcription_android_fn_func_create_local_whisper_client(
         FfiConverterString.lower(`modelPath`),_status)
+}
+    )
+    }
+    
+
+        /**
+         * Ask the transcription that is running now to stop.
+         *
+         * It stops between windows of audio, within a second or so, and the call
+         * that was running returns `Cancelled`. Nothing partial is kept. This is
+         * what the "Stop" button on the phone's notification calls.
+         *
+         * The flag stays raised until [`clear_transcription_cancel`] lowers it, so
+         * a queue of files stops as a whole rather than one file at a time.
+         */ fun `requestTranscriptionCancel`()
+        = 
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voice_transcription_android_fn_func_request_transcription_cancel(
+        _status)
+}
+    
+    
+
+        /**
+         * Whether a stop has been asked for and not yet cleared.
+         */ fun `transcriptionCancelRequested`(): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voice_transcription_android_fn_func_transcription_cancel_requested(
+        _status)
 }
     )
     }

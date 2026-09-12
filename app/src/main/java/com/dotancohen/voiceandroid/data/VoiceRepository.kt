@@ -77,6 +77,18 @@ class VoiceRepository(private val context: Context) {
      * Initialize the Voice client.
      * This should be called once when the app starts.
      */
+    /**
+     * Tell the core which timezone this phone is in. Android keeps the zone in
+     * its framework, where the native library cannot see it, so it is passed
+     * in: at start, and again whenever Android says it changed.
+     */
+    fun reportTimeZone() {
+        val zone = java.util.TimeZone.getDefault()
+        val offsetSeconds = zone.getOffset(System.currentTimeMillis()) / 1000
+        client?.setLocalTimezone(offsetSeconds, zone.id)
+        AppLogger.i(TAG, "Timezone reported to the core: ${zone.id} (${offsetSeconds}s)")
+    }
+
     suspend fun initialize(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             AppLogger.i(TAG, "Initializing VoiceRepository, dataDir=$dataDir")
@@ -84,6 +96,10 @@ class VoiceRepository(private val context: Context) {
                 client = VoiceClient(dataDir)
                 AppLogger.i(TAG, "VoiceClient created")
             }
+
+            // Every timestamp written from here records the clock this phone
+            // is reading, so a note keeps its time after the user travels
+            reportTimeZone()
 
             // Reload audiofile directory in case permission was granted after creation
             loadSavedAudiofileDirectory()
@@ -436,6 +452,7 @@ class VoiceRepository(private val context: Context) {
                     importedAt = data.importedAt,
                     filename = data.filename,
                     fileCreatedAt = data.fileCreatedAt,
+                    durationSeconds = data.durationSeconds,
                     summary = data.summary,
                     deviceId = data.deviceId,
                     modifiedAt = data.modifiedAt,
@@ -464,6 +481,7 @@ class VoiceRepository(private val context: Context) {
                     importedAt = data.importedAt,
                     filename = data.filename,
                     fileCreatedAt = data.fileCreatedAt,
+                    durationSeconds = data.durationSeconds,
                     summary = data.summary,
                     deviceId = data.deviceId,
                     modifiedAt = data.modifiedAt,
@@ -506,6 +524,7 @@ class VoiceRepository(private val context: Context) {
                     importedAt = data.importedAt,
                     filename = data.filename,
                     fileCreatedAt = data.fileCreatedAt,
+                    durationSeconds = data.durationSeconds,
                     summary = data.summary,
                     deviceId = data.deviceId,
                     modifiedAt = data.modifiedAt,
@@ -580,22 +599,65 @@ class VoiceRepository(private val context: Context) {
         try {
             val voiceClient = ensureInitialized()
             val transcriptions = voiceClient.getTranscriptionsForAudioFile(audioFileId).map { data ->
-                Transcription(
-                    id = data.id,
-                    audioFileId = data.audioFileId,
-                    content = data.content,
-                    contentSegments = data.contentSegments,
-                    service = data.service,
-                    serviceArguments = data.serviceArguments,
-                    serviceResponse = data.serviceResponse,
-                    state = data.state,
-                    deviceId = data.deviceId,
-                    createdAt = data.createdAt,
-                    modifiedAt = data.modifiedAt,
-                    deletedAt = data.deletedAt
-                )
+                data.toModel()
             }
             Result.success(transcriptions)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** One reading of a transcription row, wherever it came from. */
+    private fun uniffi.voicecore.TranscriptionData.toModel() = Transcription(
+        id = id,
+        audioFileId = audioFileId,
+        content = content,
+        contentSegments = contentSegments,
+        service = service,
+        serviceArguments = serviceArguments,
+        serviceResponse = serviceResponse,
+        state = state,
+        deviceId = deviceId,
+        createdAt = createdAt,
+        modifiedAt = modifiedAt,
+        deletedAt = deletedAt,
+    )
+
+    /**
+     * The most recent transcriptions, newest first.
+     *
+     * What the transcription queue shows under "Completed". [service] narrows
+     * it to one transcription service — `OnDeviceTranscriber.SERVICE_NAME` is
+     * the work this phone did — and null returns every service.
+     */
+    suspend fun getRecentTranscriptions(
+        service: String? = null,
+        limit: Int = 50,
+    ): Result<List<Transcription>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(
+                voiceClient.getRecentTranscriptions(service, limit.toUInt()).map { it.toModel() }
+            )
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Which notes a recording is attached to. Normally one.
+     *
+     * The queue view uses it to say which note each transcription belongs to,
+     * so the user can look at that note without leaving the queue.
+     */
+    suspend fun getNotesForAudioFile(audioFileId: String): Result<List<String>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.getNotesForAudioFile(audioFileId))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -610,20 +672,7 @@ class VoiceRepository(private val context: Context) {
         try {
             val voiceClient = ensureInitialized()
             val transcription = voiceClient.getTranscription(transcriptionId)?.let { data ->
-                Transcription(
-                    id = data.id,
-                    audioFileId = data.audioFileId,
-                    content = data.content,
-                    contentSegments = data.contentSegments,
-                    service = data.service,
-                    serviceArguments = data.serviceArguments,
-                    serviceResponse = data.serviceResponse,
-                    state = data.state,
-                    deviceId = data.deviceId,
-                    createdAt = data.createdAt,
-                    modifiedAt = data.modifiedAt,
-                    deletedAt = data.deletedAt
-                )
+                data.toModel()
             }
             Result.success(transcription)
         } catch (e: VoiceCoreException) {
@@ -641,6 +690,22 @@ class VoiceRepository(private val context: Context) {
         try {
             val voiceClient = ensureInitialized()
             Result.success(voiceClient.updateTranscriptionState(transcriptionId, state))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Merge two notes into one: the older note keeps its own content with the
+     * newer note's appended, takes over its tags and attachments, and the
+     * newer note is deleted. Returns the surviving note's id.
+     */
+    suspend fun mergeNotes(noteId1: String, noteId2: String): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.mergeNotes(noteId1, noteId2))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -695,6 +760,139 @@ class VoiceRepository(private val context: Context) {
         try {
             val voiceClient = ensureInitialized()
             Result.success(voiceClient.updateTranscription(transcriptionId, content, state))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * The attachment that stands for a note, if one was chosen: the
+     * recording played when the note is opened, and the one whose
+     * transcription the notes list shows.
+     */
+    suspend fun getPrimaryAttachment(noteId: String): Result<String?> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().getPrimaryAttachment(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Choose that attachment, or pass null to go back to the first one. */
+    suspend fun setPrimaryAttachment(noteId: String, attachmentId: String?): Result<Boolean> =
+        withContext(Dispatchers.IO) {
+            try {
+                Result.success(ensureInitialized().setPrimaryAttachment(noteId, attachmentId))
+            } catch (e: VoiceCoreException) {
+                Result.failure(Exception(e.message))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    /** The transcription that stands for a recording, if one was chosen. */
+    suspend fun getPrimaryTranscription(audioFileId: String): Result<String?> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().getPrimaryTranscription(audioFileId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Choose that transcription, or pass null to go back to the first one. */
+    suspend fun setPrimaryTranscription(audioFileId: String, transcriptionId: String?): Result<Boolean> =
+        withContext(Dispatchers.IO) {
+            try {
+                Result.success(ensureInitialized().setPrimaryTranscription(audioFileId, transcriptionId))
+            } catch (e: VoiceCoreException) {
+                Result.failure(Exception(e.message))
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+    /**
+     * The notes in the trash: deleted, still here, newest deletion first.
+     *
+     * Deleting a note has always been a soft delete, so nothing was lost:
+     * the note is still here with its history and its recordings.
+     */
+    suspend fun getDeletedNotes(): Result<List<Note>> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(
+                voiceClient.getDeletedNotes().map { noteData ->
+                    Note(
+                        id = noteData.id,
+                        content = noteData.content,
+                        createdAt = noteData.createdAt,
+                        modifiedAt = noteData.modifiedAt,
+                        deletedAt = noteData.deletedAt,
+                        listDisplayCache = noteData.listDisplayCache
+                    )
+                }
+            )
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Take a note out of the trash. False when it was not in there. */
+    suspend fun undeleteNote(noteId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.undeleteNote(noteId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Empty one note out of the trash for good, on every device.
+     *
+     * The recordings that hung on that note alone go with it: their files
+     * are deleted from the phone here, since the core knows which
+     * recordings went but not where this platform keeps them.
+     */
+    suspend fun purgeNote(noteId: String): Result<Int> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            val audioIds = voiceClient.purgeNote(noteId)
+            var filesRemoved = 0
+            for (audioId in audioIds) {
+                File(audioFileDir)
+                    .listFiles { f -> f.name.substringBeforeLast('.') == audioId }
+                    ?.forEach { file -> if (file.delete()) filesRemoved++ }
+            }
+            AppLogger.i(TAG, "Removed note ${noteId.take(8)} for good with $filesRemoved file(s)")
+            Result.success(filesRemoved)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Delete a transcription (a soft delete, so the removal syncs).
+     *
+     * Used to clear the placeholder left by a transcription the phone cut
+     * short, once the recording has really been transcribed.
+     */
+    suspend fun deleteTranscription(transcriptionId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.deleteTranscription(transcriptionId))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -1182,6 +1380,30 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
+     * Import a recording into a note that already exists, and return the new
+     * audio file's id.
+     *
+     * This is what the phone's recorder uses: the note is made first and the
+     * recording happens inside it, so saving attaches the file to that note
+     * instead of creating a second one.
+     */
+    suspend fun importAudioFileIntoNote(
+        noteId: String,
+        filename: String,
+        fileCreatedAt: Long?,
+        durationSeconds: Long?
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.importAudioFileIntoNote(noteId, filename, fileCreatedAt, durationSeconds))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Copy an audio file from a source URI to the audio file storage directory.
      *
      * @param context Application context for content resolver
@@ -1308,6 +1530,60 @@ class VoiceRepository(private val context: Context) {
         try {
             val voiceClient = ensureInitialized()
             Result.success(voiceClient.updateAudioFileStorage(audioFileId, storageProvider, storageKey))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Set how long a recording is, for a row that never had it.
+     *
+     * A repair, not an edit: see [MissingData]. The length is read off the file
+     * by whichever device has the file.
+     */
+    suspend fun updateAudioFileDuration(
+        audioFileId: String,
+        durationSeconds: Long
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.updateAudioFileDuration(audioFileId, durationSeconds))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Set when a recording was made, as Unix seconds, for a row that never had it.
+     *
+     * The timezone it was made in is not written: it cannot be read off a file.
+     */
+    suspend fun updateAudioFileCreatedAt(
+        audioFileId: String,
+        fileCreatedAt: Long
+    ): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            Result.success(voiceClient.updateAudioFileCreatedAt(audioFileId, fileCreatedAt))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Rebuild every display cache of one note: the note pane's and the list's.
+     */
+    suspend fun rebuildAllCachesForNote(noteId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val voiceClient = ensureInitialized()
+            voiceClient.rebuildAllCachesForNote(noteId)
+            Result.success(Unit)
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
