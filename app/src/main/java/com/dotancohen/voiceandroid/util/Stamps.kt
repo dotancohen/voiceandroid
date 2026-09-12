@@ -70,10 +70,3 @@ fun Stamp.formatTime(context: Context): String {
     return format.format(Date(epochMillis))
 }
 
-/**
- * The same day for two stamps? Compared in the zone each was written in, so
- * two transcriptions made on the same afternoon in Jerusalem group together
- * even when read from New York.
- */
-fun Stamp.sameDayAs(other: Stamp, context: Context): Boolean =
-    formatDate(context) == other.formatDate(context)

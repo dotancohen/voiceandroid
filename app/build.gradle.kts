@@ -190,7 +190,7 @@ tasks.register("buildRust") {
                     "-t", rustTarget,
                     "--platform", "29",
                     "build", "--release",
-                    "--no-default-features", "--features", "uniffi"
+                    "--features", "uniffi"
                 )
             }
 
@@ -224,7 +224,7 @@ tasks.register("generateKotlinBindings") {
             workingDir = rustDir
             commandLine(
                 "cargo", "run", "--release",
-                "--no-default-features", "--features", "uniffi",
+                "--features", "uniffi",
                 "--bin", "uniffi-bindgen",
                 "generate",
                 "--library", "target/aarch64-linux-android/release/libvoicecore.so",

@@ -206,7 +206,7 @@ class SyncIntegrationTest {
             client.configureSync(config)
 
             // Try to sync
-            val result = client.syncNow()
+            val result = client.sync()
 
             // If we get here without exception, sync worked
             println("Sync result: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}")

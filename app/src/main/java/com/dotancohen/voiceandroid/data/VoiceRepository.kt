@@ -232,13 +232,14 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
-     * Perform sync with the configured server.
+     * Sync with the configured server: database changes both ways. Files never
+     * move here; [upload] sends recordings to the bucket.
      */
-    suspend fun syncNow(): Result<SyncResult> = withContext(Dispatchers.IO) {
+    suspend fun sync(): Result<SyncResult> = withContext(Dispatchers.IO) {
         try {
             AppLogger.i(TAG, "Starting sync")
             val voiceClient = ensureInitialized()
-            val result = voiceClient.syncNow()
+            val result = voiceClient.sync()
             AppLogger.i(TAG, "Sync completed: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}")
             Result.success(SyncResult(
                 success = result.success,
@@ -1649,6 +1650,34 @@ class VoiceRepository(private val context: Context) {
     // Cloud Storage Download Methods
     // =========================================================================
 
+    private fun uniffi.voicecore.UploadResultData.toModel() = UploadResult(
+        uploaded = uploaded,
+        skipped = skipped,
+        failed = failed,
+        deferred = deferred,
+        errors = errors
+    )
+
+    /**
+     * Upload every recording the bucket does not hold yet. Runs only when the
+     * user asks; a sync never uploads.
+     */
+    suspend fun upload(): Result<UploadResult> = withContext(Dispatchers.IO) {
+        try {
+            AppLogger.i(TAG, "Starting upload")
+            val voiceClient = ensureInitialized()
+            val result = voiceClient.upload().toModel()
+            AppLogger.i(TAG, "Upload completed: ${result.describe()}")
+            Result.success(result)
+        } catch (e: VoiceCoreException) {
+            AppLogger.e(TAG, "Upload failed", e)
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Upload failed", e)
+            Result.failure(e)
+        }
+    }
+
     private fun uniffi.voicecore.DownloadResultData.toModel() = DownloadResult(
         downloaded = downloaded,
         alreadyLocal = alreadyLocal,
@@ -1794,6 +1823,32 @@ data class ImportAudioResult(
     /** The ID of the created audio file record */
     val audioFileId: String
 )
+
+/**
+ * Result of uploading recordings to the bucket.
+ */
+data class UploadResult(
+    /** Files uploaded in this run */
+    val uploaded: Int,
+    /** Pending rows whose file is not on this device (another device owns them) */
+    val skipped: Int = 0,
+    /** Files that failed to upload */
+    val failed: Int = 0,
+    /** Files not attempted because an earlier failure stopped the batch */
+    val deferred: Int = 0,
+    /** One message per failure */
+    val errors: List<String>
+) {
+    /** One-line description of the outcome. */
+    fun describe(): String {
+        val parts = mutableListOf<String>()
+        if (uploaded > 0) parts.add("uploaded $uploaded")
+        if (skipped > 0) parts.add("$skipped belong to another device")
+        if (failed > 0) parts.add("$failed failed")
+        if (deferred > 0) parts.add("$deferred not attempted")
+        return if (parts.isEmpty()) "nothing to upload" else parts.joinToString(", ")
+    }
+}
 
 /**
  * Result of downloading audio files from cloud storage.

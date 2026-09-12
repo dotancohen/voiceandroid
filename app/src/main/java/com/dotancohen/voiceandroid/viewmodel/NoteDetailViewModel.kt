@@ -529,11 +529,6 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     /**
-     * Check if any audio files of this note are in the cloud but not on this device.
-     */
-    fun hasDownloadableAudioFiles(): Boolean = _downloadableCount.value > 0
-
-    /**
      * Download this note's missing audio files from cloud storage (on demand).
      */
     fun downloadMissingAudioFiles() {

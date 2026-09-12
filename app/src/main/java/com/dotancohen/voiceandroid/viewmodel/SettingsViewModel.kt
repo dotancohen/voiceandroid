@@ -54,6 +54,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val maxSyncFileSizeMb: StateFlow<UInt> = _maxSyncFileSizeMb.asStateFlow()
 
     // Unsynced changes indicator
+    private val _isUploading = MutableStateFlow(false)
+    val isUploading: StateFlow<Boolean> = _isUploading.asStateFlow()
+
+    /** The last upload's outcome in one sentence, or null before the first. */
+    private val _uploadMessage = MutableStateFlow<String?>(null)
+    val uploadMessage: StateFlow<String?> = _uploadMessage.asStateFlow()
+
     private val _hasUnsyncedChanges = MutableStateFlow(false)
     val hasUnsyncedChanges: StateFlow<Boolean> = _hasUnsyncedChanges.asStateFlow()
 
@@ -232,7 +239,27 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         return repository.generateDeviceId()
     }
 
-    fun syncNow() {
+    /** Upload every recording the bucket does not hold yet. */
+    fun upload() {
+        if (_isUploading.value) return
+
+        viewModelScope.launch {
+            _isUploading.value = true
+            _uploadMessage.value = null
+            repository.upload()
+                .onSuccess { result ->
+                    _uploadMessage.value = "Upload: ${result.describe()}"
+                }
+                .onFailure { exception ->
+                    _uploadMessage.value = "Upload failed: ${exception.message}"
+                    CriticalLog.logSyncError("upload", exception.message ?: "Unknown error")
+                }
+            updateDebugInfo()
+            _isUploading.value = false
+        }
+    }
+
+    fun sync() {
         if (_isSyncing.value) return
 
         viewModelScope.launch {
@@ -242,7 +269,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _debugInfo.value = null
             AppLogger.i(TAG, "Starting sync")
 
-            repository.syncNow()
+            repository.sync()
                 .onSuccess { result ->
                     _syncResult.value = result
                     AppLogger.i(TAG, "Sync completed: received=${result.notesReceived}, sent=${result.notesSent}")
@@ -250,7 +277,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 .onFailure { exception ->
                     _syncError.value = exception.message
                     AppLogger.e(TAG, "Sync failed", exception)
-                    CriticalLog.logSyncError("syncNow", exception.message ?: "Unknown error")
+                    CriticalLog.logSyncError("sync", exception.message ?: "Unknown error")
                 }
 
             // Get debug info about audio files

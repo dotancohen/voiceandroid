@@ -229,9 +229,9 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
-                    // Sync Now button
+                    // Sync button
                     OutlinedButton(
-                        onClick = { viewModel.syncNow() },
+                        onClick = { viewModel.sync() },
                         enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank(),
                         colors = if (hasUnsyncedChanges) {
                             ButtonDefaults.outlinedButtonColors(
@@ -262,7 +262,7 @@ fun SettingsScreen(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = null
                                 )
-                                Text(if (hasUnsyncedChanges) "Sync Now (changes pending)" else "Sync Now")
+                                Text(if (hasUnsyncedChanges) "Sync (changes pending)" else "Sync")
                             }
                         }
                     }

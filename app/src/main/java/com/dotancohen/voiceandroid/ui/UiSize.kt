@@ -55,12 +55,6 @@ class UiSizeState(context: Context) {
     /** Whether the notes toolbar should offer the switch. */
     val offersSwitch: Boolean get() = mode.value == UiPreferences.SIZE_TOGGLE
 
-    fun setMode(newMode: String) {
-        prefs.uiSizeMode = newMode
-        mode.value = prefs.uiSizeMode
-        large.value = prefs.isLargeNow
-    }
-
     /** The toolbar button: switch between the two sizes and remember it. */
     fun toggle() {
         if (mode.value != UiPreferences.SIZE_TOGGLE) return

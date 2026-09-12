@@ -44,9 +44,11 @@ In **Settings**:
 - **Device ID** — generated for you, or paste an existing one to take over
   the identity of another installation
 
-**Sync now** runs a sync there and then. Recordings can be kept out of the
-sync and left on the devices that made them; the notes and their text still
-travel.
+**Sync** exchanges notes, tags and the list of recordings with the server,
+there and then. Recordings themselves never move in a sync. **Upload** sends
+the recordings the bucket does not hold yet to the bucket, when you press it.
+Recordings can also be kept out of the bucket and left on the devices that
+made them; the notes and their text still travel.
 
 ## The Notes list
 

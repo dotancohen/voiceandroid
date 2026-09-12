@@ -57,7 +57,7 @@ cd submodules/voicecore
 
 # Build for all architectures
 for target in aarch64-linux-android armv7-linux-androideabi x86_64-linux-android i686-linux-android; do
-    cargo ndk -t $target --platform 29 build --release --no-default-features --features uniffi
+    cargo ndk -t $target --platform 29 build --release --features uniffi
 done
 
 # Copy libraries

@@ -255,13 +255,6 @@ class TagManagementViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    /**
-     * Check if a tag is selected for the current note.
-     */
-    fun isTagSelected(tagId: String): Boolean {
-        return _noteTagIds.value.contains(tagId)
-    }
-
     companion object {
         private const val TAG = "TagManagementViewModel"
     }

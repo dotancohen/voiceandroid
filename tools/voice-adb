@@ -2,7 +2,7 @@
 # Drive the Voice Android app (debug build) from a computer over ADB.
 #
 #   voice-adb ping
-#   voice-adb sync-now
+#   voice-adb sync
 #   voice-adb create-note "פתק מהטלפון"
 #   voice-adb list-notes
 #   voice-adb open settings
@@ -25,7 +25,8 @@ Device and sync
   status                             device, server, note count, unresolved conflicts, pending changes
   set-sync <url> <peer-id> [name]    set Server URL, Server Peer ID (and optionally the device name)
   set-device-name <name>
-  sync-now                           same as tapping Sync Now
+  sync                               same as tapping Sync (database only)
+  upload                             same as tapping Upload (recordings to the bucket)
   initial-sync                       same as tapping Full Re-sync
   airplane on|off                    airplane mode (no app involved)
 
@@ -134,7 +135,8 @@ case "$cmd" in
     status) send STATUS ;;
     set-sync) send SET_SYNC --es url "$1" --es peer "$2" ${3:+--es name "$3"} ;;
     set-device-name) send SET_DEVICE_NAME --es name "$1" ;;
-    sync-now) send SYNC_NOW ;;
+    sync) send SYNC ;;
+    upload) send UPLOAD ;;
     initial-sync) send INITIAL_SYNC ;;
     airplane)
         case "${1:-}" in

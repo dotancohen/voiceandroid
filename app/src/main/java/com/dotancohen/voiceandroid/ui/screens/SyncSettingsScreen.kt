@@ -54,6 +54,8 @@ fun SyncSettingsScreen(
     val deviceId by viewModel.deviceId.collectAsState()
     val deviceName by viewModel.deviceName.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
+    val isUploading by viewModel.isUploading.collectAsState()
+    val uploadMessage by viewModel.uploadMessage.collectAsState()
     val syncResult by viewModel.syncResult.collectAsState()
     val syncError by viewModel.syncError.collectAsState()
     val debugInfo by viewModel.debugInfo.collectAsState()
@@ -243,9 +245,9 @@ fun SyncSettingsScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
-                    // Sync Now button
+                    // Sync button
                     OutlinedButton(
-                        onClick = { viewModel.syncNow() },
+                        onClick = { viewModel.sync() },
                         enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank(),
                         colors = if (hasUnsyncedChanges) {
                             ButtonDefaults.outlinedButtonColors(
@@ -276,9 +278,21 @@ fun SyncSettingsScreen(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = null
                                 )
-                                Text(if (hasUnsyncedChanges) "Sync Now (changes pending)" else "Sync Now")
+                                Text(if (hasUnsyncedChanges) "Sync (changes pending)" else "Sync")
                             }
                         }
+                    }
+
+                    // Upload button: recordings to the bucket, never part of a sync
+                    OutlinedButton(
+                        onClick = { viewModel.upload() },
+                        enabled = !isUploading,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (isUploading) "Uploading..." else "Upload")
+                    }
+                    uploadMessage?.let { message ->
+                        Text(text = message, color = MaterialTheme.colorScheme.primary)
                     }
 
                     // Sync result

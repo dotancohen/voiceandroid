@@ -60,7 +60,8 @@ class AdbCommandReceiver : BroadcastReceiver() {
         return when (action) {
             "PING" -> "pong device=${repo.getDeviceName().getOrNull()} id=${repo.getDeviceId().getOrNull()}"
 
-            "SYNC_NOW" -> syncResult(repo.syncNow().getOrThrow())
+            "SYNC" -> syncResult(repo.sync().getOrThrow())
+            "UPLOAD" -> "OK " + repo.upload().getOrThrow().describe()
             "INITIAL_SYNC" -> syncResult(repo.initialSync().getOrThrow())
             "SET_SYNC" -> {
                 val deviceId = repo.getDeviceId().getOrThrow()

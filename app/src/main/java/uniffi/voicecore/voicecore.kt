@@ -906,6 +906,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1093,7 +1095,7 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_set_setting(`ptr`: Pointer,`key`: RustBuffer.ByValue,`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voicecore_fn_method_voiceclient_sync_now(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_tag_note_too_big(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1119,6 +1121,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_update_transcription_state(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,`state`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_upload(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_voicecore_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -1397,7 +1401,7 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_setting(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_sync_now(
+    fun uniffi_voicecore_checksum_method_voiceclient_sync(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_tag_note_too_big(
     ): Short
@@ -1422,6 +1426,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_update_transcription_result(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_update_transcription_state(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_upload(
     ): Short
     fun uniffi_voicecore_checksum_constructor_voiceclient_new(
     ): Short
@@ -1610,7 +1616,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_import_audio_file_into_note() != 46741.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 5382.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 38631.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_file_storage_enabled() != 7221.toShort()) {
@@ -1688,7 +1694,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_setting() != 1953.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_sync_now() != 57614.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_sync() != 52830.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_tag_note_too_big() != 57103.toShort()) {
@@ -1725,6 +1731,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_update_transcription_state() != 31413.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_upload() != 59683.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 26098.toShort()) {
@@ -2458,7 +2467,7 @@ public interface VoiceClientInterface {
     /**
      * Perform initial sync - fetches full dataset from server
      *
-     * Unlike sync_now(), this ignores timestamps and fetches all data.
+     * Unlike sync(), this ignores timestamps and fetches all data.
      * Use this for first-time sync or to re-fetch everything.
      */
     fun `initialSync`(): SyncResultData
@@ -2637,9 +2646,9 @@ public interface VoiceClientInterface {
     fun `setSetting`(`key`: kotlin.String, `value`: kotlin.String)
     
     /**
-     * Perform sync with the configured server
+     * Sync with the configured server: database changes both ways, no files.
      */
-    fun `syncNow`(): SyncResultData
+    fun `sync`(): SyncResultData
     
     /**
      * Tag a note as too-big to sync (add the _system/_nonsynced/_too-big tag)
@@ -2734,6 +2743,12 @@ public interface VoiceClientInterface {
      * Example: "original !verified !verbatim !cleaned !polished"
      */
     fun `updateTranscriptionState`(`transcriptionId`: kotlin.String, `state`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * Upload every recording whose row says the bucket does not hold it yet.
+     * Runs only when the user asks; a sync never uploads.
+     */
+    fun `upload`(): UploadResultData
     
     companion object
 }
@@ -3797,7 +3812,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     /**
      * Perform initial sync - fetches full dataset from server
      *
-     * Unlike sync_now(), this ignores timestamps and fetches all data.
+     * Unlike sync(), this ignores timestamps and fetches all data.
      * Use this for first-time sync or to re-fetch everything.
      */
     @Throws(VoiceCoreException::class)override fun `initialSync`(): SyncResultData {
@@ -4250,13 +4265,13 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Perform sync with the configured server
+     * Sync with the configured server: database changes both ways, no files.
      */
-    @Throws(VoiceCoreException::class)override fun `syncNow`(): SyncResultData {
+    @Throws(VoiceCoreException::class)override fun `sync`(): SyncResultData {
             return FfiConverterTypeSyncResultData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_sync_now(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_sync(
         it, _status)
 }
     }
@@ -4484,6 +4499,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_update_transcription_state(
         it, FfiConverterString.lower(`transcriptionId`),FfiConverterString.lower(`state`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Upload every recording whose row says the bucket does not hold it yet.
+     * Runs only when the user asks; a sync never uploads.
+     */
+    @Throws(VoiceCoreException::class)override fun `upload`(): UploadResultData {
+            return FfiConverterTypeUploadResultData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_upload(
+        it, _status)
 }
     }
     )
@@ -5285,6 +5317,68 @@ public object FfiConverterTypeTranscriptionData: FfiConverterRustBuffer<Transcri
             FfiConverterTypeStamp.write(value.`createdAt`, buf)
             FfiConverterOptionalTypeStamp.write(value.`modifiedAt`, buf)
             FfiConverterOptionalTypeStamp.write(value.`deletedAt`, buf)
+    }
+}
+
+
+
+/**
+ * Result of uploading recordings to the bucket
+ */
+data class UploadResultData (
+    /**
+     * Files uploaded in this run
+     */
+    var `uploaded`: kotlin.Int, 
+    /**
+     * Pending rows whose file is not on this device (another device owns them)
+     */
+    var `skipped`: kotlin.Int, 
+    /**
+     * Files that failed to upload
+     */
+    var `failed`: kotlin.Int, 
+    /**
+     * Files not attempted because an earlier failure stopped the batch
+     */
+    var `deferred`: kotlin.Int, 
+    /**
+     * One message per failure
+     */
+    var `errors`: List<kotlin.String>
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeUploadResultData: FfiConverterRustBuffer<UploadResultData> {
+    override fun read(buf: ByteBuffer): UploadResultData {
+        return UploadResultData(
+            FfiConverterInt.read(buf),
+            FfiConverterInt.read(buf),
+            FfiConverterInt.read(buf),
+            FfiConverterInt.read(buf),
+            FfiConverterSequenceString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: UploadResultData) = (
+            FfiConverterInt.allocationSize(value.`uploaded`) +
+            FfiConverterInt.allocationSize(value.`skipped`) +
+            FfiConverterInt.allocationSize(value.`failed`) +
+            FfiConverterInt.allocationSize(value.`deferred`) +
+            FfiConverterSequenceString.allocationSize(value.`errors`)
+    )
+
+    override fun write(value: UploadResultData, buf: ByteBuffer) {
+            FfiConverterInt.write(value.`uploaded`, buf)
+            FfiConverterInt.write(value.`skipped`, buf)
+            FfiConverterInt.write(value.`failed`, buf)
+            FfiConverterInt.write(value.`deferred`, buf)
+            FfiConverterSequenceString.write(value.`errors`, buf)
     }
 }
 
