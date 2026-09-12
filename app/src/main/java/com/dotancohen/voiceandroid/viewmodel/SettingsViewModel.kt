@@ -239,6 +239,40 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         return repository.generateDeviceId()
     }
 
+    /** Whether this phone listens for peers, and where; refreshed from the core. */
+    private val _listening = MutableStateFlow(repository.listenerRunning())
+    val listening: StateFlow<Boolean> = _listening.asStateFlow()
+
+    private val _listenUrls = MutableStateFlow<List<String>>(emptyList())
+    val listenUrls: StateFlow<List<String>> = _listenUrls.asStateFlow()
+
+    private val _certificateFingerprint = MutableStateFlow("")
+    val certificateFingerprint: StateFlow<String> = _certificateFingerprint.asStateFlow()
+
+    private val _accountId = MutableStateFlow("")
+    val accountId: StateFlow<String> = _accountId.asStateFlow()
+
+    /** The address, the fingerprint and the account, for the sync screen. */
+    fun loadThisDevice() {
+        viewModelScope.launch {
+            repository.listenUrls(com.dotancohen.voiceandroid.data.SyncListenerService.PORT).onSuccess { _listenUrls.value = it }
+            repository.certificateFingerprint().onSuccess { _certificateFingerprint.value = it }
+            repository.getAccountId().onSuccess { _accountId.value = it }
+            _listening.value = repository.listenerRunning()
+        }
+    }
+
+    /** The switch: start or stop the listener service. Never started by itself. */
+    fun setListening(on: Boolean) {
+        val app = getApplication<Application>()
+        if (on) {
+            com.dotancohen.voiceandroid.data.SyncListenerService.start(app)
+        } else {
+            com.dotancohen.voiceandroid.data.SyncListenerService.stop(app)
+        }
+        _listening.value = on
+    }
+
     /** The outcome of the last join in one sentence, or null. */
     private val _joinMessage = MutableStateFlow<String?>(null)
     val joinMessage: StateFlow<String?> = _joinMessage.asStateFlow()
@@ -255,6 +289,30 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     prefs.edit().putString("server_url", joined.peerUrl).putString("server_peer_id", joined.peerId).apply()
                 }
                 .onFailure { _joinMessage.value = "Could not join: ${it.message}" }
+        }
+    }
+
+    /** Exchange with the peer: sync, then send and fetch recordings (the terms table). */
+    fun exchange() {
+        if (_isSyncing.value) return
+        viewModelScope.launch {
+            _isSyncing.value = true
+            _syncResult.value = null
+            _syncError.value = null
+            AppLogger.i(TAG, "Starting exchange")
+            repository.operate("exchange")
+                .onSuccess { result ->
+                    _syncResult.value = result
+                    AppLogger.i(TAG, "Exchange completed: received=${result.notesReceived}, sent=${result.notesSent}, files sent=${result.filesSent}, fetched=${result.filesFetched}")
+                }
+                .onFailure { exception ->
+                    _syncError.value = exception.message
+                    AppLogger.e(TAG, "Exchange failed", exception)
+                    CriticalLog.logSyncError("exchange", exception.message ?: "Unknown error")
+                }
+            updateDebugInfo()
+            checkUnsyncedChanges()
+            _isSyncing.value = false
         }
     }
 

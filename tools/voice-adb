@@ -27,6 +27,9 @@ Device and sync
   set-device-name <name>
   sync                               same as tapping Sync (database only)
   upload                             same as tapping Upload (recordings to the bucket)
+  exchange                           sync, then send and fetch recordings
+  deliver                            sync, then send recordings
+  listen-on / listen-off             the listener switch on the sync screen
   initial-sync                       same as tapping Full Re-sync
   airplane on|off                    airplane mode (no app involved)
 
@@ -137,6 +140,10 @@ case "$cmd" in
     set-device-name) send SET_DEVICE_NAME --es name "$1" ;;
     sync) send SYNC ;;
     upload) send UPLOAD ;;
+    exchange) send EXCHANGE ;;
+    deliver) send DELIVER ;;
+    listen-on) send LISTEN_ON ;;
+    listen-off) send LISTEN_OFF ;;
     initial-sync) send INITIAL_SYNC ;;
     airplane)
         case "${1:-}" in

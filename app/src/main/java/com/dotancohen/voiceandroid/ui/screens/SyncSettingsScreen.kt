@@ -42,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dotancohen.voiceandroid.viewmodel.SettingsViewModel
+import androidx.compose.material3.Switch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,6 +57,10 @@ fun SyncSettingsScreen(
     val isSyncing by viewModel.isSyncing.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
     val joinMessage by viewModel.joinMessage.collectAsState()
+    val listening by viewModel.listening.collectAsState()
+    val listenUrls by viewModel.listenUrls.collectAsState()
+    val certificateFingerprint by viewModel.certificateFingerprint.collectAsState()
+    val accountId by viewModel.accountId.collectAsState()
     val uploadMessage by viewModel.uploadMessage.collectAsState()
     val syncResult by viewModel.syncResult.collectAsState()
     val syncError by viewModel.syncError.collectAsState()
@@ -284,6 +289,34 @@ fun SyncSettingsScreen(
                         }
                     }
 
+                    // This device: the listener switch, the address a peer would type, the certificate
+                    LaunchedEffect(Unit) { viewModel.loadThisDevice() }
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Listen for peers", style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                if (listening) "Other devices can reach this phone" else "Off; nothing can reach this phone",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Switch(checked = listening, onCheckedChange = { viewModel.setListening(it) })
+                    }
+                    Text("Account $accountId", style = MaterialTheme.typography.bodySmall)
+                    Text("Address ${listenUrls.joinToString(", ").ifEmpty { "unknown (not on a network?)" }}", style = MaterialTheme.typography.bodySmall)
+                    Text("Certificate $certificateFingerprint", style = MaterialTheme.typography.bodySmall)
+
+                    // Exchange: sync, then send and fetch recordings; the one button the manual leads with
+                    OutlinedButton(
+                        onClick = { viewModel.exchange() },
+                        enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank(),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(if (isSyncing) "Working..." else "Exchange (notes and recordings)")
+                    }
+
                     // Join an account from a setup text shown by another device
                     var setupText by remember { mutableStateOf("") }
                     OutlinedTextField(
@@ -320,7 +353,8 @@ fun SyncSettingsScreen(
                     syncResult?.let { result ->
                         if (result.success) {
                             Text(
-                                text = "Sync successful! Received: ${result.notesReceived}, Sent: ${result.notesSent}",
+                                text = "Done. Received ${result.notesReceived} changes, sent ${result.notesSent}" +
+                                    (if (result.filesSent > 0 || result.filesFetched > 0) ", sent ${result.filesSent} and fetched ${result.filesFetched} recordings (${result.bytesMoved / (1024 * 1024)} MB)" else ""),
                                 color = MaterialTheme.colorScheme.primary
                             )
                         } else {

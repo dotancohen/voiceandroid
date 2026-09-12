@@ -258,6 +258,34 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
+     * One operation with the configured peer, by the terms table: "sync",
+     * "deliver" (sync then send), "exchange" (sync, send and fetch), "send" or "fetch".
+     */
+    suspend fun operate(operation: String): Result<SyncResult> = withContext(Dispatchers.IO) {
+        try {
+            AppLogger.i(TAG, "Starting $operation")
+            val result = ensureInitialized().operate(operation)
+            AppLogger.i(TAG, "$operation completed: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}, files sent=${result.filesSent}, fetched=${result.filesFetched}")
+            Result.success(SyncResult(
+                success = result.success,
+                notesReceived = result.notesReceived,
+                notesSent = result.notesSent,
+                filesSent = result.filesSent,
+                filesFetched = result.filesFetched,
+                bytesMoved = result.bytesMoved.toLong(),
+                errorMessage = result.errorMessage,
+                warnings = result.warnings
+            ))
+        } catch (e: VoiceCoreException) {
+            AppLogger.e(TAG, "$operation failed", e)
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "$operation failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /**
      * Clear sync state to force a full re-sync from scratch.
      */
     suspend fun clearSyncState(): Result<Unit> = withContext(Dispatchers.IO) {
@@ -348,6 +376,48 @@ class VoiceRepository(private val context: Context) {
             Result.success(Unit)
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Start listening for peers on `port`; returns the URLs peers can use. */
+    suspend fun startListener(port: Int): Result<List<String>> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().startListener(port.toUShort()))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Stop listening. Safe to call when nothing listens. */
+    fun stopListener() {
+        try {
+            client?.stopListener()
+        } catch (e: Exception) {
+            AppLogger.e(TAG, "Could not stop the listener", e)
+        }
+    }
+
+    fun listenerRunning(): Boolean = try { client?.listenerRunning() ?: false } catch (e: Exception) { false }
+
+    /** This phone's certificate fingerprint, what a peer pins. */
+    suspend fun certificateFingerprint(): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().certificateFingerprint())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Where this phone would be reachable at `port`. */
+    suspend fun listenUrls(port: Int): Result<List<String>> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().listenUrls(port.toUShort()))
         } catch (e: Exception) {
             Result.failure(e)
         }

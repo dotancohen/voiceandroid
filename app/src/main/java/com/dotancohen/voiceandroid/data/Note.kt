@@ -24,6 +24,12 @@ data class SyncResult(
     val success: Boolean,
     val notesReceived: Int,
     val notesSent: Int,
+    /** Recordings sent to the peer (deliver, exchange, send) */
+    val filesSent: Int = 0,
+    /** Recordings fetched from the peer (exchange, fetch) */
+    val filesFetched: Int = 0,
+    /** Bytes of recordings moved either way */
+    val bytesMoved: Long = 0,
     val errorMessage: String? = null,
     /** Non-fatal problems, e.g. a cloud upload that will be retried on the next sync */
     val warnings: List<String> = emptyList()

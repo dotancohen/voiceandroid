@@ -61,6 +61,10 @@ class AdbCommandReceiver : BroadcastReceiver() {
             "PING" -> "pong device=${repo.getDeviceName().getOrNull()} id=${repo.getDeviceId().getOrNull()}"
 
             "SYNC" -> syncResult(repo.sync().getOrThrow())
+            "EXCHANGE" -> syncResult(repo.operate("exchange").getOrThrow())
+            "LISTEN_ON" -> { com.dotancohen.voiceandroid.data.SyncListenerService.start(context); "OK listening" }
+            "LISTEN_OFF" -> { com.dotancohen.voiceandroid.data.SyncListenerService.stop(context); "OK stopped" }
+            "DELIVER" -> syncResult(repo.operate("deliver").getOrThrow())
             "UPLOAD" -> "OK " + repo.upload().getOrThrow().describe()
             "INITIAL_SYNC" -> syncResult(repo.initialSync().getOrThrow())
             "SET_SYNC" -> {

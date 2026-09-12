@@ -928,6 +928,18 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -965,6 +977,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_audio_file_in_cloud(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_certificate_fingerprint(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_clear_audio_file_storage(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_clear_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -1081,6 +1095,10 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_list_snapshots(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_listen_urls(`ptr`: Pointer,`port`: Short,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_listener_running(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_mark_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_merge_notes(`ptr`: Pointer,`noteId1`: RustBuffer.ByValue,`noteId2`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1088,6 +1106,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_move_to_account(`ptr`: Pointer,`accountId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_offer_code(`ptr`: Pointer,`urls`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_operate(`ptr`: Pointer,`operation`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_purge_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1133,6 +1153,10 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_snapshot(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_start_listener(`ptr`: Pointer,`port`: Short,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_stop_listener(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_tag_note_too_big(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1291,6 +1315,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_audio_file_in_cloud(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_certificate_fingerprint(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_clear_audio_file_storage(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_clear_sync_state(
@@ -1407,6 +1433,10 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_list_snapshots(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_listen_urls(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_listener_running(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_mark_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_merge_notes(
@@ -1414,6 +1444,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_move_to_account(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_offer_code(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_operate(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_purge_note(
     ): Short
@@ -1458,6 +1490,10 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_set_setting(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_snapshot(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_start_listener(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_stop_listener(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_sync(
     ): Short
@@ -1527,6 +1563,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_audio_file_in_cloud() != 188.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_certificate_fingerprint() != 62287.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_audio_file_storage() != 14206.toShort()) {
@@ -1703,6 +1742,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_list_snapshots() != 7926.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_listen_urls() != 12900.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_listener_running() != 55177.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_mark_note() != 26647.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1713,6 +1758,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_offer_code() != 29742.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_operate() != 28313.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_purge_note() != 15686.toShort()) {
@@ -1779,6 +1827,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_snapshot() != 5591.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_start_listener() != 35853.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_stop_listener() != 10347.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_sync() != 52830.toShort()) {
@@ -1875,6 +1929,29 @@ inline fun <T : Disposable?, R> T.use(block: (T) -> R) =
  * @suppress
  * */
 object NoPointer
+
+/**
+ * @suppress
+ */
+public object FfiConverterUShort: FfiConverter<UShort, Short> {
+    override fun lift(value: Short): UShort {
+        return value.toUShort()
+    }
+
+    override fun read(buf: ByteBuffer): UShort {
+        return lift(buf.getShort())
+    }
+
+    override fun lower(value: UShort): Short {
+        return value.toShort()
+    }
+
+    override fun allocationSize(value: UShort) = 2UL
+
+    override fun write(value: UShort, buf: ByteBuffer) {
+        buf.putShort(value.toShort())
+    }
+}
 
 /**
  * @suppress
@@ -2256,6 +2333,12 @@ public interface VoiceClientInterface {
     fun `audioFileInCloud`(`audioFileId`: kotlin.String): kotlin.Boolean
     
     /**
+     * The fingerprint of this phone's certificate, making the certificate
+     * if there is none yet: what a peer pins, and what the sync screen shows.
+     */
+    fun `certificateFingerprint`(): kotlin.String
+    
+    /**
      * Clear an audio file's cloud storage information.
      *
      * This marks the file as local-only (not uploaded to cloud).
@@ -2629,6 +2712,13 @@ public interface VoiceClientInterface {
     fun `listSnapshots`(): List<SnapshotData>
     
     /**
+     * Where this phone would be reachable at `port`, for the sync screen.
+     */
+    fun `listenUrls`(`port`: kotlin.UShort): List<kotlin.String>
+    
+    fun `listenerRunning`(): kotlin.Boolean
+    
+    /**
      * Mark a note (add the _system/_marked tag)
      *
      * Returns true if the note was marked, false if already marked.
@@ -2653,6 +2743,12 @@ public interface VoiceClientInterface {
      * are where this phone listens.
      */
     fun `offerCode`(`urls`: List<kotlin.String>): kotlin.String
+    
+    /**
+     * One operation with the configured peer: "sync", "deliver" (sync then
+     * send), "exchange" (sync, send and fetch), "send" or "fetch".
+     */
+    fun `operate`(`operation`: kotlin.String): SyncResultData
     
     /**
      * Empty one note out of the trash for good.
@@ -2809,6 +2905,18 @@ public interface VoiceClientInterface {
      * Copy the database into its snapshot directory now; returns the path.
      */
     fun `snapshot`(): kotlin.String
+    
+    /**
+     * Start listening for peers (Stage 6): HTTPS with this phone's own
+     * certificate, on a thread of its own. Returns the URLs peers can use.
+     * Never started by the core itself; the application's switch starts it.
+     */
+    fun `startListener`(`port`: kotlin.UShort): List<kotlin.String>
+    
+    /**
+     * Stop listening. The card says so once the listener has wound down.
+     */
+    fun `stopListener`()
     
     /**
      * Sync with the configured server: database changes both ways, no files.
@@ -3117,6 +3225,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_audio_file_in_cloud(
         it, FfiConverterString.lower(`audioFileId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * The fingerprint of this phone's certificate, making the certificate
+     * if there is none yet: what a peer pins, and what the sync screen shows.
+     */
+    @Throws(VoiceCoreException::class)override fun `certificateFingerprint`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_certificate_fingerprint(
+        it, _status)
 }
     }
     )
@@ -4129,6 +4254,33 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Where this phone would be reachable at `port`, for the sync screen.
+     */override fun `listenUrls`(`port`: kotlin.UShort): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_listen_urls(
+        it, FfiConverterUShort.lower(`port`),_status)
+}
+    }
+    )
+    }
+    
+
+    override fun `listenerRunning`(): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_listener_running(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Mark a note (add the _system/_marked tag)
      *
      * Returns true if the note was marked, false if already marked.
@@ -4190,6 +4342,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_offer_code(
         it, FfiConverterSequenceString.lower(`urls`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * One operation with the configured peer: "sync", "deliver" (sync then
+     * send), "exchange" (sync, send and fetch), "send" or "fetch".
+     */
+    @Throws(VoiceCoreException::class)override fun `operate`(`operation`: kotlin.String): SyncResultData {
+            return FfiConverterTypeSyncResultData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_operate(
+        it, FfiConverterString.lower(`operation`),_status)
 }
     }
     )
@@ -4579,6 +4748,38 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     }
     )
     }
+    
+
+    
+    /**
+     * Start listening for peers (Stage 6): HTTPS with this phone's own
+     * certificate, on a thread of its own. Returns the URLs peers can use.
+     * Never started by the core itself; the application's switch starts it.
+     */
+    @Throws(VoiceCoreException::class)override fun `startListener`(`port`: kotlin.UShort): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_start_listener(
+        it, FfiConverterUShort.lower(`port`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Stop listening. The card says so once the listener has wound down.
+     */override fun `stopListener`()
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_stop_listener(
+        it, _status)
+}
+    }
+    
     
 
     
@@ -5549,6 +5750,18 @@ data class SyncResultData (
     var `success`: kotlin.Boolean, 
     var `notesReceived`: kotlin.Int, 
     var `notesSent`: kotlin.Int, 
+    /**
+     * Recordings sent to the peer (deliver, exchange, send)
+     */
+    var `filesSent`: kotlin.Int, 
+    /**
+     * Recordings fetched from the peer (exchange, fetch)
+     */
+    var `filesFetched`: kotlin.Int, 
+    /**
+     * Bytes of recordings moved either way
+     */
+    var `bytesMoved`: kotlin.ULong, 
     var `errorMessage`: kotlin.String?, 
     /**
      * Non-fatal problems, e.g. a cloud upload that will be retried next sync
@@ -5568,6 +5781,9 @@ public object FfiConverterTypeSyncResultData: FfiConverterRustBuffer<SyncResultD
             FfiConverterBoolean.read(buf),
             FfiConverterInt.read(buf),
             FfiConverterInt.read(buf),
+            FfiConverterInt.read(buf),
+            FfiConverterInt.read(buf),
+            FfiConverterULong.read(buf),
             FfiConverterOptionalString.read(buf),
             FfiConverterSequenceString.read(buf),
         )
@@ -5577,6 +5793,9 @@ public object FfiConverterTypeSyncResultData: FfiConverterRustBuffer<SyncResultD
             FfiConverterBoolean.allocationSize(value.`success`) +
             FfiConverterInt.allocationSize(value.`notesReceived`) +
             FfiConverterInt.allocationSize(value.`notesSent`) +
+            FfiConverterInt.allocationSize(value.`filesSent`) +
+            FfiConverterInt.allocationSize(value.`filesFetched`) +
+            FfiConverterULong.allocationSize(value.`bytesMoved`) +
             FfiConverterOptionalString.allocationSize(value.`errorMessage`) +
             FfiConverterSequenceString.allocationSize(value.`warnings`)
     )
@@ -5585,6 +5804,9 @@ public object FfiConverterTypeSyncResultData: FfiConverterRustBuffer<SyncResultD
             FfiConverterBoolean.write(value.`success`, buf)
             FfiConverterInt.write(value.`notesReceived`, buf)
             FfiConverterInt.write(value.`notesSent`, buf)
+            FfiConverterInt.write(value.`filesSent`, buf)
+            FfiConverterInt.write(value.`filesFetched`, buf)
+            FfiConverterULong.write(value.`bytesMoved`, buf)
             FfiConverterOptionalString.write(value.`errorMessage`, buf)
             FfiConverterSequenceString.write(value.`warnings`, buf)
     }

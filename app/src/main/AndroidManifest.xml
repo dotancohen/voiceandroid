@@ -95,6 +95,15 @@
             android:exported="false"
             android:stopWithTask="false"
             android:foregroundServiceType="mediaProcessing|dataSync" />
+
+        <!-- The phone as a listener: other devices of the account may reach it
+             to sync while this runs. Started only by the switch on the sync
+             screen, stopped from its notification or the same switch. -->
+        <service
+            android:name=".data.SyncListenerService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 
 </manifest>
