@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.dotancohen.voiceandroid.data.Tag
+import uniffi.voicecore.Stamp
 import com.dotancohen.voiceandroid.ui.components.TagTreeItem
 import org.junit.Assert.*
 import org.junit.Rule
@@ -34,7 +35,7 @@ class TagTreeItemTest {
         id = "test-tag-001",
         name = "ParentTag",
         parentId = null,
-        createdAt = "2025-01-01 12:00:00",
+        createdAt = Stamp(at = 1_735_732_800, offset = 7200, zone = "Asia/Jerusalem"),
         modifiedAt = null
     )
 
@@ -192,7 +193,7 @@ class TagTreeItemTest {
             id = "test-tag-002",
             name = "ChildTag",
             parentId = "test-tag-001",
-            createdAt = "2025-01-01 12:00:00",
+            createdAt = Stamp(at = 1_735_732_800, offset = 7200, zone = "Asia/Jerusalem"),
             modifiedAt = null
         )
 

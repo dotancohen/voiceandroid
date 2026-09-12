@@ -29,14 +29,41 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Features still being tried out. They are in the debug build
+            // only, so an unfinished idea cannot reach a release, and the
+            // code that reads this constant is dropped from a release build
+            // entirely.
+            buildConfigField("boolean", "DEV_FEATURES", "true")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("boolean", "DEV_FEATURES", "false")
+        }
+
+        // Instrumented tests run as a different application, so that no test
+        // run can ever touch the notes and recordings on a real phone.
+        //
+        // On 2026-09-12 `connectedDebugAndroidTest` replaced the debug app on the
+        // owner's phone; Android deletes an app's private and external data when
+        // the app is replaced, and a week of his work was destroyed. With a
+        // separate application id the worst an instrumented run can do is
+        // destroy its own empty sandbox.
+        create("uitest") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".uitest"
+            versionNameSuffix = "-uitest"
+            isDebuggable = true
+            matchingFallbacks += listOf("debug")
         }
     }
+
+    // `connectedAndroidTest` builds and installs this build type, not debug.
+    testBuildType = "uitest"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -49,6 +76,26 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
+    }
+
+    testOptions {
+        unitTests {
+            // Android's own classes are empty stubs in a JVM test, and calling
+            // one throws by default. The code under test logs through
+            // android.util.Log on its error paths, and those paths are exactly
+            // what the tests exercise, so the stubs return a default instead.
+            //
+            // A test that wants the real framework asks for it with
+            // @RunWith(RobolectricTestRunner::class); that is how the Compose
+            // screens are tested without a phone. The two live together: a
+            // Robolectric test gets real Android classes, every other test gets
+            // the stubs.
+            isReturnDefaultValues = true
+            // Robolectric reads the application's resources and manifest, so
+            // they have to be packaged for the JVM tests as well.
+            isIncludeAndroidResources = true
+        }
     }
 
     // Include native libraries from the jniLibs directory
@@ -89,6 +136,20 @@ dependencies {
 
     // Test dependencies
     testImplementation(libs.junit)
+    // A real org.json for the JVM tests. Android's own is a stub that, with
+    // isReturnDefaultValues on, answers 0 and null instead of parsing, which
+    // would let a test read a fixture file and quietly see nothing in it.
+    testImplementation("org.json:json:20250107")
+
+    // Compose screens, tested on the JVM: Robolectric supplies the Android
+    // framework, ui-test-junit4 hosts a composable and drives it (see
+    // DEVELOPMENT.md "Testing a screen"). ui-test-manifest provides the empty
+    // activity the test host needs, and is already a debug dependency below.
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
+    testImplementation(platform(libs.androidx.compose.bom))
+    testImplementation(libs.androidx.ui.test.junit4)
+    testImplementation(libs.androidx.ui.test.manifest)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
