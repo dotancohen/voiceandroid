@@ -89,10 +89,19 @@ object WhisperModels {
     fun file(context: Context, model: WhisperModel): File = File(modelsDir(context), model.fileName)
 
     /** A model counts as installed when its file exists with the full size. */
-    fun isInstalled(context: Context, model: WhisperModel): Boolean {
-        val f = file(context, model)
-        return f.exists() && f.length() == model.sizeBytes
-    }
+    fun isInstalled(context: Context, model: WhisperModel): Boolean =
+        isComplete(file(context, model), model)
+
+    /**
+     * Whether this file is the whole model.
+     *
+     * The size is checked, not merely the name: a download stopped by a lost
+     * connection leaves a file that is there but short, and handing a
+     * half-model to whisper.cpp fails in a way that reads as a broken
+     * recording rather than as a broken download.
+     */
+    internal fun isComplete(file: File, model: WhisperModel): Boolean =
+        file.exists() && file.length() == model.sizeBytes
 
     fun installed(context: Context): List<WhisperModel> = CATALOGUE.filter { isInstalled(context, it) }
 
