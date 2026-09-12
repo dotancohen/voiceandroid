@@ -18,6 +18,72 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+/** The notes either side of the one on screen, and where it sits in the list. */
+data class NoteNeighbours(
+    val previous: String? = null,
+    val next: String? = null,
+    /** 1-based position of this note in the list, 0 when it is not in it. */
+    val position: Int = 0,
+    val total: Int = 0,
+)
+
+/**
+ * Which notes sit either side of [noteId] in [ids].
+ *
+ * Kept apart from the loading so the awkward places can be tested: the two
+ * ends of the list, a list of one, and a note that is not in the list at all
+ * (deleted while it was open, or filtered out by a search).
+ */
+fun neighboursIn(ids: List<String>, noteId: String): NoteNeighbours {
+    val index = ids.indexOf(noteId)
+    if (index < 0) return NoteNeighbours()
+    return NoteNeighbours(
+        previous = ids.getOrNull(index - 1),
+        next = ids.getOrNull(index + 1),
+        position = index + 1,
+        total = ids.size,
+    )
+}
+
+/**
+ * Whether backing out of a note should take the note with it.
+ *
+ * A note is written to the database before its recording starts, so opening
+ * the recorder and then changing one's mind would otherwise leave an empty
+ * note in the list. Four things must all hold: the note was opened in order
+ * to record, no recording is running in it, the note has arrived (a note that
+ * is still loading reads as empty, and a slow note must not be mistaken for
+ * an unwritten one), and it holds neither text nor a recording.
+ */
+fun shouldDiscardEmptyNote(
+    openedToRecord: Boolean,
+    recorderBusyOnThisNote: Boolean,
+    note: Note?,
+    audioFiles: List<AudioFile>,
+): Boolean =
+    openedToRecord &&
+        !recorderBusyOnThisNote &&
+        note != null &&
+        note.content.isBlank() &&
+        audioFiles.isEmpty()
+
+/**
+ * The transcriptions of one recording in the order they are shown: the one
+ * the user chose first, the rest after it in the order they arrived.
+ */
+fun transcriptionsInDisplayOrder(
+    transcriptions: List<Transcription>,
+    primaryTranscriptionId: String?,
+): List<Transcription> =
+    transcriptions.sortedBy { if (it.id == primaryTranscriptionId) 0 else 1 }
+
+/**
+ * Which recording to open a note on: the one the user chose, or the first —
+ * which is the oldest — when there is no choice or the choice is not here.
+ */
+fun indexOfPrimaryAudioFile(audioFiles: List<AudioFile>, primaryAudioFileId: String?): Int =
+    audioFiles.indexOfFirst { it.id == primaryAudioFileId }.coerceAtLeast(0)
+
 /**
  * ViewModel for the note detail screen.
  */
@@ -41,6 +107,101 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
     private val _transcribeMessage = MutableStateFlow<String?>(null)
     val transcribeMessage: StateFlow<String?> = _transcribeMessage.asStateFlow()
 
+    /**
+     * The notes to either side of this one, for the Previous and Next
+     * buttons: their ids, or null at the ends of the list.
+     */
+    private val _neighbours = MutableStateFlow(NoteNeighbours())
+    val neighbours: StateFlow<NoteNeighbours> = _neighbours.asStateFlow()
+
+    /**
+     * Whether the recorder should open by itself, asked once and answered
+     * once.
+     *
+     * The screen is built again every time the user comes back from the tag
+     * screen or the tag dialog, and the route still says "this note was
+     * opened in order to record". Without somewhere to remember that the
+     * recorder has already been offered, coming back from managing the tags
+     * started a second recording in the note.
+     */
+    private var startRecordingOffered = false
+
+    fun consumeStartRecording(requested: Boolean): Boolean {
+        if (!requested || startRecordingOffered) return false
+        startRecordingOffered = true
+        return true
+    }
+
+    /** The note's tags, without the system ones, in the order the core gives. */
+    private val _tags = MutableStateFlow<List<String>>(emptyList())
+    val tags: StateFlow<List<String>> = _tags.asStateFlow()
+
+    /** Whether the note carries the star (the `_marked` system tag). */
+    private val _isMarked = MutableStateFlow(false)
+    val isMarked: StateFlow<Boolean> = _isMarked.asStateFlow()
+
+    /**
+     * The attachment that stands for this note, if the user chose one: the
+     * recording played when the note is opened, and the one whose
+     * transcription the notes list shows.
+     */
+    private val _primaryAttachmentId = MutableStateFlow<String?>(null)
+    val primaryAttachmentId: StateFlow<String?> = _primaryAttachmentId.asStateFlow()
+
+    /** The same, given as the audio file's id rather than the attachment's. */
+    private val _primaryAudioFileId = MutableStateFlow<String?>(null)
+    val primaryAudioFileId: StateFlow<String?> = _primaryAudioFileId.asStateFlow()
+
+    /**
+     * The transcription that stands for each recording, where one was
+     * chosen: audio file id to transcription id.
+     */
+    private val _primaryTranscriptionIds = MutableStateFlow<Map<String, String>>(emptyMap())
+    val primaryTranscriptionIds: StateFlow<Map<String, String>> = _primaryTranscriptionIds.asStateFlow()
+
+    /** The row shown while Previous or Next is held down, or null. */
+    private val _preview = MutableStateFlow<NoteWithAudioFiles?>(null)
+    val preview: StateFlow<NoteWithAudioFiles?> = _preview.asStateFlow()
+
+    /**
+     * Work out which notes sit either side of this one.
+     *
+     * [order] is the list the user was looking at, filters and search
+     * included. A note that is not in it (opened from a link, or from the
+     * automation tool) falls back to every note, newest first, which is the
+     * order the list uses when nothing is filtered.
+     */
+    fun loadNeighbours(noteId: String, order: List<String>) {
+        viewModelScope.launch {
+            var ids = order
+            if (noteId !in ids) {
+                ids = repository.getAllNotes().getOrNull()
+                    ?.filter { it.deletedAt == null }
+                    ?.sortedByDescending { it.createdAt.at }
+                    ?.map { it.id }
+                    .orEmpty()
+            }
+            _neighbours.value = neighboursIn(ids, noteId)
+        }
+    }
+
+    /**
+     * Load the row of a neighbouring note, to show while its button is held.
+     *
+     * It is the same row the notes list draws, built by the same code, so a
+     * preview cannot say something the list would not.
+     */
+    fun loadPreview(noteId: String) {
+        viewModelScope.launch {
+            val note = repository.getAllNotes().getOrNull()?.firstOrNull { it.id == noteId }
+            _preview.value = note?.let { loadNoteRow(repository, it) }
+        }
+    }
+
+    fun clearPreview() {
+        _preview.value = null
+    }
+
     init {
         // When a job for one of this note's recordings ends, show the new transcription
         viewModelScope.launch {
@@ -56,9 +217,99 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
         }
     }
 
+    /**
+     * Put the star on this note, or take it off: the same `_marked` tag the
+     * notes list toggles.
+     */
+    fun toggleMarked() {
+        val noteId = _note.value?.id ?: return
+        viewModelScope.launch {
+            repository.toggleNoteMarked(noteId)
+                .onSuccess { marked -> _isMarked.value = marked }
+                .onFailure { e -> _error.value = "Could not change the star: ${e.message}" }
+        }
+    }
+
+    /** Take this note out of the trash, from the note itself. */
+    fun recoverNote() {
+        val noteId = _note.value?.id ?: return
+        viewModelScope.launch {
+            repository.undeleteNote(noteId)
+                .onSuccess { loadNote(noteId) }
+                .onFailure { e -> _error.value = "Could not recover the note: ${e.message}" }
+        }
+    }
+
+    /**
+     * Remove this note for good, with the recordings that hang on it alone.
+     * Only a note that is already in the trash can be removed this way.
+     */
+    fun purgeNote() {
+        val noteId = _note.value?.id ?: return
+        viewModelScope.launch {
+            repository.purgeNote(noteId)
+                .onSuccess { _deleteSuccess.value = true }
+                .onFailure { e -> _error.value = "Could not remove the note: ${e.message}" }
+        }
+    }
+
+    /**
+     * Make one of a recording's transcriptions the one that stands for it,
+     * or take the mark off the one that has it.
+     */
+    fun setPrimaryTranscription(transcription: Transcription) {
+        viewModelScope.launch {
+            val audioFileId = transcription.audioFileId
+            val current = _primaryTranscriptionIds.value[audioFileId]
+            val target = if (current == transcription.id) null else transcription.id
+            repository.setPrimaryTranscription(audioFileId, target)
+                .onSuccess { loadPrimaryTranscriptions(_audioFiles.value) }
+                .onFailure { e -> _error.value = "Could not set the main transcription: ${e.message}" }
+        }
+    }
+
+    private suspend fun loadPrimaryTranscriptions(audioFiles: List<AudioFile>) {
+        val chosen = mutableMapOf<String, String>()
+        for (audioFile in audioFiles) {
+            repository.getPrimaryTranscription(audioFile.id).getOrNull()?.let { id ->
+                chosen[audioFile.id] = id
+            }
+        }
+        _primaryTranscriptionIds.value = chosen
+    }
+
+    /**
+     * Make one of this note's recordings the one that stands for it, or take
+     * the mark off the one that has it.
+     */
+    fun setPrimaryAudioFile(audioFile: AudioFile) {
+        val noteId = _note.value?.id ?: return
+        viewModelScope.launch {
+            val attachments = repository.getAttachmentsForNote(noteId).getOrNull().orEmpty()
+            val attachment = attachments.firstOrNull { it.attachmentId == audioFile.id }
+            if (attachment == null) {
+                _error.value = "That recording is not attached to this note"
+                return@launch
+            }
+            // Pressing the star of the one that already has it puts the note
+            // back to "the first recording", which is a choice too.
+            val target = if (_primaryAttachmentId.value == attachment.id) null else attachment.id
+            repository.setPrimaryAttachment(noteId, target)
+                .onSuccess { loadNote(noteId) }
+                .onFailure { e -> _error.value = "Could not set the main recording: ${e.message}" }
+        }
+    }
+
     /** Queue one of this note's recordings for transcription on the phone. */
     fun transcribeOnDevice(audioFile: AudioFile, modelId: String? = null, language: String? = null) {
-        val problem = OnDeviceTranscriber.enqueue(getApplication(), audioFile.id, audioFile.filename, language, modelId)
+        val problem = OnDeviceTranscriber.enqueue(
+            getApplication(),
+            audioFile.id,
+            audioFile.filename,
+            language,
+            modelId,
+            audioFile.durationSeconds,
+        )
         _transcribeMessage.value = problem ?: "Transcription of ${audioFile.filename} queued"
         if (problem == null) {
             // Show the "Pending..." row as soon as it exists
@@ -76,6 +327,11 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    /** Say something went wrong, from a screen that found it out for itself. */
+    fun reportError(message: String) {
+        _error.value = message
+    }
 
     // Edit state
     private val _isEditing = MutableStateFlow(false)
@@ -155,7 +411,10 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
             // (We could add a getNoteById method to the repository, but this works for now)
             repository.getAllNotes()
                 .onSuccess { notesList ->
+                    // A note in the trash is not in the list, and it can be
+                    // opened from there, so it is looked for in both places.
                     val foundNote = notesList.find { it.id == noteId }
+                        ?: repository.getDeletedNotes().getOrNull()?.find { it.id == noteId }
                     _note.value = foundNote
 
                     if (foundNote != null) {
@@ -175,14 +434,35 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
                                 }
                         }
 
+                        // Which recording stands for the note, if one was chosen
+                        _primaryAttachmentId.value = repository.getPrimaryAttachment(noteId).getOrNull()
+                        _primaryAudioFileId.value = _primaryAttachmentId.value?.let { attachmentId ->
+                            repository.getAttachmentsForNote(noteId).getOrNull()
+                                ?.firstOrNull { it.id == attachmentId }
+                                ?.attachmentId
+                        }
+
+                        // The note's tags and its star, for the row under the
+                        // text: the same two things the notes list shows.
+                        repository.getTagsForNote(noteId)
+                            .onSuccess { tags ->
+                                _tags.value = tags
+                                    .map { it.name }
+                                    .filter { !it.startsWith("_") }
+                            }
+                            .onFailure { e -> AppLogger.w(TAG, "Failed to load tags: ${e.message}") }
+                        _isMarked.value = repository.isNoteMarked(noteId).getOrNull() ?: false
+
                         // Load audio files for this note
                         repository.getAudioFilesForNote(noteId)
                             .onSuccess { files ->
-                                val filteredFiles = files.filter { it.deletedAt == null }
+                                // Oldest first, the same order as the list
+                                val filteredFiles = audioFilesOldestFirst(files.filter { it.deletedAt == null })
                                 _audioFiles.value = filteredFiles
 
                                 // Load transcriptions for each audio file
                                 loadTranscriptionsForAudioFiles(filteredFiles)
+                                loadPrimaryTranscriptions(filteredFiles)
 
                                 // Check which audio files are available locally
                                 checkAudioFileAvailability(filteredFiles)
@@ -475,9 +755,9 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
      * Toggle a state tag for a transcription.
      * If the tag is true, it becomes false; if false, it becomes true.
      */
-    fun toggleTranscriptionState(transcription: Transcription, tag: String) {
+    fun toggleTranscriptionFlag(transcription: Transcription, tag: String) {
         viewModelScope.launch {
-            val newState = transcription.toggleState(tag)
+            val newState = transcription.toggleFlag(tag)
             AppLogger.i(TAG, "Toggling transcription ${transcription.id} state: $tag -> $newState")
 
             repository.updateTranscriptionState(transcription.id, newState)
@@ -490,6 +770,40 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
                     AppLogger.e(TAG, "Failed to update transcription state", e)
                     _error.value = "Failed to update transcription: ${e.message}"
                 }
+        }
+    }
+
+    /**
+     * Replace the text of a transcription with the user's own.
+     *
+     * The flags are left exactly as they are: whether a corrected
+     * transcription is still "original" is the user's judgement, made in the
+     * same dialogue, and this must not answer it for them.
+     *
+     * Still being tried out, so only the debug build offers a way in.
+     */
+    fun editTranscriptionContent(transcription: Transcription, content: String) {
+        viewModelScope.launch {
+            repository.updateTranscription(transcription.id, content)
+                .onSuccess {
+                    AppLogger.i(TAG, "Transcription ${transcription.id} edited by hand")
+                    updateLocalTranscriptionContent(transcription.audioFileId, transcription.id, content)
+                }
+                .onFailure { e ->
+                    AppLogger.e(TAG, "Failed to edit transcription", e)
+                    _error.value = "Could not save the transcription: ${e.message}"
+                }
+        }
+    }
+
+    private fun updateLocalTranscriptionContent(audioFileId: String, transcriptionId: String, content: String) {
+        val currentMap = _transcriptions.value.toMutableMap()
+        val list = currentMap[audioFileId]?.toMutableList() ?: return
+        val index = list.indexOfFirst { it.id == transcriptionId }
+        if (index >= 0) {
+            list[index] = list[index].copy(content = content)
+            currentMap[audioFileId] = list
+            _transcriptions.value = currentMap
         }
     }
 

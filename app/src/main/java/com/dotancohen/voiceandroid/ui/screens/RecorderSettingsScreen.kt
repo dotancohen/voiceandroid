@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +16,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,47 +43,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dotancohen.voiceandroid.BuildConfig
 import com.dotancohen.voiceandroid.audio.RecorderPreferences
 import com.dotancohen.voiceandroid.viewmodel.RecorderSettingsViewModel
 
 /**
- * Settings → Recorder: the microphones the phone has, a friendly name for
- * each, which one to record with, a live level meter to find where each
- * microphone hears the user best, and what the toolbar "New" button does.
+ * Settings → Recorder: the recording format, what the New button does,
+ * what happens during a telephone call, and a way in to the microphones,
+ * which have a screen of their own.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecorderSettingsScreen(
     onBack: () -> Unit,
+    onNavigateToMicrophones: () -> Unit,
     viewModel: RecorderSettingsViewModel = viewModel()
 ) {
-    val context = LocalContext.current
     val mics by viewModel.mics.collectAsState()
     val defaultAction by viewModel.defaultNewAction.collectAsState()
     val recordingFormat by viewModel.recordingFormat.collectAsState()
-    val testingKey by viewModel.testingMicKey.collectAsState()
-    val level by viewModel.level.collectAsState()
-    val peak by viewModel.peak.collectAsState()
-    var pendingTest by remember { mutableStateOf<String?>(null) }
-
-    val permissionLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        val key = pendingTest
-        pendingTest = null
-        if (granted && key != null) viewModel.test(mics.firstOrNull { it.key == key })
-    }
-
-    fun startTest(key: String) {
-        if (ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) {
-            viewModel.test(mics.firstOrNull { it.key == key })
-        } else {
-            pendingTest = key
-            permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
-        }
-    }
-
-    // Stop the meter when leaving the screen
-    DisposableEffect(Unit) { onDispose { viewModel.test(null) } }
-
+    val startImmediately by viewModel.startImmediately.collectAsState()
+    val duringCall by viewModel.duringCall.collectAsState()
+    val transcribeWhenSaved by viewModel.transcribeWhenSaved.collectAsState()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -106,17 +90,70 @@ fun RecorderSettingsScreen(
             Text("The New button creates", style = MaterialTheme.typography.titleMedium)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = defaultAction == RecorderPreferences.ACTION_NOTE, onClick = { viewModel.setDefaultNewAction(RecorderPreferences.ACTION_NOTE) })
-                Text("A new note")
+                Text("A new Note")
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = defaultAction == RecorderPreferences.ACTION_RECORDING, onClick = { viewModel.setDefaultNewAction(RecorderPreferences.ACTION_RECORDING) })
-                Text("A new voice recording")
+                Text("A new voice Recording")
             }
             Text(
                 "Long-press the New button to choose the other one.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                Checkbox(checked = startImmediately, onCheckedChange = { viewModel.setStartImmediately(it) })
+                Column(modifier = Modifier.weight(1f)) {
+                    Text("Start recording as soon as the screen opens")
+                    Text(
+                        "No button to press: the recording begins with the screen. " +
+                            "The first time, the phone still asks for permission to use the microphone.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+
+            // Still being tried out: debug builds only.
+            if (BuildConfig.DEV_FEATURES) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    Checkbox(
+                        checked = transcribeWhenSaved,
+                        onCheckedChange = { viewModel.setTranscribeWhenSaved(it) }
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Transcribe every Recording as it is saved")
+                        Text(
+                            "The recording goes straight into the transcription queue when you " +
+                                "press Save, without opening the Transcribe dialogue. Under trial: " +
+                                "this setting is not in a release build.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            Text("During a telephone call", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "Android gives the microphone to the telephone, so a call cannot be recorded. " +
+                    "This is what happens to a recording that is already running.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            for (behaviour in RecorderPreferences.CALL_BEHAVIOURS) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    RadioButton(
+                        selected = duringCall == behaviour,
+                        onClick = { viewModel.setDuringCall(behaviour) }
+                    )
+                    Text(RecorderPreferences.callBehaviourTitle(behaviour))
+                }
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
             Text("Recording format", style = MaterialTheme.typography.titleMedium)
@@ -135,55 +172,37 @@ fun RecorderSettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Microphones", style = MaterialTheme.typography.titleMedium)
-            Text(
-                "Give each microphone a name, choose the one to record with, and press Test while speaking: " +
-                    "the bar shows how loudly that microphone hears you, and the peak shows the loudest point so far. " +
-                    "Speak near each edge and corner of the phone to learn where each microphone hears best.",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = mics.none { it.selected }, onClick = { viewModel.selectMic(null) })
-                Text("System default microphone")
-            }
-
-            if (mics.isEmpty()) {
-                Text("No microphones reported. Press Refresh.", color = MaterialTheme.colorScheme.error)
-            }
-
-            for (mic in mics) {
-                var name by remember(mic.key, mic.friendlyName) { mutableStateOf(mic.friendlyName) }
-                val testing = testingKey == mic.key
-                Card(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
-                    Column(modifier = Modifier.padding(12.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            RadioButton(selected = mic.selected, onClick = { viewModel.selectMic(mic.key) })
-                            Column(modifier = Modifier.weight(1f)) {
-                                OutlinedTextField(
-                                    value = name,
-                                    onValueChange = { name = it; viewModel.rename(mic, it) },
-                                    label = { Text("Friendly name") },
-                                    singleLine = true,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
-                                Text(mic.technicalName, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-                            TextButton(onClick = { if (testing) viewModel.test(null) else startTest(mic.key) }) {
-                                Text(if (testing) "Stop test" else "Test")
-                            }
-                            if (testing) {
-                                Column(modifier = Modifier.weight(1f)) {
-                                    LinearProgressIndicator(progress = { level }, modifier = Modifier.fillMaxWidth())
-                                    Text("now ${(level * 100).toInt()}%  ·  peak ${(peak * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
-                                }
-                            }
-                        }
+            // The microphones have a screen of their own: naming them and
+            // testing each one is a job in itself, and it filled this screen
+            // so that the settings under it were never seen.
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = onNavigateToMicrophones)
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth().padding(12.dp)
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Microphones", style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = mics.firstOrNull { it.selected }?.friendlyName
+                                ?: "System default microphone",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        Text(
+                            "Choose one, name them, and test where each hears best.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
         }

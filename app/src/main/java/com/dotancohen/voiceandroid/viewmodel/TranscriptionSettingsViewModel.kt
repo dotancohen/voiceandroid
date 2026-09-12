@@ -32,6 +32,13 @@ class TranscriptionSettingsViewModel(application: Application) : AndroidViewMode
     private val _language = MutableStateFlow(prefs.language)
     val language: StateFlow<String> = _language.asStateFlow()
 
+    /**
+     * What each language is offered as, by code: not used, in the list, or a
+     * button of its own.
+     */
+    private val _languageUses = MutableStateFlow(readLanguageUses())
+    val languageUses: StateFlow<Map<String, String>> = _languageUses.asStateFlow()
+
     private val _beamSize = MutableStateFlow(prefs.beamSize)
     val beamSize: StateFlow<Int> = _beamSize.asStateFlow()
 
@@ -59,6 +66,23 @@ class TranscriptionSettingsViewModel(application: Application) : AndroidViewMode
         prefs.language = code
         _language.value = code
     }
+
+    fun setLanguageUse(code: String, use: String) {
+        prefs.setLanguageUse(code, use)
+        _languageUses.value = readLanguageUses()
+        // A language that is no longer offered cannot stay the default.
+        if (code == prefs.language && use == TranscriptionPreferences.USE_OFF) {
+            val fallback = prefs.buttonLanguages().firstOrNull()?.first
+                ?: prefs.selectableLanguages().firstOrNull { it.first != code }?.first
+                ?: TranscriptionPreferences.LANGUAGE_AUTO
+            setLanguage(fallback)
+        }
+    }
+
+    private fun readLanguageUses(): Map<String, String> =
+        TranscriptionPreferences.LANGUAGE_CATALOGUE.associate { (code, _) ->
+            code to prefs.languageUse(code)
+        }
 
     fun setBeamSize(n: Int) {
         prefs.beamSize = n

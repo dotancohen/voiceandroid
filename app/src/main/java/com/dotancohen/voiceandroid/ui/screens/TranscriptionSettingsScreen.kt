@@ -19,6 +19,9 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -28,6 +31,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +55,7 @@ fun TranscriptionSettingsScreen(
 ) {
     val models by viewModel.models.collectAsState()
     val language by viewModel.language.collectAsState()
+    val languageUses by viewModel.languageUses.collectAsState()
     val beamSize by viewModel.beamSize.collectAsState()
     val message by viewModel.message.collectAsState()
     val current by OnDeviceTranscriber.current.collectAsState()
@@ -97,6 +103,7 @@ fun TranscriptionSettingsScreen(
                             when (job.stage) {
                                 TranscriptionStage.Done -> "Finished: ${job.filename}"
                                 TranscriptionStage.Failed -> "Failed: ${job.filename}"
+                                TranscriptionStage.Stopped -> "Stopped: ${job.filename}"
                                 else -> "Working on ${job.filename}"
                             },
                             style = MaterialTheme.typography.titleSmall
@@ -112,12 +119,55 @@ fun TranscriptionSettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
-            Text("Language", style = MaterialTheme.typography.titleMedium)
-            for ((code, title) in TranscriptionPreferences.LANGUAGES) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = language == code, onClick = { viewModel.setLanguage(code) })
-                    Text(title)
+            Text("Languages", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "A language with a button is offered as one press in the Transcribe dialog. " +
+                    "One in the list is behind the drop-down there. The rest are not shown at all. " +
+                    "The language marked below is the one used when nothing else is chosen.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            var showAllLanguages by remember { mutableStateOf(false) }
+            val shownLanguages = TranscriptionPreferences.LANGUAGE_CATALOGUE.filter { (code, _) ->
+                showAllLanguages || (languageUses[code] ?: TranscriptionPreferences.USE_OFF) !=
+                    TranscriptionPreferences.USE_OFF
+            }
+            for ((code, title) in shownLanguages) {
+                val use = languageUses[code] ?: TranscriptionPreferences.USE_OFF
+                Column(modifier = Modifier.padding(bottom = 6.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(
+                            selected = language == code,
+                            enabled = use != TranscriptionPreferences.USE_OFF,
+                            onClick = { viewModel.setLanguage(code) }
+                        )
+                        Text(title, style = MaterialTheme.typography.bodyMedium)
+                    }
+                    SingleChoiceSegmentedButtonRow(modifier = Modifier.padding(start = 40.dp)) {
+                        TranscriptionPreferences.USES.forEachIndexed { index, option ->
+                            SegmentedButton(
+                                selected = use == option,
+                                onClick = { viewModel.setLanguageUse(code, option) },
+                                shape = SegmentedButtonDefaults.itemShape(
+                                    index = index,
+                                    count = TranscriptionPreferences.USES.size
+                                )
+                            ) {
+                                Text(
+                                    TranscriptionPreferences.useTitle(option),
+                                    style = MaterialTheme.typography.labelSmall
+                                )
+                            }
+                        }
+                    }
                 }
+            }
+            TextButton(onClick = { showAllLanguages = !showAllLanguages }) {
+                Text(
+                    if (showAllLanguages) "Show only the languages in use"
+                    else "Show all ${TranscriptionPreferences.LANGUAGE_CATALOGUE.size} languages"
+                )
             }
 
             Spacer(modifier = Modifier.height(24.dp))

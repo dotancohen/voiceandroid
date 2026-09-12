@@ -25,6 +25,11 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material.icons.filled.Add
+import com.dotancohen.voiceandroid.ui.components.CreateTagDialog
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -63,6 +68,7 @@ fun TagManagementScreen(
     val collapsedTagIds by viewModel.collapsedTagIds.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    var showCreateTag by remember { mutableStateOf(false) }
 
     // Load tags when noteId changes
     LaunchedEffect(noteId) {
@@ -71,7 +77,14 @@ fun TagManagementScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Manage Tags") },
+            title = { Text("Tags") },
+            actions = {
+                // The same dialogue as the tag hierarchy screen: a Tag made
+                // here is put on this Note at once.
+                IconButton(onClick = { showCreateTag = true }) {
+                    Icon(Icons.Default.Add, contentDescription = "Create Tag")
+                }
+            },
             navigationIcon = {
                 IconButton(onClick = onBack) {
                     Icon(
@@ -85,14 +98,16 @@ fun TagManagementScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
         ) {
-            // Filter field
+            // The filter is not focused when the screen opens. This screen is
+            // for tapping tags, and a keyboard over it hides most of them —
+            // the user had to dismiss it before they could tag anything.
             OutlinedTextField(
                 value = filterText,
                 onValueChange = { viewModel.updateFilter(it) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Filter tags...") },
+                placeholder = { Text("Filter Tags…") },
                 singleLine = true,
                 trailingIcon = {
                     if (filterText.isNotEmpty()) {
@@ -106,13 +121,21 @@ fun TagManagementScreen(
                 }
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(4.dp))
+
+            if (showCreateTag) {
+                CreateTagDialog(
+                    note = "It will be put on this Note.",
+                    onCreate = { name -> viewModel.createTagForNote(name) },
+                    onDismiss = { showCreateTag = false }
+                )
+            }
 
             // Status text
             when {
                 isLoading -> {
                     Text(
-                        text = "Loading tags...",
+                        text = "Loading Tags…",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -126,14 +149,14 @@ fun TagManagementScreen(
                 }
                 filteredTags.isEmpty() && filterText.isNotEmpty() -> {
                     Text(
-                        text = "No tags match \"$filterText\"",
+                        text = "No Tags match \"$filterText\"",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 filteredTags.isEmpty() -> {
                     Text(
-                        text = "No tags available",
+                        text = "No Tags yet",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -176,34 +199,34 @@ private fun TagItem(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onToggle() }
-            .padding(vertical = 4.dp),
+            .clickable { onToggle() },
         verticalAlignment = Alignment.CenterVertically
     ) {
         if (isFiltering) {
             // When filtering, show checkbox then full path with highlighted match
             Checkbox(
                 checked = isSelected,
-                onCheckedChange = { onToggle() }
+                onCheckedChange = { onToggle() },
+                modifier = Modifier.size(28.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             HighlightedText(
                 text = tagWithPath.path,
                 highlight = filterText,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyMedium
             )
         } else {
             // When not filtering, show hierarchical layout with indentation
             // Indentation based on depth
             if (tagWithPath.depth > 0) {
-                Spacer(modifier = Modifier.width((tagWithPath.depth * 24).dp))
+                Spacer(modifier = Modifier.width((tagWithPath.depth * 16).dp))
             }
 
             // Expand/collapse icon for tags with children
             if (tagWithPath.hasChildren) {
                 IconButton(
                     onClick = onToggleCollapse,
-                    modifier = Modifier.size(32.dp)
+                    modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
                         imageVector = if (isCollapsed)
@@ -216,19 +239,20 @@ private fun TagItem(
                 }
             } else {
                 // Placeholder for alignment
-                Spacer(modifier = Modifier.width(32.dp))
+                Spacer(modifier = Modifier.width(24.dp))
             }
 
             Checkbox(
                 checked = isSelected,
-                onCheckedChange = { onToggle() }
+                onCheckedChange = { onToggle() },
+                modifier = Modifier.size(28.dp)
             )
 
-            Spacer(modifier = Modifier.width(4.dp))
+            Spacer(modifier = Modifier.width(6.dp))
 
             Text(
                 text = tagWithPath.tag.name,
-                style = MaterialTheme.typography.bodyLarge
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }

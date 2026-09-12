@@ -2,6 +2,7 @@ package com.dotancohen.voiceandroid.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,6 +25,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.dotancohen.voiceandroid.audio.LargeRecording
+import java.io.File
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -63,13 +70,23 @@ fun CompactAudioPlayer(
     filePath: String?,
     modifier: Modifier = Modifier,
     onPlaybackStarted: (() -> Unit)? = null,
-    playerManager: AudioPlayerManager? = null
+    playerManager: AudioPlayerManager? = null,
+    /**
+     * What this recording is called, which note it is in, and that note's
+     * first line — for the notification drawer, which otherwise can only say
+     * "Playing a recording": the file on disk is named after its id.
+     */
+    title: String? = null,
+    noteId: String? = null,
+    noteLine: String? = null,
+    audioFileId: String? = null,
 ) {
     val context = LocalContext.current
 
-    // Use provided player manager or create a local one
-    val localPlayerManager = remember { playerManager ?: AudioPlayerManager(context) }
-    val isLocalPlayer = playerManager == null
+    // The one player of the application, so that what is started here goes on
+    // playing when the note is opened.
+    val localPlayerManager = remember { playerManager ?: AudioPlayerManager.shared(context) }
+    val isLocalPlayer = false
     val waveformExtractor = remember { WaveformExtractor(context) }
 
     // State
@@ -80,19 +97,53 @@ fun CompactAudioPlayer(
     // Set up player with the file and auto-play
     LaunchedEffect(filePath) {
         if (filePath != null) {
-            localPlayerManager.setAudioFiles(listOf(filePath))
             isPlayerSetUp = true
-            // Auto-play when unfolded
-            onPlaybackStarted?.invoke()
-            localPlayerManager.playFile(0)
+            if (title != null) {
+                localPlayerManager.describe(filePath, title, noteId, audioFileId, noteLine)
+            }
+            // Unfolding a recording plays it — unless it is the one already
+            // playing, which is left alone rather than started again.
+            if (localPlayerManager.currentFile == filePath && localPlayerManager.playbackState.value.isPlaying) {
+                localPlayerManager.adoptAudioFiles(listOf(filePath))
+            } else {
+                localPlayerManager.setAudioFiles(listOf(filePath))
+                onPlaybackStarted?.invoke()
+                localPlayerManager.playFile(0)
+            }
         }
     }
 
-    // Extract waveform
-    LaunchedEffect(filePath) {
-        if (filePath != null) {
-            waveform = waveformExtractor.extractWaveform(filePath)
+    /**
+     * Whether this recording is long enough that its waveform is drawn only
+     * when asked for. Null until we know; see [LargeRecording].
+     */
+    var askBeforeDrawing by remember(filePath) { mutableStateOf(false) }
+    var drawing by remember(filePath) { mutableStateOf(false) }
+
+    // The waveform: shown at once when it was drawn before, offered as a
+    // button when drawing it would cost real work.
+    LaunchedEffect(filePath, playbackState.duration) {
+        val path = filePath ?: return@LaunchedEffect
+        if (waveform.isNotEmpty() || drawing) return@LaunchedEffect
+        waveformExtractor.cachedWaveform(path)?.let {
+            waveform = it
+            askBeforeDrawing = false
+            return@LaunchedEffect
         }
+        val large = LargeRecording.isLargeByMillis(playbackState.duration, File(path).length())
+        if (large) {
+            askBeforeDrawing = true
+        } else {
+            waveform = waveformExtractor.extractWaveform(path)
+        }
+    }
+
+    suspend fun drawWaveformNow() {
+        val path = filePath ?: return
+        drawing = true
+        askBeforeDrawing = false
+        waveform = waveformExtractor.extractWaveform(path)
+        drawing = false
     }
 
     // Update playback position periodically
@@ -126,8 +177,33 @@ fun CompactAudioPlayer(
             .fillMaxWidth()
             .padding(vertical = 4.dp)
     ) {
-        // Waveform display
-        CompactWaveformView(
+        // A long recording is not decoded until the user asks: the work is
+        // proportional to its length, and this is where they say it is worth
+        // it. Asked once — the answer is kept.
+        if (askBeforeDrawing) {
+            val scope = rememberCoroutineScope()
+            TextButton(
+                onClick = { scope.launch { drawWaveformNow() } },
+                modifier = Modifier.fillMaxWidth().height(48.dp)
+            ) {
+                Text(
+                    text = LargeRecording.GENERATE_WAVEFORM_PROMPT,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center
+                )
+            }
+        } else if (drawing) {
+            Box(
+                modifier = Modifier.fillMaxWidth().height(48.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "Drawing the waveform…",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        } else CompactWaveformView(
             waveform = waveform,
             progress = if (playbackState.duration > 0) {
                 playbackState.currentPosition.toFloat() / playbackState.duration
@@ -240,10 +316,22 @@ private fun CompactWaveformView(
                 color = MaterialTheme.colorScheme.surface,
                 shape = MaterialTheme.shapes.small
             )
+            // Tap to seek, and drag to scrub: the position follows the
+            // finger while it moves, so a passage can be found by ear
+            // without lifting and trying again.
             .pointerInput(Unit) {
                 detectTapGestures { offset ->
-                    val fraction = (offset.x / size.width).coerceIn(0f, 1f)
-                    onSeek(fraction)
+                    onSeek((offset.x / size.width).coerceIn(0f, 1f))
+                }
+            }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = { offset ->
+                        onSeek((offset.x / size.width).coerceIn(0f, 1f))
+                    }
+                ) { change, _ ->
+                    change.consume()
+                    onSeek((change.position.x / size.width).coerceIn(0f, 1f))
                 }
             }
     ) {

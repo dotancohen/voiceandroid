@@ -19,6 +19,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.dotancohen.voiceandroid.audio.PlaybackPreferences
+import com.dotancohen.voiceandroid.util.Magic
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -37,18 +38,12 @@ fun PlaybackSpeedControl(
 ) {
     val min = PlaybackPreferences.MIN_SPEED
     val max = PlaybackPreferences.MAX_SPEED
-    val marks = listOf(0.5f to "½", 1f to "1", 2f to "2")
+    val marks = SPEED_MARKS
     val textMeasurer = rememberTextMeasurer()
     val labelStyle = MaterialTheme.typography.labelSmall
     val active = MaterialTheme.colorScheme.primary
     val inactive = MaterialTheme.colorScheme.surfaceVariant
     val labelColor = MaterialTheme.colorScheme.onSurfaceVariant
-
-    fun snap(value: Float): Float {
-        val v = (value.coerceIn(min, max) * 20f).roundToInt() / 20f
-        for ((mark, _) in marks) if (abs(v - mark) <= SNAP_DISTANCE) return mark
-        return v
-    }
 
     Row(
         verticalAlignment = Alignment.CenterVertically,
@@ -69,14 +64,14 @@ fun PlaybackSpeedControl(
                 .pointerInput(min, max) {
                     val pad = PAD_DP.dp.toPx()
                     detectTapGestures { offset ->
-                        onSpeedChange(snap(valueAtX(offset.x, size.width.toFloat(), pad, min, max)))
+                        onSpeedChange(snapSpeed(valueAtX(offset.x, size.width.toFloat(), pad, min, max)))
                     }
                 }
                 .pointerInput(min, max) {
                     val pad = PAD_DP.dp.toPx()
                     detectDragGestures { change, _ ->
                         change.consume()
-                        onSpeedChange(snap(valueAtX(change.position.x, size.width.toFloat(), pad, min, max)))
+                        onSpeedChange(snapSpeed(valueAtX(change.position.x, size.width.toFloat(), pad, min, max)))
                     }
                 }
         ) {
@@ -106,9 +101,31 @@ fun PlaybackSpeedControl(
 
 private const val PAD_DP = 10
 /** How close (in speed units) to ½, 1 or 2 the thumb snaps. */
-private const val SNAP_DISTANCE = 0.12f
+const val SNAP_DISTANCE = Magic.PLAYBACK_SNAP_DISTANCE
 
-private fun valueAtX(x: Float, width: Float, pad: Float, min: Float, max: Float): Float {
+/** The marks drawn on the slider, and what each is labelled. */
+val SPEED_MARKS = listOf(0.5f to "½", 1f to "1", 2f to "2")
+
+/**
+ * The speed a touch means: rounded to a twentieth, and pulled onto ½, 1 or 2
+ * when it lands within [SNAP_DISTANCE] of one of them.
+ *
+ * A finger on a slider a centimetre wide cannot hit 1.00 exactly, and a
+ * recording played back at 1.05 sounds wrong in a way that is hard to place,
+ * so the common speeds are given a wide target.
+ */
+fun snapSpeed(
+    value: Float,
+    min: Float = PlaybackPreferences.MIN_SPEED,
+    max: Float = PlaybackPreferences.MAX_SPEED,
+): Float {
+    val rounded = (value.coerceIn(min, max) * 20f).roundToInt() / 20f
+    for ((mark, _) in SPEED_MARKS) if (abs(rounded - mark) <= SNAP_DISTANCE) return mark
+    return rounded
+}
+
+/** The speed under a touch at [x], along a track [width] wide with [pad] each side. */
+fun valueAtX(x: Float, width: Float, pad: Float, min: Float, max: Float): Float {
     val fraction = ((x - pad) / (width - 2 * pad)).coerceIn(0f, 1f)
     return min + fraction * (max - min)
 }

@@ -21,11 +21,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Transcribe
+import androidx.compose.material.icons.filled.Tune
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.AudioFile
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.Build
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
@@ -41,6 +46,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
@@ -64,11 +70,17 @@ import java.io.File
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel(),
+    onBack: () -> Unit = {},
     onNavigateToSyncSettings: () -> Unit = {},
     onNavigateToManageTags: () -> Unit = {},
     onNavigateToImportAudio: () -> Unit = {},
     onNavigateToRecorder: () -> Unit = {},
-    onNavigateToTranscription: () -> Unit = {}
+    onNavigateToPlayback: () -> Unit = {},
+    onNavigateToTranscription: () -> Unit = {},
+    onNavigateToAdvanced: () -> Unit = {},
+    onNavigateToTrash: () -> Unit = {},
+    onNavigateToTranscriptionQueue: () -> Unit = {},
+    onNavigateToMissingData: () -> Unit = {}
 ) {
     val audiofileDirectory by viewModel.audiofileDirectory.collectAsState()
     val defaultAudiofileDirectory by viewModel.defaultAudiofileDirectory.collectAsState()
@@ -188,7 +200,12 @@ fun SettingsScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
-            title = { Text("Settings") }
+            title = { Text("Settings") },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                }
+            }
         )
 
         Column(
@@ -311,6 +328,19 @@ fun SettingsScreen(
                 Text("Recorder")
             }
 
+            // Playback: what happens when a Note is opened, and at what speed
+            OutlinedButton(
+                onClick = onNavigateToPlayback,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Playback")
+            }
+
             // Transcription: Whisper models on the phone, language, decoding
             OutlinedButton(
                 onClick = onNavigateToTranscription,
@@ -322,6 +352,62 @@ fun SettingsScreen(
                     modifier = Modifier.padding(end = 8.dp)
                 )
                 Text("Transcription")
+            }
+
+            // What the phone is transcribing, and what is waiting
+            OutlinedButton(
+                onClick = onNavigateToTranscriptionQueue,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Transcribe,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Transcription queue")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // The trash bin: deleted notes, still recoverable
+            OutlinedButton(
+                onClick = onNavigateToTrash,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Trash")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Missing data: lengths, dates and caches that were never calculated
+            OutlinedButton(
+                onClick = onNavigateToMissingData,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Build,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Calculate missing data")
+            }
+
+            // Advanced: settings most people never need
+            OutlinedButton(
+                onClick = onNavigateToAdvanced,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Tune,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Advanced")
             }
 
             // Import Audio Files

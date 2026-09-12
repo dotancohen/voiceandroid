@@ -35,6 +35,16 @@ class RecorderSettingsViewModel(application: Application) : AndroidViewModel(app
     private val _recordingFormat = MutableStateFlow(prefs.recordingFormat)
     val recordingFormat: StateFlow<String> = _recordingFormat.asStateFlow()
 
+    private val _startImmediately = MutableStateFlow(prefs.startRecordingImmediately)
+    val startImmediately: StateFlow<Boolean> = _startImmediately.asStateFlow()
+
+    /** Debug builds only: queue every recording for transcription as it is saved. */
+    private val _transcribeWhenSaved = MutableStateFlow(prefs.transcribeWhenSaved)
+    val transcribeWhenSaved: StateFlow<Boolean> = _transcribeWhenSaved.asStateFlow()
+
+    private val _duringCall = MutableStateFlow(prefs.duringCall)
+    val duringCall: StateFlow<String> = _duringCall.asStateFlow()
+
     /** Key of the microphone whose level is being shown, or null. */
     private val _testingMicKey = MutableStateFlow<String?>(null)
     val testingMicKey: StateFlow<String?> = _testingMicKey.asStateFlow()
@@ -66,6 +76,21 @@ class RecorderSettingsViewModel(application: Application) : AndroidViewModel(app
     fun setRecordingFormat(format: String) {
         prefs.recordingFormat = format
         _recordingFormat.value = prefs.recordingFormat
+    }
+
+    fun setStartImmediately(start: Boolean) {
+        prefs.startRecordingImmediately = start
+        _startImmediately.value = start
+    }
+
+    fun setTranscribeWhenSaved(transcribe: Boolean) {
+        prefs.transcribeWhenSaved = transcribe
+        _transcribeWhenSaved.value = transcribe
+    }
+
+    fun setDuringCall(behaviour: String) {
+        prefs.duringCall = behaviour
+        _duringCall.value = prefs.duringCall
     }
 
     fun selectMic(key: String?) {

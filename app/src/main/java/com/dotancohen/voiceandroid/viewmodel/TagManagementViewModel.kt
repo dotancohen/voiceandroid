@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dotancohen.voiceandroid.data.Tag
+import com.dotancohen.voiceandroid.data.TagTree
 import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.util.AppLogger
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -23,6 +24,24 @@ data class TagWithPath(
     val depth: Int,
     val hasChildren: Boolean
 )
+
+/**
+ * Full path, depth and "has children" for every tag, sorted by path.
+ * Shared by the single-note tag screen and the notes list's tag dialog.
+ */
+fun tagsWithPaths(tags: List<Tag>): List<TagWithPath> {
+    val tagById = tags.associateBy { it.id }
+    val parents = tags.mapNotNull { it.parentId }.toSet()
+
+    return tags.map { tag ->
+        TagWithPath(
+            tag = tag,
+            path = TagTree.pathOf(tag, tagById),
+            depth = TagTree.depthOf(tag, tagById),
+            hasChildren = tag.id in parents
+        )
+    }.sortedBy { it.path.lowercase() }
+}
 
 /**
  * ViewModel for the tag management screen.
@@ -103,78 +122,25 @@ class TagManagementViewModel(application: Application) : AndroidViewModel(applic
      * Compute full paths for all tags and determine which have children.
      */
     private fun computeTagPaths(tags: List<Tag>): List<TagWithPath> {
-        val tagById = tags.associateBy { it.id }
-
-        // Build children map
-        val childrenMap = mutableMapOf<String, MutableSet<String>>()
-        for (tag in tags) {
-            tag.parentId?.let { parentId ->
-                childrenMap.getOrPut(parentId) { mutableSetOf() }.add(tag.id)
-            }
-        }
-        childrenByParentId = childrenMap.mapValues { it.value.toSet() }
-
-        // Compute all descendants for each tag (for collapse logic)
-        val result = mutableListOf<TagWithPath>()
-
-        for (tag in tags) {
-            val pathParts = mutableListOf<String>()
-            var current: Tag? = tag
-            var depth = 0
-
-            while (current != null) {
-                pathParts.add(0, current.name)
-                val parentId = current.parentId
-                current = if (parentId != null) tagById[parentId] else null
-                if (current != null) depth++
-            }
-
-            result.add(TagWithPath(
-                tag = tag,
-                path = pathParts.joinToString(" > "),
-                depth = depth,
-                hasChildren = childrenByParentId.containsKey(tag.id)
-            ))
-        }
-
-        // Sort by full path for proper hierarchical order
-        return result.sortedBy { it.path.lowercase() }
+        childrenByParentId = TagTree.childrenByParent(tags)
+        return tagsWithPaths(tags)
     }
 
     /**
      * Get all descendant IDs of a tag (children, grandchildren, etc.)
      */
-    private fun getAllDescendantIds(tagId: String): Set<String> {
-        val descendants = mutableSetOf<String>()
-        val queue = ArrayDeque<String>()
-        queue.add(tagId)
-
-        while (queue.isNotEmpty()) {
-            val current = queue.removeFirst()
-            childrenByParentId[current]?.forEach { childId ->
-                if (descendants.add(childId)) {
-                    queue.add(childId)
-                }
-            }
-        }
-        return descendants
-    }
+    private fun getAllDescendantIds(tagId: String): Set<String> =
+        TagTree.descendantIds(tagId, childrenByParentId)
 
     /**
      * Check if a tag is hidden due to a collapsed ancestor.
      */
-    private fun isTagHiddenByCollapse(tag: TagWithPath): Boolean {
-        val tagById = _allTags.value.associateBy { it.tag.id }
-        var current = tag.tag.parentId
-
-        while (current != null) {
-            if (_collapsedTagIds.value.contains(current)) {
-                return true
-            }
-            current = tagById[current]?.tag?.parentId
-        }
-        return false
-    }
+    private fun isTagHiddenByCollapse(tag: TagWithPath): Boolean =
+        TagTree.isHiddenByCollapse(
+            tag.tag,
+            _allTags.value.associate { it.tag.id to it.tag },
+            _collapsedTagIds.value
+        )
 
     /**
      * Toggle collapse/expand state of a tag.
@@ -227,6 +193,29 @@ class TagManagementViewModel(application: Application) : AndroidViewModel(applic
     /**
      * Toggle a tag on/off for the current note.
      */
+    /**
+     * Create a Tag and put it on this Note.
+     *
+     * Creating a Tag from here means wanting it on the Note in front of you,
+     * so the two happen together rather than leaving the user to find the new
+     * Tag in the list afterwards.
+     */
+    fun createTagForNote(name: String) {
+        val currentNoteId = _noteId.value ?: return
+        viewModelScope.launch {
+            repository.createTag(name, null)
+                .onSuccess { tagId ->
+                    repository.addTagToNote(currentNoteId, tagId)
+                        .onFailure { e -> _error.value = "Could not put the Tag on this Note: ${e.message}" }
+                    // Everything that shows Tags is loaded again, so the new
+                    // one is there at once — in this list and on the Note.
+                    loadTags(currentNoteId)
+                    _tagsChanged.emit(currentNoteId)
+                }
+                .onFailure { e -> _error.value = "Could not create the Tag: ${e.message}" }
+        }
+    }
+
     fun toggleTag(tagId: String) {
         val currentNoteId = _noteId.value ?: return
         val isCurrentlySelected = _noteTagIds.value.contains(tagId)

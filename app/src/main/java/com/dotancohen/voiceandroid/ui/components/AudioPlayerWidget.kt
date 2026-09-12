@@ -3,6 +3,7 @@ package com.dotancohen.voiceandroid.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,6 +24,8 @@ import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Replay10
 import androidx.compose.material.icons.filled.Replay5
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.filled.Transcribe
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -31,6 +34,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.text.style.TextAlign
+import com.dotancohen.voiceandroid.audio.LargeRecording
+import java.io.File
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -51,6 +60,10 @@ import androidx.compose.ui.unit.dp
 import com.dotancohen.voiceandroid.audio.AudioPlayerManager
 import com.dotancohen.voiceandroid.audio.PlaybackState
 import com.dotancohen.voiceandroid.audio.WaveformExtractor
+import com.dotancohen.voiceandroid.ui.scaledIcon
+import com.dotancohen.voiceandroid.util.Durations
+import com.dotancohen.voiceandroid.viewmodel.indexOfPrimaryAudioFile
+import com.dotancohen.voiceandroid.ui.theme.StarGold
 import com.dotancohen.voiceandroid.data.AudioFile
 import kotlinx.coroutines.delay
 
@@ -73,12 +86,32 @@ fun AudioPlayerWidget(
     /** Shown as a transcribe icon at the left of every file; null hides it. */
     onTranscribe: ((AudioFile) -> Unit)? = null,
     /** Index of the file the player is on (0 before anything was played). */
-    onCurrentFileChanged: ((Int) -> Unit)? = null
+    onCurrentFileChanged: ((Int) -> Unit)? = null,
+    /** Recordings whose transcription was asked for and has not arrived. */
+    pendingTranscriptionIds: Set<String> = emptySet(),
+    /**
+     * Which recording stands for the note: played first, and played by
+     * itself when the note is opened and the setting says so. Null means the
+     * first one in the list.
+     */
+    primaryAudioFileId: String? = null,
+    /** Start playing that recording as soon as the note is open. */
+    autoPlay: Boolean = false,
+    /** Mark one of the recordings as the one that stands for the note. */
+    onSetPrimary: ((AudioFile) -> Unit)? = null,
+    /**
+     * Which note these recordings are in, and its first line — for the
+     * notification drawer, which says what is playing and opens that note
+     * when it is tapped.
+     */
+    noteId: String? = null,
+    noteLine: String? = null,
 ) {
     val context = LocalContext.current
 
-    // Initialize managers
-    val playerManager = remember { AudioPlayerManager(context) }
+    // The one player of the application: a recording started in the notes
+    // list is still playing when this screen opens, and must not be cut off.
+    val playerManager = remember { AudioPlayerManager.shared(context) }
     val waveformExtractor = remember { WaveformExtractor(context) }
 
     // State
@@ -92,17 +125,57 @@ fun AudioPlayerWidget(
             getFilePath(audioFile.id)
         }
         filePaths = paths
-        playerManager.setAudioFiles(paths)
-    }
-
-    // Extract waveforms for all files
-    LaunchedEffect(filePaths) {
-        filePaths.forEachIndexed { index, path ->
-            if (!waveforms.containsKey(index)) {
-                val waveform = waveformExtractor.extractWaveform(path)
-                waveforms = waveforms + (index to waveform)
+        // Say what each recording is called before any of them plays, so the
+        // notification drawer names it rather than its id.
+        audioFiles.forEachIndexed { index, audioFile ->
+            paths.getOrNull(index)?.let { path ->
+                playerManager.describe(path, audioFile.filename, noteId, audioFile.id, noteLine)
             }
         }
+        // If one of these recordings is already playing — started in the
+        // notes list — it carries on from where it is. Nothing else here
+        // interrupts it, autoplay included: the user is already listening.
+        val carriedOver = playerManager.adoptAudioFiles(paths)
+        if (!carriedOver && autoPlay && paths.isNotEmpty()) {
+            // Straight to the recording that stands for the note, which is
+            // the first one unless the user chose another.
+            val index = indexOfPrimaryAudioFile(audioFiles, primaryAudioFileId)
+            playerManager.playFile(index)
+        }
+    }
+
+    /** Recordings whose waveform would cost real work, by their index here. */
+    var askBeforeDrawing by remember(filePaths) { mutableStateOf(setOf<Int>()) }
+    var drawingNow by remember(filePaths) { mutableStateOf<Int?>(null) }
+
+    // The waveforms: drawn at once for ordinary recordings, shown from the
+    // cache when they were drawn before, and offered as a button for a long
+    // recording, where decoding it is minutes of work for a picture in which
+    // each bar is several minutes of audio.
+    LaunchedEffect(filePaths) {
+        filePaths.forEachIndexed { index, path ->
+            if (waveforms.containsKey(index)) return@forEachIndexed
+            waveformExtractor.cachedWaveform(path)?.let {
+                waveforms = waveforms + (index to it)
+                return@forEachIndexed
+            }
+            // The duration is not known for every recording until its player
+            // has prepared it, so the size decides here; the compact player in
+            // the list, which has a prepared player, uses both.
+            if (LargeRecording.isLarge(null, File(path).length())) {
+                askBeforeDrawing = askBeforeDrawing + index
+            } else {
+                waveforms = waveforms + (index to waveformExtractor.extractWaveform(path))
+            }
+        }
+    }
+
+    suspend fun drawWaveform(index: Int) {
+        val path = filePaths.getOrNull(index) ?: return
+        drawingNow = index
+        askBeforeDrawing = askBeforeDrawing - index
+        waveforms = waveforms + (index to waveformExtractor.extractWaveform(path))
+        drawingNow = null
     }
 
     // Update playback position periodically
@@ -137,8 +210,32 @@ fun AudioPlayerWidget(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
         ) {
             // Waveform display
-            val currentWaveform = waveforms[playbackState.currentFileIndex] ?: emptyList()
-            WaveformView(
+            val shownIndex = playbackState.currentFileIndex.coerceAtLeast(0)
+            val currentWaveform = waveforms[shownIndex] ?: emptyList()
+            if (shownIndex in askBeforeDrawing) {
+                val scope = rememberCoroutineScope()
+                TextButton(
+                    onClick = { scope.launch { drawWaveform(shownIndex) } },
+                    modifier = Modifier.fillMaxWidth().height(64.dp)
+                ) {
+                    Text(
+                        text = LargeRecording.GENERATE_WAVEFORM_PROMPT,
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center
+                    )
+                }
+            } else if (drawingNow == shownIndex) {
+                Box(
+                    modifier = Modifier.fillMaxWidth().height(64.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "Drawing the waveform…",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            } else WaveformView(
                 waveform = currentWaveform,
                 progress = if (playbackState.duration > 0) {
                     playbackState.currentPosition.toFloat() / playbackState.duration
@@ -223,18 +320,23 @@ fun AudioPlayerWidget(
                 )
             }
 
-            // The files: transcribe icon, play state, name
-            LazyColumn(
-                modifier = Modifier.height((audioFiles.size * 36).coerceAtMost(180).dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp)
-            ) {
-                itemsIndexed(audioFiles) { index, audioFile ->
+            // The files: transcribe icon, play state, name.
+            //
+            // A plain Column, not a list with a height of its own: a control
+            // must never scroll inside itself. Every recording of the note is
+            // drawn, and the screen it sits on does the scrolling, so nothing
+            // is hidden behind an edge the user cannot see.
+            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                audioFiles.forEachIndexed { index, audioFile ->
                     AudioFileListItem(
                         audioFile = audioFile,
                         isSelected = index == playbackState.currentFileIndex || (playbackState.currentFileIndex < 0 && index == 0),
                         isPlaying = index == playbackState.currentFileIndex && playbackState.isPlaying,
                         onClick = { playerManager.playFile(index) },
-                        onTranscribe = onTranscribe?.let { cb -> { cb(audioFile) } }
+                        onTranscribe = onTranscribe?.let { cb -> { cb(audioFile) } },
+                        transcriptionPending = audioFile.id in pendingTranscriptionIds,
+                        isPrimary = audioFile.id == primaryAudioFileId,
+                        onSetPrimary = onSetPrimary?.let { cb -> { cb(audioFile) } }
                     )
                 }
             }
@@ -263,10 +365,22 @@ fun WaveformView(
                 color = MaterialTheme.colorScheme.surface,
                 shape = MaterialTheme.shapes.small
             )
+            // Tap to seek, and drag to scrub: the position follows the
+            // finger while it moves, so a passage can be found by ear
+            // without lifting and trying again.
             .pointerInput(Unit) {
                 detectTapGestures { offset ->
-                    val fraction = (offset.x / size.width).coerceIn(0f, 1f)
-                    onSeek(fraction)
+                    onSeek((offset.x / size.width).coerceIn(0f, 1f))
+                }
+            }
+            .pointerInput(Unit) {
+                detectHorizontalDragGestures(
+                    onDragStart = { offset ->
+                        onSeek((offset.x / size.width).coerceIn(0f, 1f))
+                    }
+                ) { change, _ ->
+                    change.consume()
+                    onSeek((change.position.x / size.width).coerceIn(0f, 1f))
                 }
             }
     ) {
@@ -330,7 +444,13 @@ fun AudioFileListItem(
     isSelected: Boolean,
     isPlaying: Boolean,
     onClick: () -> Unit,
-    onTranscribe: (() -> Unit)? = null
+    onTranscribe: (() -> Unit)? = null,
+    /** A transcription of this recording was asked for and has not arrived. */
+    transcriptionPending: Boolean = false,
+    /** This is the recording that stands for the note. */
+    isPrimary: Boolean = false,
+    /** Make this the recording that stands for the note. */
+    onSetPrimary: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier
@@ -348,12 +468,45 @@ fun AudioFileListItem(
             verticalAlignment = Alignment.CenterVertically
         ) {
             if (onTranscribe != null) {
-                IconButton(onClick = onTranscribe, modifier = Modifier.size(32.dp)) {
+                // The mark, and the button around it, both follow the
+                // icon-size setting: a larger mark in a button of the old
+                // size would be cut off by it.
+                val markSize = scaledIcon(18.dp)
+                IconButton(onClick = onTranscribe, modifier = Modifier.size(scaledIcon(32.dp))) {
+                    if (transcriptionPending) {
+                        // Already being worked on: the mark with a clock over
+                        // it. The button still works, since asking for a
+                        // second transcription is allowed.
+                        PendingTranscriptionIcon(
+                            size = markSize,
+                            tint = MaterialTheme.colorScheme.primary,
+                            background = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                            else MaterialTheme.colorScheme.surface
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Filled.Transcribe,
+                            contentDescription = "Transcribe ${audioFile.filename}",
+                            modifier = Modifier.size(markSize),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                }
+            }
+            // The star marks the recording that stands for the note: the one
+            // played when the note is opened, and the one whose
+            // transcription the notes list shows.
+            if (onSetPrimary != null) {
+                IconButton(onClick = onSetPrimary, modifier = Modifier.size(32.dp)) {
                     Icon(
-                        imageVector = Icons.Filled.Transcribe,
-                        contentDescription = "Transcribe ${audioFile.filename}",
-                        modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.primary
+                        imageVector = if (isPrimary) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                        contentDescription = if (isPrimary) {
+                            "The main Recording of this Note"
+                        } else {
+                            "Make this the main Recording"
+                        },
+                        modifier = Modifier.size(16.dp),
+                        tint = if (isPrimary) StarGold else MaterialTheme.colorScheme.outline
                     )
                 }
             }
@@ -385,20 +538,5 @@ fun AudioFileListItem(
     }
 }
 
-/**
- * Format milliseconds to MM:SS or HH:MM:SS for files over 60 minutes.
- */
-private fun formatTime(millis: Long): String {
-    if (millis <= 0) return "00:00"
-
-    val totalSeconds = millis / 1000
-    val hours = totalSeconds / 3600
-    val minutes = (totalSeconds % 3600) / 60
-    val seconds = totalSeconds % 60
-
-    return if (hours > 0) {
-        String.format("%d:%02d:%02d", hours, minutes, seconds)
-    } else {
-        String.format("%02d:%02d", minutes, seconds)
-    }
-}
+/** Format milliseconds to MM:SS, or HH:MM:SS for files over an hour. */
+private fun formatTime(millis: Long): String = Durations.ofMillis(millis)

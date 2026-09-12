@@ -78,7 +78,7 @@ fun FilterScreen(
                     value = searchQuery,
                     onValueChange = { filterViewModel.updateSearchQuery(it) },
                     modifier = Modifier.weight(1f),
-                    placeholder = { Text("Search notes...") },
+                    placeholder = { Text("Search Notes…") },
                     singleLine = true,
                     trailingIcon = {
                         if (searchQuery.isNotEmpty()) {

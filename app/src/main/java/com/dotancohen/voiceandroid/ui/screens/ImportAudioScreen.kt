@@ -301,7 +301,7 @@ fun ImportAudioScreen(
                         value = filterText,
                         onValueChange = { viewModel.setFilterText(it) },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("Filter tags...") },
+                        placeholder = { Text("Filter Tags…") },
                         singleLine = true,
                         trailingIcon = {
                             if (filterText.isNotEmpty()) {

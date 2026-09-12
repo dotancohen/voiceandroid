@@ -19,6 +19,98 @@ data class TagTreeNode(
     val depth: Int = 0
 )
 
+/**
+ * The tags as a tree of root nodes, each sorted by name.
+ *
+ * A tag whose parent is not in the list is shown at the top level rather than
+ * being dropped, and so is a tag caught in a loop — two phones that were both
+ * offline can each move one tag under the other, and after they sync neither
+ * of the two has a root above it. Such a tag is cut loose from its parent
+ * here, so that it can still be seen and moved somewhere sensible.
+ */
+fun buildTagTree(tags: List<Tag>): List<TagTreeNode> {
+    val nodeMap = tags.associate { tag -> tag.id to TagTreeNode(tag = tag, depth = 0) }
+    val rootNodes = mutableListOf<TagTreeNode>()
+
+    for (tag in tags) {
+        val node = nodeMap[tag.id] ?: continue
+        val parentNode = tag.parentId?.let { nodeMap[it] }
+        if (parentNode != null && parentNode !== node) parentNode.children.add(node)
+        else rootNodes.add(node)
+    }
+
+    // Anything no root can reach is in a loop; the first such tag becomes a
+    // root of its own, which is enough to reach the rest of the loop.
+    val reachable = mutableSetOf<String>()
+    fun mark(node: TagTreeNode) {
+        if (reachable.add(node.tag.id)) node.children.forEach(::mark)
+    }
+    rootNodes.forEach(::mark)
+    for (tag in tags) {
+        if (tag.id in reachable) continue
+        val node = nodeMap[tag.id] ?: continue
+        tag.parentId?.let { nodeMap[it]?.children?.remove(node) }
+        rootNodes.add(node)
+        mark(node)
+    }
+
+    fun sortNodes(nodes: MutableList<TagTreeNode>) {
+        nodes.sortBy { it.tag.name.lowercase() }
+        nodes.forEach { sortNodes(it.children) }
+    }
+    sortNodes(rootNodes)
+
+    return rootNodes
+}
+
+/** The rows the tree shows: a node's children only while the node is expanded. */
+fun flattenVisibleTags(roots: List<TagTreeNode>, expandedIds: Set<String>): List<TagTreeNode> {
+    val result = mutableListOf<TagTreeNode>()
+    fun addNodes(nodes: List<TagTreeNode>, depth: Int) {
+        for (node in nodes) {
+            result.add(node.copy(depth = depth))
+            if (node.tag.id in expandedIds && node.children.isNotEmpty()) {
+                addNodes(node.children, depth + 1)
+            }
+        }
+    }
+    addNodes(roots, 0)
+    return result
+}
+
+/**
+ * The query with `tag:Name` added, or unchanged when that exact term is
+ * already there.
+ *
+ * The term has to match whole: a query that filters on `tag:Workshop` does
+ * not already filter on `tag:Work`.
+ */
+fun queryWithTag(query: String, tagName: String): String {
+    val term = "tag:$tagName"
+    val present = query.split(" ", "\t", "\n")
+        .any { it.equals(term, ignoreCase = true) }
+    if (present) return query.trim()
+    val trimmed = query.trim()
+    return if (trimmed.isEmpty()) term else "$trimmed $term"
+}
+
+/** The term the search understands as "only the starred notes". */
+const val MARKED_TERM = "is:marked"
+
+private val MARKED_PATTERN = Regex("""\bis:marked\b""", RegexOption.IGNORE_CASE)
+
+/** Whether this query already asks for the starred notes only. */
+fun queryHasMarkedFilter(query: String): Boolean = MARKED_PATTERN.containsMatchIn(query)
+
+/**
+ * The query with the star filter switched on or off, leaving the rest of
+ * what the user typed alone.
+ */
+fun queryWithMarkedFilter(query: String, wanted: Boolean): String {
+    val without = MARKED_PATTERN.replace(query, "").replace(Regex("""\s+"""), " ").trim()
+    return if (wanted) "$MARKED_TERM $without".trim() else without
+}
+
 class FilterViewModel(application: Application) : AndroidViewModel(application) {
 
     private val repository = VoiceRepository.getInstance(application)
@@ -87,77 +179,11 @@ class FilterViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     /**
-     * Build a hierarchical tree from a flat list of tags.
-     */
-    private fun buildTagTree(tags: List<Tag>): List<TagTreeNode> {
-        // Create a map of tag ID to TagTreeNode
-        val nodeMap = tags.associate { tag ->
-            tag.id to TagTreeNode(tag = tag, depth = 0)
-        }.toMutableMap()
-
-        // Build parent-child relationships
-        val rootNodes = mutableListOf<TagTreeNode>()
-
-        for (tag in tags) {
-            val node = nodeMap[tag.id] ?: continue
-
-            if (tag.parentId == null) {
-                // Root node
-                rootNodes.add(node)
-            } else {
-                // Child node - add to parent's children
-                val parentNode = nodeMap[tag.parentId]
-                if (parentNode != null) {
-                    parentNode.children.add(node)
-                } else {
-                    // Parent not found, treat as root
-                    rootNodes.add(node)
-                }
-            }
-        }
-
-        // Calculate depths and sort
-        fun setDepths(nodes: List<TagTreeNode>, depth: Int) {
-            for (node in nodes) {
-                // Create a new node with the correct depth (TagTreeNode is a data class)
-                val updatedNode = node.copy(depth = depth)
-                // Since we're modifying in place, we need to update children first
-                setDepths(node.children, depth + 1)
-            }
-        }
-        setDepths(rootNodes, 0)
-
-        // Sort alphabetically
-        fun sortNodes(nodes: MutableList<TagTreeNode>) {
-            nodes.sortBy { it.tag.name.lowercase() }
-            nodes.forEach { sortNodes(it.children) }
-        }
-        sortNodes(rootNodes)
-
-        return rootNodes
-    }
-
-    /**
      * Get a flattened list of visible tags based on expanded state.
      * Each item includes its depth for indentation.
      */
-    fun getFlattenedVisibleTags(): List<TagTreeNode> {
-        val result = mutableListOf<TagTreeNode>()
-        val expanded = _expandedTagIds.value
-
-        fun addNodes(nodes: List<TagTreeNode>, depth: Int) {
-            for (node in nodes) {
-                val nodeWithDepth = node.copy(depth = depth)
-                result.add(nodeWithDepth)
-                if (expanded.contains(node.tag.id) && node.children.isNotEmpty()) {
-                    addNodes(node.children, depth + 1)
-                }
-            }
-        }
-
-        addNodes(_tagTree.value, 0)
-        return result
-    }
+    fun getFlattenedVisibleTags(): List<TagTreeNode> =
+        flattenVisibleTags(_tagTree.value, _expandedTagIds.value)
 
     /**
      * Toggle the expanded state of a tag.
@@ -192,19 +218,7 @@ class FilterViewModel(application: Application) : AndroidViewModel(application) 
      * Adds "tag:TagName" to the current query.
      */
     fun addTagToSearch(tag: Tag) {
-        val tagTerm = "tag:${tag.name}"
-        val currentQuery = _searchQuery.value.trim()
-
-        // Check if tag is already in query (case-insensitive)
-        if (currentQuery.lowercase().contains(tagTerm.lowercase())) {
-            return // Tag already added
-        }
-
-        _searchQuery.value = if (currentQuery.isEmpty()) {
-            tagTerm
-        } else {
-            "$currentQuery $tagTerm"
-        }
+        _searchQuery.value = queryWithTag(_searchQuery.value, tag.name)
     }
 
     /**

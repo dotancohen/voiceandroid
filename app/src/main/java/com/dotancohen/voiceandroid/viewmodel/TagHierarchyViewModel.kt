@@ -4,6 +4,8 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dotancohen.voiceandroid.data.Tag
+import com.dotancohen.voiceandroid.data.TagColours
+import com.dotancohen.voiceandroid.data.TagTree
 import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.util.AppLogger
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -68,6 +70,34 @@ class TagHierarchyViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Load all tags from the database.
      */
+    /** The colours chosen for Tags, by name; a Tag without one is absent. */
+    private val _tagColours = MutableStateFlow<Map<String, String>>(emptyMap())
+    val tagColours: StateFlow<Map<String, String>> = _tagColours.asStateFlow()
+
+    /**
+     * Choose the colour of a Tag, or pass null to go back to the one
+     * calculated from its name.
+     *
+     * Stored in the synced settings, so the choice reaches every device.
+     */
+    fun setTagColour(tagName: String, colour: String?) {
+        viewModelScope.launch {
+            repository.setSetting(TagColours.settingKey(tagName), colour.orEmpty())
+                .onSuccess { loadTagColours() }
+                .onFailure { e -> _error.value = "Could not save the colour: ${e.message}" }
+        }
+    }
+
+    private suspend fun loadTagColours() {
+        val chosen = mutableMapOf<String, String>()
+        for (tag in rawTags) {
+            repository.getSetting(TagColours.settingKey(tag.name)).getOrNull()
+                ?.takeIf { it.isNotBlank() }
+                ?.let { chosen[tag.name] = it }
+        }
+        _tagColours.value = chosen
+    }
+
     fun loadTags() {
         viewModelScope.launch {
             _isLoading.value = true
@@ -76,6 +106,7 @@ class TagHierarchyViewModel(application: Application) : AndroidViewModel(applica
             repository.getAllTags()
                 .onSuccess { tags ->
                     rawTags = tags
+                    loadTagColours()
                     val tagsWithPaths = computeTagHierarchy(tags)
                     _allTags.value = tagsWithPaths
                     updateFilteredTags()
@@ -95,13 +126,7 @@ class TagHierarchyViewModel(application: Application) : AndroidViewModel(applica
         val tagById = tags.associateBy { it.id }
 
         // Build children map
-        val childrenMap = mutableMapOf<String, MutableSet<String>>()
-        for (tag in tags) {
-            tag.parentId?.let { parentId ->
-                childrenMap.getOrPut(parentId) { mutableSetOf() }.add(tag.id)
-            }
-        }
-        childrenByParentId = childrenMap.mapValues { it.value.toSet() }
+        childrenByParentId = TagTree.childrenByParent(tags)
 
         // Get note counts for each tag
         val noteCounts = mutableMapOf<String, Int>()
@@ -111,27 +136,14 @@ class TagHierarchyViewModel(application: Application) : AndroidViewModel(applica
                 .onFailure { noteCounts[tag.id] = 0 }
         }
 
-        val result = mutableListOf<TagHierarchyItem>()
-
-        for (tag in tags) {
-            val pathParts = mutableListOf<String>()
-            var current: Tag? = tag
-            var depth = 0
-
-            while (current != null) {
-                pathParts.add(0, current.name)
-                val parentId = current.parentId
-                current = if (parentId != null) tagById[parentId] else null
-                if (current != null) depth++
-            }
-
-            result.add(TagHierarchyItem(
+        val result = tags.map { tag ->
+            TagHierarchyItem(
                 tag = tag,
-                path = pathParts.joinToString(" > "),
-                depth = depth,
+                path = TagTree.pathOf(tag, tagById),
+                depth = TagTree.depthOf(tag, tagById),
                 hasChildren = childrenByParentId.containsKey(tag.id),
                 noteCount = noteCounts[tag.id] ?: 0
-            ))
+            )
         }
 
         return result.sortedBy { it.path.lowercase() }
@@ -165,18 +177,12 @@ class TagHierarchyViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Check if a tag is hidden due to a collapsed ancestor.
      */
-    private fun isTagHiddenByCollapse(tagItem: TagHierarchyItem): Boolean {
-        val tagById = _allTags.value.associateBy { it.tag.id }
-        var current = tagItem.tag.parentId
-
-        while (current != null) {
-            if (_collapsedTagIds.value.contains(current)) {
-                return true
-            }
-            current = tagById[current]?.tag?.parentId
-        }
-        return false
-    }
+    private fun isTagHiddenByCollapse(tagItem: TagHierarchyItem): Boolean =
+        TagTree.isHiddenByCollapse(
+            tagItem.tag,
+            _allTags.value.associate { it.tag.id to it.tag },
+            _collapsedTagIds.value
+        )
 
     /**
      * Toggle collapse state of a tag.
@@ -328,21 +334,8 @@ class TagHierarchyViewModel(application: Application) : AndroidViewModel(applica
     /**
      * Get all descendant IDs of a tag.
      */
-    private fun getAllDescendantIds(tagId: String): MutableSet<String> {
-        val descendants = mutableSetOf<String>()
-        val queue = ArrayDeque<String>()
-        queue.add(tagId)
-
-        while (queue.isNotEmpty()) {
-            val current = queue.removeFirst()
-            childrenByParentId[current]?.forEach { childId ->
-                if (descendants.add(childId)) {
-                    queue.add(childId)
-                }
-            }
-        }
-        return descendants
-    }
+    private fun getAllDescendantIds(tagId: String): MutableSet<String> =
+        TagTree.descendantIds(tagId, childrenByParentId).toMutableSet()
 
     /**
      * Clear success message after it's been shown.

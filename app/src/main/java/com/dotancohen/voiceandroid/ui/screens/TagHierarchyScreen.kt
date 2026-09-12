@@ -45,13 +45,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import com.dotancohen.voiceandroid.ui.components.autoFocus
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dotancohen.voiceandroid.viewmodel.TagHierarchyItem
+import androidx.compose.material.icons.filled.Palette
+import com.dotancohen.voiceandroid.ui.components.TagColourDialog
+import com.dotancohen.voiceandroid.ui.components.CreateTagDialog
 import com.dotancohen.voiceandroid.viewmodel.TagHierarchyViewModel
 
 /**
@@ -73,6 +78,7 @@ fun TagHierarchyScreen(
     viewModel: TagHierarchyViewModel = viewModel()
 ) {
     val filteredTags by viewModel.filteredTags.collectAsState()
+    val tagColours by viewModel.tagColours.collectAsState()
     val filterText by viewModel.filterText.collectAsState()
     val collapsedTagIds by viewModel.collapsedTagIds.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -86,6 +92,7 @@ fun TagHierarchyScreen(
     var showAddDialog by remember { mutableStateOf(false) }
     var addDialogParentId by remember { mutableStateOf<String?>(null) }
     var showRenameDialog by remember { mutableStateOf(false) }
+    var colourTagItem by remember { mutableStateOf<TagHierarchyItem?>(null) }
     var renameTagItem by remember { mutableStateOf<TagHierarchyItem?>(null) }
     var showMoveDialog by remember { mutableStateOf(false) }
     var moveTagItem by remember { mutableStateOf<TagHierarchyItem?>(null) }
@@ -126,7 +133,7 @@ fun TagHierarchyScreen(
                             showAddDialog = true
                         }
                     ) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Tag")
+                        Icon(Icons.Default.Add, contentDescription = "Create Tag")
                     }
                 }
             )
@@ -144,7 +151,7 @@ fun TagHierarchyScreen(
                 value = filterText,
                 onValueChange = { viewModel.updateFilter(it) },
                 modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Filter tags...") },
+                placeholder = { Text("Filter Tags…") },
                 singleLine = true,
                 trailingIcon = {
                     if (filterText.isNotEmpty()) {
@@ -164,21 +171,21 @@ fun TagHierarchyScreen(
             when {
                 isLoading -> {
                     Text(
-                        text = "Loading tags...",
+                        text = "Loading Tags…",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 filteredTags.isEmpty() && filterText.isNotEmpty() -> {
                     Text(
-                        text = "No tags match \"$filterText\"",
+                        text = "No Tags match \"$filterText\"",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
                 filteredTags.isEmpty() -> {
                     Text(
-                        text = "No tags. Tap + to create one.",
+                        text = "No Tags yet. Tap + to create one.",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -204,6 +211,7 @@ fun TagHierarchyScreen(
                             renameTagItem = tagItem
                             showRenameDialog = true
                         },
+                        onChooseColour = { colourTagItem = tagItem },
                         onMove = {
                             moveTagItem = tagItem
                             viewModel.preparePossibleParents(tagItem.tag.id)
@@ -219,58 +227,24 @@ fun TagHierarchyScreen(
         }
     }
 
-    // Add Tag Dialog
+    colourTagItem?.let { item ->
+        TagColourDialog(
+            tagName = item.tag.name,
+            currentColour = tagColours[item.tag.name],
+            onChoose = { colour -> viewModel.setTagColour(item.tag.name, colour) },
+            onDismiss = { colourTagItem = null }
+        )
+    }
+
+    // Create Tag, the same dialogue as everywhere else a Tag is made
     if (showAddDialog) {
-        var newTagName by remember { mutableStateOf("") }
         val parentName = addDialogParentId?.let { parentId ->
             filteredTags.find { it.tag.id == parentId }?.tag?.name
         }
-
-        AlertDialog(
-            onDismissRequest = { showAddDialog = false },
-            title = {
-                Text(
-                    if (parentName != null) "Add Child Tag"
-                    else "Add Tag"
-                )
-            },
-            text = {
-                Column {
-                    if (parentName != null) {
-                        Text(
-                            text = "Parent: $parentName",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                    }
-                    OutlinedTextField(
-                        value = newTagName,
-                        onValueChange = { newTagName = it },
-                        label = { Text("Tag name") },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        if (newTagName.isNotBlank()) {
-                            viewModel.createTag(newTagName.trim(), addDialogParentId)
-                            showAddDialog = false
-                        }
-                    },
-                    enabled = newTagName.isNotBlank()
-                ) {
-                    Text("Add")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAddDialog = false }) {
-                    Text("Cancel")
-                }
-            }
+        CreateTagDialog(
+            parentName = parentName,
+            onCreate = { name -> viewModel.createTag(name, addDialogParentId) },
+            onDismiss = { showAddDialog = false }
         )
     }
 
@@ -287,7 +261,7 @@ fun TagHierarchyScreen(
                     onValueChange = { newName = it },
                     label = { Text("New name") },
                     singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().focusRequester(autoFocus())
                 )
             },
             confirmButton = {
@@ -315,7 +289,7 @@ fun TagHierarchyScreen(
     if (showMoveDialog && moveTagItem != null) {
         AlertDialog(
             onDismissRequest = { showMoveDialog = false },
-            title = { Text("Move '${moveTagItem!!.tag.name}' to...") },
+            title = { Text("Move '${moveTagItem!!.tag.name}' under…") },
             text = {
                 LazyColumn(
                     modifier = Modifier
@@ -382,7 +356,7 @@ fun TagHierarchyScreen(
                 Column {
                     if (hasChildren) {
                         Text(
-                            text = "Cannot delete '${deleteTagItem!!.tag.name}' because it has child tags:",
+                            text = "Cannot delete '${deleteTagItem!!.tag.name}' because Tags sit under it:",
                             style = MaterialTheme.typography.bodyMedium
                         )
                         Spacer(modifier = Modifier.height(8.dp))
@@ -453,6 +427,7 @@ private fun TagHierarchyRow(
     onToggleCollapse: () -> Unit,
     onAddChild: () -> Unit,
     onRename: () -> Unit,
+    onChooseColour: () -> Unit,
     onMove: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -528,13 +503,23 @@ private fun TagHierarchyRow(
             onDismissRequest = { showMenu = false }
         ) {
             DropdownMenuItem(
-                text = { Text("Add Child") },
+                text = { Text("Create Tag under this one") },
                 onClick = {
                     showMenu = false
                     onAddChild()
                 },
                 leadingIcon = {
                     Icon(Icons.Default.Add, contentDescription = null)
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Colour…") },
+                onClick = {
+                    showMenu = false
+                    onChooseColour()
+                },
+                leadingIcon = {
+                    Icon(Icons.Default.Palette, contentDescription = null)
                 }
             )
             DropdownMenuItem(

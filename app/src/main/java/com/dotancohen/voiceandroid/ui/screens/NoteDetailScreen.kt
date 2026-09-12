@@ -1,14 +1,18 @@
 package com.dotancohen.voiceandroid.ui.screens
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -19,16 +23,24 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Mic
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -52,13 +64,44 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dotancohen.voiceandroid.data.AudioFile
+import com.dotancohen.voiceandroid.data.isFinished
+import com.dotancohen.voiceandroid.data.isPending
+import com.dotancohen.voiceandroid.util.format
+import com.dotancohen.voiceandroid.transcription.WhisperModels
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Share
+import com.dotancohen.voiceandroid.ui.components.ShareItem
+import com.dotancohen.voiceandroid.ui.components.ShareNoteDialog
+import com.dotancohen.voiceandroid.util.NoteSharing
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import com.dotancohen.voiceandroid.util.Magic
+import com.dotancohen.voiceandroid.util.UiPreferences
+import com.dotancohen.voiceandroid.ui.theme.RecordRed
+import com.dotancohen.voiceandroid.ui.theme.StarGold
+import com.dotancohen.voiceandroid.BuildConfig
+import com.dotancohen.voiceandroid.audio.RecorderPreferences
+import com.dotancohen.voiceandroid.audio.RecordingState
+import com.dotancohen.voiceandroid.audio.VoiceRecorder
 import com.dotancohen.voiceandroid.ui.components.AudioPlayerWidget
+import com.dotancohen.voiceandroid.ui.components.AudioRecorderWidget
+import com.dotancohen.voiceandroid.ui.components.recorderPlacement
 import com.dotancohen.voiceandroid.ui.components.TranscribeDialog
 import com.dotancohen.voiceandroid.ui.components.TranscriptionsSection
 import com.dotancohen.voiceandroid.transcription.TranscriptionStage
+import com.dotancohen.voiceandroid.ui.components.stampText
+import com.dotancohen.voiceandroid.viewmodel.shouldDiscardEmptyNote
 import com.dotancohen.voiceandroid.viewmodel.NoteDetailViewModel
 
 /**
@@ -76,6 +119,16 @@ fun NoteDetailScreen(
     onBack: () -> Unit,
     onNavigateToTags: () -> Unit = {},
     onNavigateToTranscriptionSettings: () -> Unit = {},
+    /**
+     * The note was created in order to record into it, so the recorder is
+     * open when the screen appears (and starts by itself if Settings →
+     * Recorder says so).
+     */
+    startRecording: Boolean = false,
+    /** The notes as the list is showing them, for Previous and Next. */
+    visibleNoteIds: List<String> = emptyList(),
+    /** Open another note in place of this one. */
+    onOpenNote: (String) -> Unit = {},
     viewModel: NoteDetailViewModel = viewModel()
 ) {
     val note by viewModel.note.collectAsState()
@@ -101,17 +154,101 @@ fun NoteDetailScreen(
     val pendingUploadCount by viewModel.pendingUploadCount.collectAsState()
     val downloadMessage by viewModel.downloadMessage.collectAsState()
     val onDeviceJob by viewModel.onDeviceJob.collectAsState()
+    val tags by viewModel.tags.collectAsState()
+    val isMarked by viewModel.isMarked.collectAsState()
+    val primaryAudioFileId by viewModel.primaryAudioFileId.collectAsState()
+    val primaryTranscriptionIds by viewModel.primaryTranscriptionIds.collectAsState()
+    val neighbours by viewModel.neighbours.collectAsState()
+    val preview by viewModel.preview.collectAsState()
     val transcribeMessage by viewModel.transcribeMessage.collectAsState()
     /** The recording whose transcriptions are shown: the one the player is on */
     var selectedAudioIndex by remember { mutableStateOf(0) }
     var transcribeTarget by remember { mutableStateOf<AudioFile?>(null) }
     var showTimes by remember { mutableStateOf(false) }
+    var shareRequested by remember { mutableStateOf(false) }
+    var showNoteMenu by remember { mutableStateOf(false) }
+    var shareItems by remember { mutableStateOf<List<ShareItem>>(emptyList()) }
+    /** The "Add to this Note" menu in the toolbar. */
+    var showAddMenu by remember { mutableStateOf(false) }
+    val recorderState by VoiceRecorder.state.collectAsState()
+    val recorderNoteId by VoiceRecorder.noteId.collectAsState()
+    /**
+     * Open the recorder now because this note was created for a recording.
+     *
+     * Asked of the view model, which answers yes once: the screen is built
+     * again on the way back from the tag screen, and the route still says
+     * `record=true`, so anything remembered here alone would start another
+     * recording every time the user came back.
+     */
+    val recordOnArrival = remember { viewModel.consumeStartRecording(startRecording) }
+    /** The recorder was asked for in this note, by the New button or the microphone. */
+    var recorderAsked by remember { mutableStateOf(recordOnArrival) }
+    // Whether the recorder belongs in this note, or is busy in another one.
+    // A recording carries on when the user walks to another note, so it must
+    // not appear there (see recorderPlacement for why).
+    val placement = recorderPlacement(
+        noteId = noteId,
+        recordingNoteId = recorderNoteId,
+        recording = recorderState != RecordingState.Idle,
+        asked = recorderAsked,
+    )
+    val recorderBusyElsewhere = placement.busyElsewhere
+    val showRecorder = placement.show
+
+    /**
+     * Leave the note, taking it with us if it only ever existed to hold a
+     * recording that was never made.
+     *
+     * The note is created before the recording starts, so backing out of a
+     * recording that was never started would otherwise leave an empty note
+     * in the list. A recording in progress keeps its note, of course: it is
+     * still being made, and it carries on while the user is elsewhere.
+     */
+    fun leaveNote() {
+        val busy = recorderNoteId == noteId && recorderState != RecordingState.Idle
+        if (shouldDiscardEmptyNote(startRecording, busy, note, audioFiles)) {
+            viewModel.deleteNote()
+        } else {
+            onBack()
+        }
+    }
+
+    /**
+     * Add something to this note. One kind so far; images and video will be
+     * further branches here.
+     */
+    fun addAttachment(kind: String) {
+        when (kind) {
+            RecorderPreferences.ATTACHMENT_RECORDING -> recorderAsked = true
+        }
+    }
+
+    BackHandler(enabled = !isEditing) { leaveNote() }
+
+    /**
+     * A recording was attached to this note: put the recorder away and show
+     * the note again with its new recording in the player.
+     *
+     * The screen watches for this rather than the recorder widget, because
+     * the widget can leave the screen the moment the recording is saved and
+     * would then never hear that its own save finished.
+     */
+    val savedRecordingNoteId by VoiceRecorder.savedNoteId.collectAsState()
+    LaunchedEffect(savedRecordingNoteId) {
+        if (savedRecordingNoteId == noteId) {
+            VoiceRecorder.clearSavedNote()
+            recorderAsked = false
+            viewModel.loadNote(noteId)
+        }
+    }
 
     // Snackbar state
     val snackbarHostState = remember { SnackbarHostState() }
 
     // Confirmation dialog state
     var showDeleteConfirmation by remember { mutableStateOf(false) }
+    /** Removing a note that is already in the trash, for good. */
+    var showPurgeConfirmation by remember { mutableStateOf(false) }
 
     // Show snackbar when download message changes
     LaunchedEffect(downloadMessage) {
@@ -134,11 +271,56 @@ fun NoteDetailScreen(
         viewModel.loadNote(noteId)
     }
 
+    // Where this note sits in the list, for Previous and Next
+    LaunchedEffect(noteId, visibleNoteIds) {
+        viewModel.loadNeighbours(noteId, visibleNoteIds)
+    }
+
     // Navigate back when note is deleted
     LaunchedEffect(deleteSuccess) {
         if (deleteSuccess) {
             onBack()
         }
+    }
+
+    // Sharing. One thing to send goes straight out; several open the tree so
+    // the user can say which of them travel together.
+    val shareContext = LocalContext.current
+    val shareScope = rememberCoroutineScope()
+
+    fun sendShare(chosen: Set<String>) {
+        shareScope.launch {
+            val files = NoteSharing.audioFilesFor(chosen, audioFiles).mapNotNull { audioFile ->
+                viewModel.getAudioFilePath(audioFile.id)?.let { java.io.File(it) }
+            }
+            NoteSharing.share(
+                context = shareContext,
+                text = NoteSharing.textFor(chosen, note, audioFiles, transcriptions),
+                files = files,
+                subject = note?.content?.lineSequence()?.firstOrNull { it.isNotBlank() }
+            )?.let { problem -> viewModel.reportError(problem) }
+        }
+    }
+
+    LaunchedEffect(shareRequested) {
+        if (!shareRequested) return@LaunchedEffect
+        shareRequested = false
+        val items = NoteSharing.itemsFor(note, audioFiles, transcriptions) { audioFileId ->
+            audioFileAvailability[audioFileId] != false
+        }
+        when {
+            items.isEmpty() -> viewModel.reportError("This Note holds nothing to share yet")
+            items.size == 1 -> sendShare(setOf(items.first().id))
+            else -> shareItems = items
+        }
+    }
+
+    if (shareItems.isNotEmpty()) {
+        ShareNoteDialog(
+            items = shareItems,
+            onShare = { chosen -> sendShare(chosen) },
+            onDismiss = { shareItems = emptyList() }
+        )
     }
 
     // Version history dialog: every version of the content, restore any of them
@@ -161,7 +343,7 @@ fun NoteDetailScreen(
                             val isCurrent = version.content == current
                             Column(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp)) {
                                 Text(
-                                    text = "${version.createdAt} · ${version.deviceLabel} · $kind" +
+                                    text = "${version.createdAt.format(LocalContext.current)} · ${version.deviceLabel} · $kind" +
                                         (version.conflictKind?.let { " · $it conflict" } ?: "") +
                                         (if (isCurrent) " · current" else ""),
                                     style = MaterialTheme.typography.labelMedium,
@@ -236,14 +418,48 @@ fun NoteDetailScreen(
     // Transcribe dialog for one recording
     transcribeTarget?.let { target ->
         TranscribeDialog(
-            audioFile = target,
+            subtitle = target.filename,
             onDismiss = { transcribeTarget = null },
             onSettings = { transcribeTarget = null; onNavigateToTranscriptionSettings() },
             onTranscribe = { modelId, language ->
                 transcribeTarget = null
                 viewModel.transcribeOnDevice(target, modelId, language)
-            }
+            },
+            existingTranscriptions = transcriptions[target.id].orEmpty().count { it.isFinished }
         )
+    }
+
+    // Held down Previous or Next: that note's row from the notes list, the
+    // width of the screen and with twice as many lines of text as the list
+    // shows. It is the list's own row, so it behaves like one: tapping it
+    // opens the note. Tapping anywhere else puts it away.
+    preview?.let { row ->
+        Dialog(
+            onDismissRequest = { viewModel.clearPreview() },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            // Scrollable: opening the section adds a player and a waveform, and
+            // on a long note that is taller than the screen.
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+            NoteCard(
+                noteWithAudio = row,
+                contentLines = UiPreferences(LocalContext.current).notesListLines * 2,
+                onClick = {
+                    val id = row.note.id
+                    viewModel.clearPreview()
+                    onOpenNote(id)
+                },
+                // So the chevron opens the preview's own player, as it does in
+                // the list: the card keeps the open state itself here.
+                getAudioFilePath = { audioId -> viewModel.getAudioFilePath(audioId) },
+                modifier = Modifier.fillMaxWidth()
+            )
+            }
+        }
     }
 
     // Created and modified times (long-press on the title)
@@ -251,8 +467,40 @@ fun NoteDetailScreen(
         AlertDialog(
             onDismissRequest = { showTimes = false },
             title = { Text("Times") },
-            text = { Text("Created: ${note!!.createdAt}\nModified: ${note!!.modifiedAt ?: "never"}") },
+            text = {
+                val context = LocalContext.current
+                Text(
+                    "Created: ${note!!.createdAt.format(context)}\n" +
+                        "Modified: ${note!!.modifiedAt?.format(context) ?: "never"}"
+                )
+            },
             confirmButton = { TextButton(onClick = { showTimes = false }) { Text("Close") } }
+        )
+    }
+
+    // Removing a note in the trash for good, from the note itself
+    if (showPurgeConfirmation) {
+        AlertDialog(
+            onDismissRequest = { showPurgeConfirmation = false },
+            title = { Text("Remove this Note for good?") },
+            text = {
+                Text(
+                    "The note, its history and the recordings that belong only to it are " +
+                        "removed from this phone and from every device it syncs with. " +
+                        "This cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPurgeConfirmation = false
+                    viewModel.purgeNote()
+                }) {
+                    Text("Delete for good", color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showPurgeConfirmation = false }) { Text("Cancel") }
+            }
         )
     }
 
@@ -261,7 +509,12 @@ fun NoteDetailScreen(
         AlertDialog(
             onDismissRequest = { showDeleteConfirmation = false },
             title = { Text("Delete Note") },
-            text = { Text("Are you sure you want to delete this note? This action cannot be undone.") },
+            text = {
+                Text(
+                    "The note goes to the trash, with its recordings. " +
+                        "You can bring it back from Settings → Trash."
+                )
+            },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -284,22 +537,74 @@ fun NoteDetailScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
+                // A note screen is mostly note, so the bar is as short as it
+                // can be while still being tappable, and it does not add the
+                // status bar's height a second time.
+                modifier = Modifier.height(48.dp),
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 title = {
-                    // The last change as the title; long-press for created and modified
-                    Text(
-                        text = if (isEditing) "Edit Note" else (note?.modifiedAt ?: note?.createdAt ?: "Note"),
-                        style = MaterialTheme.typography.titleMedium,
-                        modifier = Modifier.combinedClickable(onClick = {}, onLongClick = { showTimes = true })
-                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        // Previous and next, then the date: the two steps
+                        // belong together, beside the arrow that leaves the
+                        // note, and the date reads as the note's own title
+                        // rather than as a label between two buttons.
+                        //
+                        // Up and down rather than left and right, because
+                        // that is how the list runs, and because arrows that
+                        // mean "left" have to be mirrored in Hebrew while
+                        // "up" means up everywhere. Hold one to see the note
+                        // it would open.
+                        if (!isEditing) {
+                            NoteStepButton(
+                                icon = Icons.Filled.KeyboardArrowUp,
+                                label = "Previous note",
+                                targetNoteId = neighbours.previous,
+                                onOpen = onOpenNote,
+                                onPreview = { viewModel.loadPreview(it) }
+                            )
+                            NoteStepButton(
+                                icon = Icons.Filled.KeyboardArrowDown,
+                                label = "Next note",
+                                targetNoteId = neighbours.next,
+                                onOpen = onOpenNote,
+                                onPreview = { viewModel.loadPreview(it) }
+                            )
+                        }
+                        // The last change as the title; long-press for created
+                        // and modified. It is meant to be one line: if the
+                        // format is too long for the width, it breaks once,
+                        // before the time of day, rather than being cut.
+                        val shownStamp = note?.modifiedAt ?: note?.createdAt
+                        Text(
+                            text = when {
+                                isEditing -> AnnotatedString("Edit Note")
+                                shownStamp != null -> stampText(
+                                    shownStamp,
+                                    baseSize = MaterialTheme.typography.titleMedium.fontSize
+                                )
+                                else -> AnnotatedString("Note")
+                            },
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 2,
+                            softWrap = true,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .weight(1f)
+                                .combinedClickable(onClick = {}, onLongClick = { showTimes = true })
+                        )
+                    }
                 },
                 navigationIcon = {
-                    IconButton(onClick = {
-                        if (isEditing) {
-                            viewModel.cancelEditing()
-                        } else {
-                            onBack()
-                        }
-                    }) {
+                    IconButton(
+                        onClick = {
+                            if (isEditing) {
+                                viewModel.cancelEditing()
+                            } else {
+                                leaveNote()
+                            }
+                        },
+                        modifier = Modifier.size(Magic.TOOLBAR_BUTTON_DP.dp)
+                    ) {
                         Icon(
                             imageVector = if (isEditing) Icons.Filled.Close else Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = if (isEditing) "Cancel" else "Back"
@@ -310,7 +615,8 @@ fun NoteDetailScreen(
                     if (isEditing) {
                         IconButton(
                             onClick = { viewModel.saveNote() },
-                            enabled = !isSaving
+                            enabled = !isSaving,
+                            modifier = Modifier.size(Magic.TOOLBAR_BUTTON_DP.dp)
                         ) {
                             if (isSaving) {
                                 CircularProgressIndicator(
@@ -325,43 +631,76 @@ fun NoteDetailScreen(
                             }
                         }
                     } else if (note != null) {
-                        // History button
-                        IconButton(onClick = { viewModel.loadHistory(); showHistory = true }) {
-                            Icon(
-                                imageVector = Icons.Filled.History,
-                                contentDescription = "History"
-                            )
-                        }
-                        // Tags button
-                        IconButton(onClick = onNavigateToTags) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.Label,
-                                contentDescription = "Tags"
-                            )
-                        }
-                        // Delete button
-                        IconButton(
-                            onClick = { showDeleteConfirmation = true },
-                            enabled = !isDeleting
-                        ) {
-                            if (isDeleting) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
+                        // One menu holds everything that is not stepping
+                        // between Notes: adding to this Note, sharing it, its
+                        // history, and deleting it. Four buttons on the bar
+                        // left no room for the date they sat beside.
+                        val context = LocalContext.current
+                        Box {
+                            IconButton(
+                                onClick = { showNoteMenu = true },
+                                modifier = Modifier.size(Magic.TOOLBAR_BUTTON_DP.dp)
+                            ) {
                                 Icon(
-                                    imageVector = Icons.Filled.Delete,
-                                    contentDescription = "Delete"
+                                    imageVector = Icons.Filled.MoreVert,
+                                    contentDescription = "More"
                                 )
                             }
-                        }
-                        // Edit button
-                        IconButton(onClick = { viewModel.startEditing() }) {
-                            Icon(
-                                imageVector = Icons.Filled.Edit,
-                                contentDescription = "Edit"
-                            )
+                            DropdownMenu(
+                                expanded = showNoteMenu,
+                                onDismissRequest = { showNoteMenu = false }
+                            ) {
+                                if (!showRecorder) {
+                                    for (kind in RecorderPreferences.ATTACHMENT_KINDS) {
+                                        DropdownMenuItem(
+                                            text = { Text(RecorderPreferences.attachmentKindTitle(kind)) },
+                                            leadingIcon = {
+                                                Icon(
+                                                    imageVector = Icons.Filled.Mic,
+                                                    contentDescription = null,
+                                                    tint = RecordRed
+                                                )
+                                            },
+                                            onClick = {
+                                                showNoteMenu = false
+                                                addAttachment(kind)
+                                            }
+                                        )
+                                    }
+                                }
+                                DropdownMenuItem(
+                                    text = { Text("Share") },
+                                    leadingIcon = { Icon(Icons.Filled.Share, contentDescription = null) },
+                                    onClick = {
+                                        showNoteMenu = false
+                                        shareRequested = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("History") },
+                                    leadingIcon = { Icon(Icons.Filled.History, contentDescription = null) },
+                                    onClick = {
+                                        showNoteMenu = false
+                                        viewModel.loadHistory()
+                                        showHistory = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Delete Note", color = MaterialTheme.colorScheme.error) },
+                                    leadingIcon = {
+                                        Icon(
+                                            imageVector = Icons.Filled.Delete,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    },
+                                    enabled = !isDeleting,
+                                    onClick = {
+                                        showNoteMenu = false
+                                        showDeleteConfirmation = true
+                                    }
+                                )
+                            }
                         }
                     }
                 }
@@ -401,8 +740,27 @@ fun NoteDetailScreen(
                         .fillMaxSize()
                         .padding(innerPadding)
                         .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
+                        // Room at the sides, none above: the first thing
+                        // under the bar sits against it.
+                        .padding(horizontal = 12.dp)
                 ) {
+                    // A note in the trash says so before anything else, with
+                    // the same two things the trash offers.
+                    if (note?.deletedAt != null) {
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            DeletedNoteActions(
+                                deletedAt = note?.deletedAt,
+                                onRecover = { viewModel.recoverNote() },
+                                onPurge = { showPurgeConfirmation = true }
+                            )
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                    }
+
                     // Conflict banner: what disagreed, on which devices, and how to resolve
                     if (conflictTypes.isNotEmpty()) {
                         val typesStr = conflictTypes.joinToString(", ")
@@ -449,12 +807,56 @@ fun NoteDetailScreen(
                         }
                     }
 
+                    // Star, tags button and the note's tags, on one line of
+                    // their own: the star is the same one the notes list
+                    // shows, and the tags say what the note is filed under
+                    // without having to open the tag screen.
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        IconButton(
+                            onClick = { viewModel.toggleMarked() },
+                            modifier = Modifier.size(Magic.NOTE_LINE_BUTTON_DP.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isMarked) Icons.Filled.Star else Icons.Outlined.StarOutline,
+                                contentDescription = if (isMarked) "Remove the star" else "Star this Note",
+                                modifier = Modifier.size(20.dp),
+                                tint = if (isMarked) StarGold else MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        // The label is the icon: what it opens is plain from
+                        // the tags listed beside it, and the words cost a
+                        // third of the line.
+                        IconButton(
+                            onClick = onNavigateToTags,
+                            modifier = Modifier.size(Magic.NOTE_LINE_BUTTON_DP.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.Label,
+                                contentDescription = "Manage tags",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        Text(
+                            text = if (tags.isEmpty()) "no tags" else tags.joinToString(", "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (tags.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.primary,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(start = 4.dp).weight(1f)
+                        )
+                    }
+
                     // Note content - editable or read-only, always in a visible box
                     if (isEditing) {
+                        val focusRequester = remember { FocusRequester() }
                         OutlinedTextField(
                             value = editedContent,
                             onValueChange = { viewModel.updateEditedContent(it) },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
                             enabled = !isSaving,
                             textStyle = MaterialTheme.typography.bodyLarge,
                             minLines = 5,
@@ -463,20 +865,85 @@ fun NoteDetailScreen(
                                 focusedBorderColor = MaterialTheme.colorScheme.primary
                             )
                         )
+                        // Editing began with a tap on the text, so the
+                        // keyboard should be there without a second tap.
+                        LaunchedEffect(Unit) { focusRequester.requestFocus() }
                     } else {
+                        // Tapping the text is how editing starts; there is no
+                        // separate pencil in the toolbar to look for.
                         Surface(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { viewModel.startEditing() },
                             shape = MaterialTheme.shapes.small,
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
                         ) {
                             Text(
-                                text = note!!.content,
+                                text = note!!.content.ifBlank { "Tap to write" },
                                 style = MaterialTheme.typography.bodyLarge,
+                                color = if (note!!.content.isBlank()) {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(10.dp)
                             )
                         }
+                    }
+
+                    // Asked to record here while the recorder is busy in
+                    // another note: say so instead of showing controls that
+                    // would act on the other note.
+                    if (recorderAsked && recorderBusyElsewhere) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            shape = MaterialTheme.shapes.small
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Text(
+                                    text = "A recording is already in progress in another note.",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "Save or discard that one first; this phone records one note at a time.",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                                TextButton(onClick = { recorderAsked = false }) { Text("OK") }
+                            }
+                        }
+                    }
+
+                    // Recording into this note, in the same place as the player
+                    if (showRecorder) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        AudioRecorderWidget(
+                            noteId = noteId,
+                            // Whether the recorder was opened by the New
+                            // button or by the Add menu, the setting decides
+                            // whether it starts by itself.
+                            autoStart = true,
+                            modifier = Modifier.fillMaxWidth(),
+                            onDiscarded = {
+                                recorderAsked = false
+                                // A note made only to hold this recording has
+                                // nothing left in it, so it goes with the
+                                // recording rather than being left behind
+                                // empty in the list. A note the user made
+                                // themselves is theirs, empty or not, and is
+                                // never removed here.
+                                val loaded = note
+                                if (startRecording && loaded != null &&
+                                    loaded.content.isBlank() && audioFiles.isEmpty()
+                                ) {
+                                    viewModel.deleteNote()
+                                }
+                            }
+                        )
                     }
 
                     // Audio player widget (if there are audio files)
@@ -556,7 +1023,15 @@ fun NoteDetailScreen(
                                 },
                                 modifier = Modifier.fillMaxWidth(),
                                 onTranscribe = { audioFile -> transcribeTarget = audioFile },
-                                onCurrentFileChanged = { index -> selectedAudioIndex = index }
+                                onCurrentFileChanged = { index -> selectedAudioIndex = index },
+                                pendingTranscriptionIds = transcriptions
+                                    .filterValues { rows -> rows.any { it.isPending } }
+                                    .keys,
+                                primaryAudioFileId = primaryAudioFileId,
+                                autoPlay = UiPreferences(LocalContext.current).autoplayOnOpen,
+                                onSetPrimary = { audioFile -> viewModel.setPrimaryAudioFile(audioFile) },
+                                noteId = noteId,
+                                noteLine = note?.content?.lineSequence()?.firstOrNull()?.take(60)
                             )
 
                             // Progress of a transcription running for one of these recordings
@@ -605,14 +1080,60 @@ fun NoteDetailScreen(
 
                         TranscriptionsSection(
                             transcriptions = shownTranscriptions,
-                            onToggleState = { transcription, tag ->
-                                viewModel.toggleTranscriptionState(transcription, tag)
+                            onToggleFlag = { transcription, tag ->
+                                viewModel.toggleTranscriptionFlag(transcription, tag)
                             },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            primaryTranscriptionId = shownAudio?.let { primaryTranscriptionIds[it.id] },
+                            onSetPrimary = { transcription -> viewModel.setPrimaryTranscription(transcription) },
+                            // Editing a transcription by hand is under trial:
+                            // debug builds only.
+                            onEditContent = if (BuildConfig.DEV_FEATURES) {
+                                { transcription, text ->
+                                    viewModel.editTranscriptionContent(transcription, text)
+                                }
+                            } else null
                         )
                     }
                 }
             }
         }
+    }
+}
+
+/**
+ * One step through the notes list: a tap opens that note, a long press shows
+ * its row from the list first.
+ *
+ * Greyed out at the ends of the list, where there is no note to step to. A
+ * plain [IconButton] cannot tell a long press from a tap, so this is a box
+ * with both.
+ */
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun NoteStepButton(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    targetNoteId: String?,
+    onOpen: (String) -> Unit,
+    onPreview: (String) -> Unit,
+) {
+    val enabled = targetNoteId != null
+    Box(
+        modifier = Modifier
+            .size(Magic.TOOLBAR_BUTTON_DP.dp)
+            .combinedClickable(
+                enabled = enabled,
+                onClick = { targetNoteId?.let(onOpen) },
+                onLongClick = { targetNoteId?.let(onPreview) }
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = label,
+            tint = if (enabled) MaterialTheme.colorScheme.onSurface
+            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
+        )
     }
 }

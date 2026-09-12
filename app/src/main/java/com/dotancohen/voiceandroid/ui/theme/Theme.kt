@@ -11,6 +11,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 
+/**
+ * The red of a record button, everywhere one appears: the "New" button in
+ * the notes toolbar, the recorder's own button and its elapsed time. It is
+ * the same red in both themes on purpose, because that is what makes it read
+ * as "recording" rather than as an accent colour.
+ */
+val RecordRed = Color(0xFFD32F2F)
+
+/** The gold of a starred note, in the list and in the note itself. */
+val StarGold = Color(0xFFFFD700)
+
 private val DarkColorScheme = darkColorScheme(
     primary = Color(0xFF90CAF9),
     secondary = Color(0xFF80CBC4),

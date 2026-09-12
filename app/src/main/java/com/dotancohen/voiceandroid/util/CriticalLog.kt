@@ -30,8 +30,19 @@ object CriticalLog {
      * Must be called once at application startup.
      */
     fun init(context: Context) {
-        logFile = File(context.filesDir, LOG_FILE_NAME)
+        useFile(File(context.filesDir, LOG_FILE_NAME))
     }
+
+    /** The file to write to. Only the phone's own directory, outside a test. */
+    internal fun useFile(file: File) {
+        logFile = file
+    }
+
+    /** How large the file may grow before the oldest entries are dropped. */
+    internal val maxSizeBytes: Int get() = MAX_SIZE_BYTES
+
+    /** How many lines a rotation keeps. */
+    internal val linesKeptOnRotation: Int get() = MAX_LINES_TO_KEEP / 2
 
     /**
      * Log a critical error.

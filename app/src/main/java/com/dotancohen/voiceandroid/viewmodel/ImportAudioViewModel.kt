@@ -11,6 +11,7 @@ import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.dotancohen.voiceandroid.data.Tag
+import com.dotancohen.voiceandroid.data.TagTree
 import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.util.AppLogger
 import com.dotancohen.voiceandroid.util.CriticalLog
@@ -149,40 +150,17 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
      */
     private fun computeTagHierarchy(tags: List<Tag>): List<SelectableTagItem> {
         val tagById = tags.associateBy { it.id }
+        childrenByParentId = TagTree.childrenByParent(tags)
 
-        // Build children map
-        val childrenMap = mutableMapOf<String, MutableSet<String>>()
-        for (tag in tags) {
-            tag.parentId?.let { parentId ->
-                childrenMap.getOrPut(parentId) { mutableSetOf() }.add(tag.id)
-            }
-        }
-        childrenByParentId = childrenMap.mapValues { it.value.toSet() }
-
-        val result = mutableListOf<SelectableTagItem>()
-
-        for (tag in tags) {
-            val pathParts = mutableListOf<String>()
-            var current: Tag? = tag
-            var depth = 0
-
-            while (current != null) {
-                pathParts.add(0, current.name)
-                val parentId = current.parentId
-                current = if (parentId != null) tagById[parentId] else null
-                if (current != null) depth++
-            }
-
-            result.add(SelectableTagItem(
+        return tags.map { tag ->
+            SelectableTagItem(
                 tag = tag,
-                path = pathParts.joinToString(" > "),
-                depth = depth,
+                path = TagTree.pathOf(tag, tagById),
+                depth = TagTree.depthOf(tag, tagById),
                 hasChildren = childrenByParentId.containsKey(tag.id),
                 isSelected = _selectedTagIds.value.contains(tag.id)
-            ))
-        }
-
-        return result.sortedBy { it.path.lowercase() }
+            )
+        }.sortedBy { it.path.lowercase() }
     }
 
     /**
@@ -286,18 +264,12 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
     /**
      * Check if a tag is hidden due to a collapsed ancestor.
      */
-    private fun isTagHiddenByCollapse(tagItem: SelectableTagItem): Boolean {
-        val tagById = _allTags.value.associateBy { it.tag.id }
-        var current = tagItem.tag.parentId
-
-        while (current != null) {
-            if (_collapsedTagIds.value.contains(current)) {
-                return true
-            }
-            current = tagById[current]?.tag?.parentId
-        }
-        return false
-    }
+    private fun isTagHiddenByCollapse(tagItem: SelectableTagItem): Boolean =
+        TagTree.isHiddenByCollapse(
+            tagItem.tag,
+            _allTags.value.associate { it.tag.id to it.tag },
+            _collapsedTagIds.value
+        )
 
     /**
      * Check if storage permission is granted (for Android 11+).

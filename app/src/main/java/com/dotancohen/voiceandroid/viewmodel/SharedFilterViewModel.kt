@@ -35,4 +35,18 @@ class SharedFilterViewModel : ViewModel() {
     fun clearSearchFilter() {
         _activeSearchQuery.value = null
     }
+
+    /**
+     * The notes as the list is showing them, in that order.
+     *
+     * A note screen moves to the next and previous note through this, so
+     * "next" means the next one in the list the user was looking at, search
+     * and star filter included, rather than the next one in the database.
+     */
+    private val _visibleNoteIds = MutableStateFlow<List<String>>(emptyList())
+    val visibleNoteIds: StateFlow<List<String>> = _visibleNoteIds.asStateFlow()
+
+    fun setVisibleNotes(ids: List<String>) {
+        if (_visibleNoteIds.value != ids) _visibleNoteIds.value = ids
+    }
 }
