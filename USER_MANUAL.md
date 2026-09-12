@@ -50,6 +50,15 @@ the recordings the bucket does not hold yet to the bucket, when you press it.
 Recordings can also be kept out of the bucket and left on the devices that
 made them; the notes and their text still travel.
 
+The phone's notes belong to one **account**, shown under Settings → Advanced.
+A server or desktop of another account refuses the phone with a sentence naming
+both accounts, and nothing crosses.
+
+A **snapshot** of the notes database is taken before every sync and kept five
+deep; Settings → Advanced lists them and can restore one. The state being
+replaced is kept as the newest snapshot, so a restore can be undone.
+Recordings are never part of a snapshot.
+
 ## The Notes list
 
 Each row is one Note: its Tags in their own colours, the date it was made,

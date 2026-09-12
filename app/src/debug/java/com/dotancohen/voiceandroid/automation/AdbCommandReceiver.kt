@@ -74,7 +74,7 @@ class AdbCommandReceiver : BroadcastReceiver() {
                 val cfg = repo.getSyncConfig().getOrNull()
                 val conflicts = repo.getUnresolvedConflictCount().getOrNull() ?: -1
                 val notes = repo.getAllNotes().getOrNull()?.size ?: -1
-                "device=${repo.getDeviceName().getOrNull()} id=${repo.getDeviceId().getOrNull()} server=${cfg?.serverUrl} peer=${cfg?.serverPeerId} notes=$notes unresolved_conflicts=$conflicts pending_changes=${repo.hasUnsyncedChanges().getOrNull()}"
+                "account=${repo.getAccountId().getOrNull()} device=${repo.getDeviceName().getOrNull()} id=${repo.getDeviceId().getOrNull()} server=${cfg?.serverUrl} peer=${cfg?.serverPeerId} notes=$notes unresolved_conflicts=$conflicts pending_changes=${repo.hasUnsyncedChanges().getOrNull()}"
             }
 
             "CREATE_NOTE" -> {

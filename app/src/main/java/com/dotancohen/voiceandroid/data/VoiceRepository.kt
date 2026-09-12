@@ -317,6 +317,53 @@ class VoiceRepository(private val context: Context) {
     /**
      * Get the current device ID.
      */
+    /** The account this phone's database belongs to: 32 hex characters. */
+    suspend fun getAccountId(): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().accountId())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Copy the database into its snapshot directory now. Returns the path. */
+    suspend fun takeSnapshot(): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().snapshot())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Every snapshot beside the database, newest first. */
+    suspend fun listSnapshots(): Result<List<Snapshot>> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().listSnapshots().map {
+                Snapshot(name = it.name, path = it.path, sizeBytes = it.sizeBytes.toLong(), noteCount = it.noteCount)
+            })
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Replace the database with a snapshot; the state replaced is snapshotted first. */
+    suspend fun restoreSnapshot(name: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            ensureInitialized().restoreSnapshot(name)
+            Result.success(Unit)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun getDeviceId(): Result<String> = withContext(Dispatchers.IO) {
         try {
             val voiceClient = ensureInitialized()
@@ -1822,6 +1869,18 @@ data class ImportAudioResult(
     val noteId: String,
     /** The ID of the created audio file record */
     val audioFileId: String
+)
+
+/**
+ * One snapshot of the database, as listed by [VoiceRepository.listSnapshots].
+ */
+data class Snapshot(
+    /** File name; what [VoiceRepository.restoreSnapshot] takes */
+    val name: String,
+    val path: String,
+    val sizeBytes: Long,
+    /** Notes in the snapshot that are not in the trash */
+    val noteCount: Long,
 )
 
 /**

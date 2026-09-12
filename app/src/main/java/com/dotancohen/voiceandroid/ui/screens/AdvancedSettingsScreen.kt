@@ -42,6 +42,11 @@ import com.dotancohen.voiceandroid.util.TimeFormat
 import com.dotancohen.voiceandroid.util.UiPreferences
 import java.util.Locale
 import kotlin.math.roundToInt
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dotancohen.voiceandroid.viewmodel.SnapshotsViewModel
 
 /**
  * Settings → Advanced: the settings most people never need to change.
@@ -300,6 +305,48 @@ fun AdvancedSettingsScreen(
                 steps = UiPreferences.MAX_LIST_LINES - 2,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // Snapshots: a copy of the database before every sync, kept five deep
+            Spacer(modifier = Modifier.height(24.dp))
+            Text("Snapshots", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "A copy of the notes database is taken before every sync and kept five deep. " +
+                    "Restoring one brings the notes back as they were; the state being replaced is kept as the newest snapshot.",
+                style = MaterialTheme.typography.bodySmall
+            )
+            val snapshotsViewModel: SnapshotsViewModel = viewModel()
+            val snapshots by snapshotsViewModel.snapshots.collectAsState()
+            val snapshotMessage by snapshotsViewModel.message.collectAsState()
+            val accountId by snapshotsViewModel.accountId.collectAsState()
+            var confirmRestore by remember { mutableStateOf<String?>(null) }
+            Text("Account $accountId", style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = { snapshotsViewModel.takeSnapshot() }, modifier = Modifier.fillMaxWidth()) {
+                Text("Take a snapshot now")
+            }
+            snapshotMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+            snapshots.forEach { snapshot ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(snapshot.name, style = MaterialTheme.typography.bodyMedium)
+                        Text("${snapshot.noteCount} notes, ${snapshot.sizeBytes / 1024} KB", style = MaterialTheme.typography.bodySmall)
+                    }
+                    TextButton(onClick = { confirmRestore = snapshot.name }) { Text("Restore") }
+                }
+            }
+            confirmRestore?.let { name ->
+                AlertDialog(
+                    onDismissRequest = { confirmRestore = null },
+                    title = { Text("Restore $name?") },
+                    text = { Text("The notes database is replaced with this snapshot. The current state is kept as the newest snapshot, so this can be undone.") },
+                    confirmButton = {
+                        TextButton(onClick = { snapshotsViewModel.restore(name); confirmRestore = null }) { Text("Restore") }
+                    },
+                    dismissButton = { TextButton(onClick = { confirmRestore = null }) { Text("Cancel") } }
+                )
+            }
         }
     }
 }

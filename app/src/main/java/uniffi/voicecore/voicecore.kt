@@ -908,6 +908,16 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -937,6 +947,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_accept_note_conflicts(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Int
+    fun uniffi_voicecore_fn_method_voiceclient_account_id(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_add_tag_to_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_audio_file_exists_locally(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1053,10 +1065,14 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_list_snapshots(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_mark_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_merge_notes(`ptr`: Pointer,`noteId1`: RustBuffer.ByValue,`noteId2`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_move_to_account(`ptr`: Pointer,`accountId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_purge_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_rebuild_all_caches_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1075,6 +1091,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_resolve_conflict_with_content(`ptr`: Pointer,`conflictId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_restore_snapshot(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_search_notes(`ptr`: Pointer,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_set_audiofile_directory(`ptr`: Pointer,`path`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1095,6 +1113,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_set_setting(`ptr`: Pointer,`key`: RustBuffer.ByValue,`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_snapshot(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_tag_note_too_big(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1243,6 +1263,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_accept_note_conflicts(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_account_id(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_audio_file_exists_locally(
@@ -1359,9 +1381,13 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_list_snapshots(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_mark_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_merge_notes(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_move_to_account(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_purge_note(
     ): Short
@@ -1380,6 +1406,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_resolve_conflict_with_content(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_restore_snapshot(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_search_notes(
     ): Short
@@ -1400,6 +1428,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_set_primary_transcription(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_setting(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_snapshot(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_sync(
     ): Short
@@ -1455,6 +1485,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_accept_note_conflicts() != 1211.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_account_id() != 4136.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note() != 54360.toShort()) {
@@ -1631,10 +1664,16 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_sync_configured() != 19345.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_list_snapshots() != 7926.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_mark_note() != 26647.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_merge_notes() != 17846.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_move_to_account() != 24734.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_purge_note() != 15686.toShort()) {
@@ -1662,6 +1701,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_resolve_conflict_with_content() != 56220.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_restore_snapshot() != 36564.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_search_notes() != 16307.toShort()) {
@@ -1692,6 +1734,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_setting() != 1953.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_snapshot() != 5591.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_sync() != 52830.toShort()) {
@@ -1829,6 +1874,29 @@ public object FfiConverterInt: FfiConverter<Int, Int> {
 
     override fun write(value: Int, buf: ByteBuffer) {
         buf.putInt(value)
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterULong: FfiConverter<ULong, Long> {
+    override fun lift(value: Long): ULong {
+        return value.toULong()
+    }
+
+    override fun read(buf: ByteBuffer): ULong {
+        return lift(buf.getLong())
+    }
+
+    override fun lower(value: ULong): Long {
+        return value.toLong()
+    }
+
+    override fun allocationSize(value: ULong) = 8UL
+
+    override fun write(value: ULong, buf: ByteBuffer) {
+        buf.putLong(value.toLong())
     }
 }
 
@@ -2112,6 +2180,12 @@ public interface VoiceClientInterface {
      * Accept every unresolved conflict of a note. Returns how many were accepted.
      */
     fun `acceptNoteConflicts`(`noteId`: kotlin.String): kotlin.Int
+    
+    /**
+     * The account this phone's database belongs to (ACCT-1). A phone has no
+     * account index; its one database carries the id.
+     */
+    fun `accountId`(): kotlin.String
     
     /**
      * Add a tag to a note
@@ -2493,6 +2567,11 @@ public interface VoiceClientInterface {
     fun `isSyncConfigured`(): kotlin.Boolean
     
     /**
+     * Every snapshot beside the database, newest first.
+     */
+    fun `listSnapshots`(): List<SnapshotData>
+    
+    /**
      * Mark a note (add the _system/_marked tag)
      *
      * Returns true if the note was marked, false if already marked.
@@ -2504,6 +2583,13 @@ public interface VoiceClientInterface {
      * Returns the surviving note ID (the one with earlier created_at).
      */
     fun `mergeNotes`(`noteId1`: kotlin.String, `noteId2`: kotlin.String): kotlin.String
+    
+    /**
+     * Move this database, notes and all, to another account (ACCT-5). The
+     * deliberate way to merge accounts; a snapshot is taken first and every
+     * peer is forgotten.
+     */
+    fun `moveToAccount`(`accountId`: kotlin.String)
     
     /**
      * Empty one note out of the trash for good.
@@ -2584,6 +2670,12 @@ public interface VoiceClientInterface {
     fun `resolveConflictWithContent`(`conflictId`: kotlin.String, `content`: kotlin.String): kotlin.Boolean
     
     /**
+     * Replace the database with a snapshot (SNAP-4); the state replaced is
+     * snapshotted first, so this is undoable too.
+     */
+    fun `restoreSnapshot`(`name`: kotlin.String)
+    
+    /**
      * Execute a search query
      *
      * Supports "tag:Name" syntax for tag filtering and free text search.
@@ -2644,6 +2736,11 @@ public interface VoiceClientInterface {
      * Set a synced setting. Concurrent changes on two devices are merged and flagged.
      */
     fun `setSetting`(`key`: kotlin.String, `value`: kotlin.String)
+    
+    /**
+     * Copy the database into its snapshot directory now; returns the path.
+     */
+    fun `snapshot`(): kotlin.String
     
     /**
      * Sync with the configured server: database changes both ways, no files.
@@ -2874,6 +2971,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_accept_note_conflicts(
         it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * The account this phone's database belongs to (ACCT-1). A phone has no
+     * account index; its one database carries the id.
+     */
+    @Throws(VoiceCoreException::class)override fun `accountId`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_account_id(
+        it, _status)
 }
     }
     )
@@ -3892,6 +4006,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Every snapshot beside the database, newest first.
+     */
+    @Throws(VoiceCoreException::class)override fun `listSnapshots`(): List<SnapshotData> {
+            return FfiConverterSequenceTypeSnapshotData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_list_snapshots(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Mark a note (add the _system/_marked tag)
      *
      * Returns true if the note was marked, false if already marked.
@@ -3923,6 +4053,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     }
     )
     }
+    
+
+    
+    /**
+     * Move this database, notes and all, to another account (ACCT-5). The
+     * deliberate way to merge accounts; a snapshot is taken first and every
+     * peer is forgotten.
+     */
+    @Throws(VoiceCoreException::class)override fun `moveToAccount`(`accountId`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_move_to_account(
+        it, FfiConverterString.lower(`accountId`),_status)
+}
+    }
+    
     
 
     
@@ -4101,6 +4248,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Replace the database with a snapshot (SNAP-4); the state replaced is
+     * snapshotted first, so this is undoable too.
+     */
+    @Throws(VoiceCoreException::class)override fun `restoreSnapshot`(`name`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_restore_snapshot(
+        it, FfiConverterString.lower(`name`),_status)
+}
+    }
+    
+    
+
+    
+    /**
      * Execute a search query
      *
      * Supports "tag:Name" syntax for tag filtering and free text search.
@@ -4261,6 +4424,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 }
     }
     
+    
+
+    
+    /**
+     * Copy the database into its snapshot directory now; returns the path.
+     */
+    @Throws(VoiceCoreException::class)override fun `snapshot`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_snapshot(
+        it, _status)
+}
+    }
+    )
+    }
     
 
     
@@ -4999,6 +5178,55 @@ public object FfiConverterTypeSearchResultData: FfiConverterRustBuffer<SearchRes
             FfiConverterSequenceTypeNoteData.write(value.`notes`, buf)
             FfiConverterSequenceString.write(value.`ambiguousTags`, buf)
             FfiConverterSequenceString.write(value.`notFoundTags`, buf)
+    }
+}
+
+
+
+/**
+ * One snapshot of the database, as listed by `list_snapshots`
+ */
+data class SnapshotData (
+    /**
+     * File name, `notes-<UTC time>.db`; what `restore_snapshot` takes
+     */
+    var `name`: kotlin.String, 
+    var `path`: kotlin.String, 
+    var `sizeBytes`: kotlin.ULong, 
+    /**
+     * Notes in the snapshot that are not in the trash
+     */
+    var `noteCount`: kotlin.Long
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSnapshotData: FfiConverterRustBuffer<SnapshotData> {
+    override fun read(buf: ByteBuffer): SnapshotData {
+        return SnapshotData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterULong.read(buf),
+            FfiConverterLong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SnapshotData) = (
+            FfiConverterString.allocationSize(value.`name`) +
+            FfiConverterString.allocationSize(value.`path`) +
+            FfiConverterULong.allocationSize(value.`sizeBytes`) +
+            FfiConverterLong.allocationSize(value.`noteCount`)
+    )
+
+    override fun write(value: SnapshotData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`name`, buf)
+            FfiConverterString.write(value.`path`, buf)
+            FfiConverterULong.write(value.`sizeBytes`, buf)
+            FfiConverterLong.write(value.`noteCount`, buf)
     }
 }
 
@@ -6001,6 +6229,34 @@ public object FfiConverterSequenceTypeNoteData: FfiConverterRustBuffer<List<Note
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeNoteData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeSnapshotData: FfiConverterRustBuffer<List<SnapshotData>> {
+    override fun read(buf: ByteBuffer): List<SnapshotData> {
+        val len = buf.getInt()
+        return List<SnapshotData>(len) {
+            FfiConverterTypeSnapshotData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<SnapshotData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeSnapshotData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<SnapshotData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeSnapshotData.write(it, buf)
         }
     }
 }
