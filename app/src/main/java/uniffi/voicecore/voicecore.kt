@@ -918,6 +918,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1065,6 +1069,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_list_devices(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_list_snapshots(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_mark_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1092,6 +1098,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_resolve_conflict_with_content(`ptr`: Pointer,`conflictId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_restore_snapshot(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_revoke_device(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_search_notes(`ptr`: Pointer,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1381,6 +1389,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_list_devices(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_list_snapshots(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_mark_note(
@@ -1408,6 +1418,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_resolve_conflict_with_content(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_restore_snapshot(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_revoke_device(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_search_notes(
     ): Short
@@ -1664,6 +1676,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_sync_configured() != 19345.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_list_devices() != 22261.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_list_snapshots() != 7926.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1704,6 +1719,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_restore_snapshot() != 36564.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_revoke_device() != 21871.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_search_notes() != 16307.toShort()) {
@@ -2567,6 +2585,11 @@ public interface VoiceClientInterface {
     fun `isSyncConfigured`(): kotlin.Boolean
     
     /**
+     * Every device of the account, by its card (CARD-1).
+     */
+    fun `listDevices`(): List<DeviceCardData>
+    
+    /**
      * Every snapshot beside the database, newest first.
      */
     fun `listSnapshots`(): List<SnapshotData>
@@ -2674,6 +2697,11 @@ public interface VoiceClientInterface {
      * snapshotted first, so this is undoable too.
      */
     fun `restoreSnapshot`(`name`: kotlin.String)
+    
+    /**
+     * Revoke a device of the account (AUTH-6): one way, and it travels.
+     */
+    fun `revokeDevice`(`deviceId`: kotlin.String)
     
     /**
      * Execute a search query
@@ -4006,6 +4034,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Every device of the account, by its card (CARD-1).
+     */
+    @Throws(VoiceCoreException::class)override fun `listDevices`(): List<DeviceCardData> {
+            return FfiConverterSequenceTypeDeviceCardData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_list_devices(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Every snapshot beside the database, newest first.
      */
     @Throws(VoiceCoreException::class)override fun `listSnapshots`(): List<SnapshotData> {
@@ -4257,6 +4301,21 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_restore_snapshot(
         it, FfiConverterString.lower(`name`),_status)
+}
+    }
+    
+    
+
+    
+    /**
+     * Revoke a device of the account (AUTH-6): one way, and it travels.
+     */
+    @Throws(VoiceCoreException::class)override fun `revokeDevice`(`deviceId`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_revoke_device(
+        it, FfiConverterString.lower(`deviceId`),_status)
 }
     }
     
@@ -4923,6 +4982,64 @@ public object FfiConverterTypeConflictData: FfiConverterRustBuffer<ConflictData>
             FfiConverterString.write(value.`mergeVersionId`, buf)
             FfiConverterTypeStamp.write(value.`createdAt`, buf)
             FfiConverterOptionalTypeStamp.write(value.`resolvedAt`, buf)
+    }
+}
+
+
+
+/**
+ * A device of the account, as its card says (CARD-1)
+ */
+data class DeviceCardData (
+    var `deviceId`: kotlin.String, 
+    var `name`: kotlin.String, 
+    var `certificateFingerprint`: kotlin.String, 
+    /**
+     * JSON list of the URLs it listens on, or empty
+     */
+    var `addresses`: kotlin.String, 
+    var `listens`: kotlin.Boolean, 
+    var `revoked`: kotlin.Boolean, 
+    var `application`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeDeviceCardData: FfiConverterRustBuffer<DeviceCardData> {
+    override fun read(buf: ByteBuffer): DeviceCardData {
+        return DeviceCardData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: DeviceCardData) = (
+            FfiConverterString.allocationSize(value.`deviceId`) +
+            FfiConverterString.allocationSize(value.`name`) +
+            FfiConverterString.allocationSize(value.`certificateFingerprint`) +
+            FfiConverterString.allocationSize(value.`addresses`) +
+            FfiConverterBoolean.allocationSize(value.`listens`) +
+            FfiConverterBoolean.allocationSize(value.`revoked`) +
+            FfiConverterString.allocationSize(value.`application`)
+    )
+
+    override fun write(value: DeviceCardData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`deviceId`, buf)
+            FfiConverterString.write(value.`name`, buf)
+            FfiConverterString.write(value.`certificateFingerprint`, buf)
+            FfiConverterString.write(value.`addresses`, buf)
+            FfiConverterBoolean.write(value.`listens`, buf)
+            FfiConverterBoolean.write(value.`revoked`, buf)
+            FfiConverterString.write(value.`application`, buf)
     }
 }
 
@@ -6173,6 +6290,34 @@ public object FfiConverterSequenceTypeConflictData: FfiConverterRustBuffer<List<
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeConflictData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeDeviceCardData: FfiConverterRustBuffer<List<DeviceCardData>> {
+    override fun read(buf: ByteBuffer): List<DeviceCardData> {
+        val len = buf.getInt()
+        return List<DeviceCardData>(len) {
+            FfiConverterTypeDeviceCardData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<DeviceCardData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeDeviceCardData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<DeviceCardData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeDeviceCardData.write(it, buf)
         }
     }
 }
