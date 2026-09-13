@@ -499,7 +499,7 @@ class AdbCommandReceiver : BroadcastReceiver() {
                 val ms = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull(); r.release(); ms?.let { it / 1000 }
             } catch (e: Exception) { null }
             val result = repo.importAudioFile(f.name, f.lastModified() / 1000, duration).getOrThrow()
-            repo.copyAudioFileToStorage(context, Uri.fromFile(f), result.audioFileId, f.extension.lowercase()).getOrThrow()
+            repo.copyAudioFileToStorage(context, Uri.fromFile(f), result.audioFileId).getOrThrow()
             names.put(JSONObject().put("file", f.name).put("note", result.noteId).put("audio_id", result.audioFileId))
             imported++
         }

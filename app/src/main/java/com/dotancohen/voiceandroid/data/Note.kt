@@ -96,7 +96,11 @@ data class AudioFile(
     /** Cloud storage provider ("s3") once the owning device uploaded the file */
     val storageProvider: String? = null,
     /** Object key in cloud storage once uploaded */
-    val storageKey: String? = null
+    val storageKey: String? = null,
+    /** The file's name in the audio directory (Stage 13): the recording's start, the tail of its id, the extension */
+    val localName: String = "",
+    /** The SHA-256 of the file's bytes, lowercase hex, once computed (Stage 13) */
+    val contentSha256: String? = null
 ) {
     /** True once the binary is available in cloud storage. */
     val isInCloud: Boolean

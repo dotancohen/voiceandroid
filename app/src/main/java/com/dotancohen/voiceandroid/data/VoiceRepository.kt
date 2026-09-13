@@ -626,20 +626,6 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
-     * Check if sync is configured.
-     */
-    suspend fun isSyncConfigured(): Result<Boolean> = withContext(Dispatchers.IO) {
-        try {
-            val voiceClient = ensureInitialized()
-            Result.success(voiceClient.isSyncConfigured())
-        } catch (e: VoiceCoreException) {
-            Result.failure(Exception(e.message))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /**
      * Generate a new device ID.
      */
     fun generateDeviceId(): String {
@@ -691,7 +677,8 @@ class VoiceRepository(private val context: Context) {
                     deletedAt = data.deletedAt,
                     storageProvider = data.storageProvider,
                     storageKey = data.storageKey,
-                    localName = data.localName
+                    localName = data.localName,
+                    contentSha256 = data.contentSha256
                 )
             }
             Result.success(audioFiles)
@@ -721,7 +708,8 @@ class VoiceRepository(private val context: Context) {
                     deletedAt = data.deletedAt,
                     storageProvider = data.storageProvider,
                     storageKey = data.storageKey,
-                    localName = data.localName
+                    localName = data.localName,
+                    contentSha256 = data.contentSha256
                 )
             }
             Result.success(audioFile)
@@ -765,7 +753,8 @@ class VoiceRepository(private val context: Context) {
                     deletedAt = data.deletedAt,
                     storageProvider = data.storageProvider,
                     storageKey = data.storageKey,
-                    localName = data.localName
+                    localName = data.localName,
+                    contentSha256 = data.contentSha256
                 )
             }
             Result.success(audioFiles)
@@ -1682,6 +1671,8 @@ class VoiceRepository(private val context: Context) {
                     input.copyTo(output)
                 }
             } ?: return@withContext Result.failure(Exception("Could not open source file"))
+            // The content hash (Stage 13): the bucket key and the proof of a fetched copy
+            ensureInitialized().storeContentHash(audioFileId)
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)

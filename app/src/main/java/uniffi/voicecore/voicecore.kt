@@ -983,6 +983,8 @@ internal open class UniffiVTableCallbackInterfaceOperationProgress(
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1223,6 +1225,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_stop_listener(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_store_content_hash(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_tag_note_too_big(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1584,6 +1588,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_start_listener(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_stop_listener(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_store_content_hash(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_sync(
     ): Short
@@ -1958,6 +1964,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_stop_listener() != 10347.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_store_content_hash() != 54844.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_sync() != 36539.toShort()) {
@@ -3113,6 +3122,12 @@ public interface VoiceClientInterface {
      * Stop listening. The card says so once the listener has wound down.
      */
     fun `stopListener`()
+    
+    /**
+     * Compute and store a recording's content hash (Stage 13) from its file
+     * in the audio directory, after the file is copied there. Returns the hash.
+     */
+    fun `storeContentHash`(`audioFileId`: kotlin.String): kotlin.String
     
     /**
      * Sync with the last peer, or the only one: database changes both
@@ -5167,6 +5182,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Compute and store a recording's content hash (Stage 13) from its file
+     * in the audio directory, after the file is copied there. Returns the hash.
+     */
+    @Throws(VoiceCoreException::class)override fun `storeContentHash`(`audioFileId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_store_content_hash(
+        it, FfiConverterString.lower(`audioFileId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Sync with the last peer, or the only one: database changes both
      * ways, no files. `operate` names a peer.
      */
@@ -5509,7 +5541,16 @@ data class AudioFileData (
      * When the file was uploaded to cloud storage; a machine event, so it
      * carries no timezone of its own and a reader shows it in its own.
      */
-    var `storageUploadedAt`: Stamp?
+    var `storageUploadedAt`: Stamp?, 
+    /**
+     * The file's name in the audio directory (Stage 13): the recording's
+     * start, the tail of its id and the extension
+     */
+    var `localName`: kotlin.String, 
+    /**
+     * The SHA-256 of the file's bytes, lowercase hex, once computed (Stage 13)
+     */
+    var `contentSha256`: kotlin.String?
 ) {
     
     companion object
@@ -5533,6 +5574,8 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
             FfiConverterOptionalString.read(buf),
             FfiConverterOptionalString.read(buf),
             FfiConverterOptionalTypeStamp.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
         )
     }
 
@@ -5548,7 +5591,9 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
             FfiConverterOptionalTypeStamp.allocationSize(value.`deletedAt`) +
             FfiConverterOptionalString.allocationSize(value.`storageProvider`) +
             FfiConverterOptionalString.allocationSize(value.`storageKey`) +
-            FfiConverterOptionalTypeStamp.allocationSize(value.`storageUploadedAt`)
+            FfiConverterOptionalTypeStamp.allocationSize(value.`storageUploadedAt`) +
+            FfiConverterString.allocationSize(value.`localName`) +
+            FfiConverterOptionalString.allocationSize(value.`contentSha256`)
     )
 
     override fun write(value: AudioFileData, buf: ByteBuffer) {
@@ -5564,6 +5609,8 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
             FfiConverterOptionalString.write(value.`storageProvider`, buf)
             FfiConverterOptionalString.write(value.`storageKey`, buf)
             FfiConverterOptionalTypeStamp.write(value.`storageUploadedAt`, buf)
+            FfiConverterString.write(value.`localName`, buf)
+            FfiConverterOptionalString.write(value.`contentSha256`, buf)
     }
 }
 

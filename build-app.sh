@@ -1,4 +1,7 @@
 #!/bin/bash
+# Stop at the first failure: without this the script ends with exit 0
+# after a failed compile, because the last echo succeeds.
+set -e
 
 # The Voice Family builds every Rust crate into one shared directory; see
 # VoiceFamily/.cargo/config.toml and TECHNICAL-DECISIONS.md §7.4.
