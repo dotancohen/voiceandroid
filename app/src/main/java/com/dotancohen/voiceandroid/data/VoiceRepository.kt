@@ -448,6 +448,31 @@ class VoiceRepository(private val context: Context) {
     }
 
     /** Show a code for another device to join this phone's account. */
+    /** The recording key's text (Stage 15): made now when the account has none; showing it is the export. */
+    suspend fun recordingKeyExport(): Result<String> = withContext(Dispatchers.IO) {
+        try { Result.success(ensureInitialized().recordingKeyExport()) } catch (e: Exception) { Result.failure(Exception(e.message)) }
+    }
+
+    suspend fun recordingKeyImport(text: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try { ensureInitialized().recordingKeyImport(text); Result.success(Unit) } catch (e: Exception) { Result.failure(Exception(e.message)) }
+    }
+
+    suspend fun encryptionState(): Result<EncryptionState> = withContext(Dispatchers.IO) {
+        try { ensureInitialized().encryptionState().let { Result.success(EncryptionState(it.hasKey, it.exported, it.on)) } } catch (e: Exception) { Result.failure(Exception(e.message)) }
+    }
+
+    suspend fun setEncryptionOn(on: Boolean): Result<Unit> = withContext(Dispatchers.IO) {
+        try { ensureInitialized().setEncryptionOn(on); Result.success(Unit) } catch (e: Exception) { Result.failure(Exception(e.message)) }
+    }
+
+    /** "Re-upload existing recordings encrypted" (ENC-3). */
+    suspend fun reuploadEncrypted(): Result<UploadResult> = withContext(Dispatchers.IO) {
+        try {
+            val r = ensureInitialized().reuploadEncrypted(null)
+            Result.success(UploadResult(r.uploaded, r.skipped, r.failed, r.deferred, r.errors))
+        } catch (e: Exception) { Result.failure(Exception(e.message)) }
+    }
+
     suspend fun offerCode(urls: List<String>): Result<String> = withContext(Dispatchers.IO) {
         try {
             Result.success(ensureInitialized().offerCode(urls))
@@ -2067,6 +2092,9 @@ data class ImportAudioResult(
 
 /** What a successful join gives back. */
 data class Joined(val accountId: String, val peerId: String, val peerName: String, val peerUrl: String, val granted: Boolean)
+
+/** Where encryption of recordings stands on this phone (Stage 15) */
+data class EncryptionState(val hasKey: Boolean, val exported: Boolean, val on: Boolean)
 
 /** What a move to another account gave back (Stage 1). */
 data class Moved(val accountId: String, val peerName: String, val notesMoved: Long, val tagsMerged: Long)

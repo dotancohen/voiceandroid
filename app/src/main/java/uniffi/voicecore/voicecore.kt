@@ -1015,6 +1015,16 @@ internal open class UniffiVTableCallbackInterfaceOperationProgress(
 
 
 
+
+
+
+
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1091,6 +1101,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_download_audio_files_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_download_missing_audio_files(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_encryption_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_filter_notes(`ptr`: Pointer,`tagIds`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1214,6 +1226,10 @@ internal interface UniffiLib : Library {
     ): Int
     fun uniffi_voicecore_fn_method_voiceclient_rebuild_note_list_cache(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_recording_key_export(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_recording_key_import(`ptr`: Pointer,`text`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_rename_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1228,6 +1244,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_restore_snapshot(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_reupload_encrypted(`ptr`: Pointer,`progress`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_revoke_device(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_search_notes(`ptr`: Pointer,`query`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1237,6 +1255,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_set_device_id(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_device_name(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_set_encryption_on(`ptr`: Pointer,`on`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_file_storage_config(`ptr`: Pointer,`provider`: RustBuffer.ByValue,`config`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -1458,6 +1478,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_download_missing_audio_files(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_encryption_state(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_filter_notes(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_forget_peer(
@@ -1580,6 +1602,10 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_rebuild_note_list_cache(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_recording_key_export(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_recording_key_import(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_rename_peer(
@@ -1594,6 +1620,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_restore_snapshot(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_reupload_encrypted(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_revoke_device(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_search_notes(
@@ -1603,6 +1631,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_set_device_id(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_device_name(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_set_encryption_on(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_file_storage_config(
     ): Short
@@ -1756,6 +1786,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_download_missing_audio_files() != 38016.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_encryption_state() != 36391.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_filter_notes() != 10478.toShort()) {
@@ -1941,6 +1974,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_rebuild_note_list_cache() != 38166.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_recording_key_export() != 36949.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_recording_key_import() != 3328.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 22162.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1962,6 +2001,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_restore_snapshot() != 36564.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_reupload_encrypted() != 50328.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_revoke_device() != 21871.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1975,6 +2017,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_device_name() != 11140.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_encryption_on() != 33267.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_file_storage_config() != 29062.toShort()) {
@@ -2670,6 +2715,11 @@ public interface VoiceClientInterface {
     fun `downloadMissingAudioFiles`(): DownloadResultData
     
     /**
+     * Whether this device holds the key, exported it, and whether new uploads are encrypted.
+     */
+    fun `encryptionState`(): EncryptionStateData
+    
+    /**
      * Filter notes by tag IDs.
      *
      * Returns notes that have ALL the specified tags.
@@ -3050,6 +3100,18 @@ public interface VoiceClientInterface {
     fun `rebuildNoteListCache`(`noteId`: kotlin.String)
     
     /**
+     * The recording key's text (Stage 15, ENC-1), made now when the account
+     * has none; showing it counts as the export the switch waits for.
+     */
+    fun `recordingKeyExport`(): kotlin.String
+    
+    /**
+     * Keep a recording key typed or scanned from an export (ENC-1): how a
+     * device that lost everything reads the bucket again.
+     */
+    fun `recordingKeyImport`(`text`: kotlin.String)
+    
+    /**
      * Remove a tag from a note
      *
      * Soft-deletes the note_tag association between the note and tag.
@@ -3107,6 +3169,12 @@ public interface VoiceClientInterface {
     fun `restoreSnapshot`(`name`: kotlin.String)
     
     /**
+     * "Re-upload existing recordings encrypted" (ENC-3): the plain objects
+     * whose files are here go up again encrypted, one at a time, resumable.
+     */
+    fun `reuploadEncrypted`(`progress`: OperationProgress?): UploadResultData
+    
+    /**
      * Revoke a device of the account (AUTH-6): one way, and it travels.
      */
     fun `revokeDevice`(`deviceId`: kotlin.String)
@@ -3133,6 +3201,12 @@ public interface VoiceClientInterface {
      * Set the device name
      */
     fun `setDeviceName`(`name`: kotlin.String)
+    
+    /**
+     * Turn encryption of new uploads on or off for the account (ENC-3);
+     * on needs the key exported from this device first.
+     */
+    fun `setEncryptionOn`(`on`: kotlin.Boolean)
     
     /**
      * Set the file storage configuration in the database.
@@ -3830,6 +3904,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_download_missing_audio_files(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Whether this device holds the key, exported it, and whether new uploads are encrypted.
+     */
+    @Throws(VoiceCoreException::class)override fun `encryptionState`(): EncryptionStateData {
+            return FfiConverterTypeEncryptionStateData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_encryption_state(
         it, _status)
 }
     }
@@ -4880,6 +4970,39 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * The recording key's text (Stage 15, ENC-1), made now when the account
+     * has none; showing it counts as the export the switch waits for.
+     */
+    @Throws(VoiceCoreException::class)override fun `recordingKeyExport`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_recording_key_export(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Keep a recording key typed or scanned from an export (ENC-1): how a
+     * device that lost everything reads the bucket again.
+     */
+    @Throws(VoiceCoreException::class)override fun `recordingKeyImport`(`text`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_recording_key_import(
+        it, FfiConverterString.lower(`text`),_status)
+}
+    }
+    
+    
+
+    
+    /**
      * Remove a tag from a note
      *
      * Soft-deletes the note_tag association between the note and tag.
@@ -5012,6 +5135,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * "Re-upload existing recordings encrypted" (ENC-3): the plain objects
+     * whose files are here go up again encrypted, one at a time, resumable.
+     */
+    @Throws(VoiceCoreException::class)override fun `reuploadEncrypted`(`progress`: OperationProgress?): UploadResultData {
+            return FfiConverterTypeUploadResultData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_reupload_encrypted(
+        it, FfiConverterOptionalTypeOperationProgress.lower(`progress`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Revoke a device of the account (AUTH-6): one way, and it travels.
      */
     @Throws(VoiceCoreException::class)override fun `revokeDevice`(`deviceId`: kotlin.String)
@@ -5084,6 +5224,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_device_name(
         it, FfiConverterString.lower(`name`),_status)
+}
+    }
+    
+    
+
+    
+    /**
+     * Turn encryption of new uploads on or off for the account (ENC-3);
+     * on needs the key exported from this device first.
+     */
+    @Throws(VoiceCoreException::class)override fun `setEncryptionOn`(`on`: kotlin.Boolean)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_encryption_on(
+        it, FfiConverterBoolean.lower(`on`),_status)
 }
     }
     
@@ -5991,6 +6147,45 @@ public object FfiConverterTypeDownloadResultData: FfiConverterRustBuffer<Downloa
             FfiConverterInt.write(value.`notInCloud`, buf)
             FfiConverterInt.write(value.`failed`, buf)
             FfiConverterSequenceString.write(value.`errors`, buf)
+    }
+}
+
+
+
+/**
+ * Where encryption of recordings stands on this device (Stage 15)
+ */
+data class EncryptionStateData (
+    var `hasKey`: kotlin.Boolean, 
+    var `exported`: kotlin.Boolean, 
+    var `on`: kotlin.Boolean
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeEncryptionStateData: FfiConverterRustBuffer<EncryptionStateData> {
+    override fun read(buf: ByteBuffer): EncryptionStateData {
+        return EncryptionStateData(
+            FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: EncryptionStateData) = (
+            FfiConverterBoolean.allocationSize(value.`hasKey`) +
+            FfiConverterBoolean.allocationSize(value.`exported`) +
+            FfiConverterBoolean.allocationSize(value.`on`)
+    )
+
+    override fun write(value: EncryptionStateData, buf: ByteBuffer) {
+            FfiConverterBoolean.write(value.`hasKey`, buf)
+            FfiConverterBoolean.write(value.`exported`, buf)
+            FfiConverterBoolean.write(value.`on`, buf)
     }
 }
 

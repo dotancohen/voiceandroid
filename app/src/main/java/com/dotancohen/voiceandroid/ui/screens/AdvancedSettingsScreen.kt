@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
@@ -328,6 +329,47 @@ fun AdvancedSettingsScreen(
                 modifier = Modifier.fillMaxWidth()
             ) { Text("Move $noteCount notes to the other account") }
             moveMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+
+            // Encryption of recordings in the bucket (Stage 15): off until the key was exported
+            Spacer(modifier = Modifier.height(24.dp))
+            val encryption by moveViewModel.encryption.collectAsState()
+            val recordingKey by moveViewModel.recordingKey.collectAsState()
+            val encryptionMessage by moveViewModel.encryptionMessage.collectAsState()
+            LaunchedEffect(Unit) { moveViewModel.loadEncryption() }
+            Text("Encryption of recordings in the bucket", style = MaterialTheme.typography.titleMedium)
+            Text("When on, nobody without the recording key can listen to a recording in the bucket, Amazon included. Export the key first and keep it on paper: without it these recordings cannot be played.", style = MaterialTheme.typography.bodySmall)
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(if (encryption.on) "New uploads are encrypted" else "New uploads are plain", modifier = Modifier.weight(1f))
+                Switch(checked = encryption.on, onCheckedChange = { moveViewModel.setEncryptionOn(it) }, enabled = encryption.on || (encryption.hasKey && encryption.exported))
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { if (recordingKey == null) moveViewModel.exportRecordingKey() else moveViewModel.hideRecordingKey() }, modifier = Modifier.weight(1f)) {
+                    Text(if (recordingKey == null) "Export the key" else "Hide the key")
+                }
+                var importText by remember { mutableStateOf("") }
+                var importing by remember { mutableStateOf(false) }
+                OutlinedButton(onClick = { importing = !importing }, modifier = Modifier.weight(1f)) { Text("Import a key") }
+                if (importing) {
+                    androidx.compose.material3.AlertDialog(
+                        onDismissRequest = { importing = false },
+                        title = { Text("Import the recording key") },
+                        text = { OutlinedTextField(value = importText, onValueChange = { importText = it }, label = { Text("The 43 characters from an export") }, modifier = Modifier.fillMaxWidth()) },
+                        confirmButton = { OutlinedButton(onClick = { importing = false; moveViewModel.importRecordingKey(importText) }, enabled = importText.trim().length == 43) { Text("Keep it") } },
+                        dismissButton = { OutlinedButton(onClick = { importing = false }) { Text("Cancel") } }
+                    )
+                }
+            }
+            recordingKey?.let { key ->
+                val context = androidx.compose.ui.platform.LocalContext.current
+                com.dotancohen.voiceandroid.ui.components.QrCodeImage(key, modifier = Modifier.fillMaxWidth(0.7f), contentDescription = "The recording key as a code")
+                Text(key, style = MaterialTheme.typography.bodySmall)
+                Text("Recording key. Keep this on paper. Without it these recordings cannot be played.", style = MaterialTheme.typography.bodySmall)
+                OutlinedButton(onClick = {
+                    (context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager).setPrimaryClip(android.content.ClipData.newPlainText("Voice recording key", key))
+                }, modifier = Modifier.fillMaxWidth()) { Text("Copy") }
+            }
+            OutlinedButton(onClick = { moveViewModel.reuploadEncrypted() }, enabled = encryption.on && encryption.hasKey, modifier = Modifier.fillMaxWidth()) { Text("Re-upload existing recordings encrypted") }
+            encryptionMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
 
             // Snapshots: a copy of the database before every sync, kept five deep
             Spacer(modifier = Modifier.height(24.dp))

@@ -52,6 +52,54 @@ class SnapshotsViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    /** Encryption of recordings in the bucket (Stage 15), under Advanced Settings. */
+    private val _encryption = MutableStateFlow(com.dotancohen.voiceandroid.data.EncryptionState(hasKey = false, exported = false, on = false))
+    val encryption: StateFlow<com.dotancohen.voiceandroid.data.EncryptionState> = _encryption.asStateFlow()
+    private val _recordingKey = MutableStateFlow<String?>(null)
+    val recordingKey: StateFlow<String?> = _recordingKey.asStateFlow()
+    private val _encryptionMessage = MutableStateFlow<String?>(null)
+    val encryptionMessage: StateFlow<String?> = _encryptionMessage.asStateFlow()
+
+    fun loadEncryption() {
+        viewModelScope.launch { repository.encryptionState().onSuccess { _encryption.value = it } }
+    }
+
+    fun exportRecordingKey() {
+        viewModelScope.launch {
+            repository.recordingKeyExport()
+                .onSuccess { _recordingKey.value = it; loadEncryption() }
+                .onFailure { _encryptionMessage.value = "Could not export the key: ${it.message}" }
+        }
+    }
+
+    fun hideRecordingKey() { _recordingKey.value = null }
+
+    fun importRecordingKey(text: String) {
+        viewModelScope.launch {
+            repository.recordingKeyImport(text)
+                .onSuccess { _encryptionMessage.value = "The recording key is kept; recordings in the bucket open on this phone again."; loadEncryption() }
+                .onFailure { _encryptionMessage.value = "Not imported: ${it.message}" }
+        }
+    }
+
+    fun setEncryptionOn(on: Boolean) {
+        viewModelScope.launch {
+            repository.setEncryptionOn(on)
+                .onSuccess { _encryptionMessage.value = null }
+                .onFailure { _encryptionMessage.value = it.message }
+            loadEncryption()
+        }
+    }
+
+    fun reuploadEncrypted() {
+        viewModelScope.launch {
+            _encryptionMessage.value = "Re-uploading…"
+            repository.reuploadEncrypted()
+                .onSuccess { _encryptionMessage.value = "Re-uploaded encrypted: ${it.uploaded}; not on this phone: ${it.skipped}; failed: ${it.failed}" + (if (it.errors.isEmpty()) "" else "; " + it.errors.joinToString("; ")) }
+                .onFailure { _encryptionMessage.value = "Not re-uploaded: ${it.message}" }
+        }
+    }
+
     init {
         refresh()
     }
