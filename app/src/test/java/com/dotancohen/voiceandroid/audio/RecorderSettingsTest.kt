@@ -88,12 +88,15 @@ class RecorderSettingsTest {
     }
 
     @Test
-    fun `each format's extension is its own`() {
-        val extensions = RecorderPreferences.FORMATS.map { RecorderPreferences.formatExtension(it) }
-        assertEquals(
-            "two formats writing the same extension cannot be told apart",
-            extensions.size, extensions.toSet().size
-        )
+    fun `an extension names the container, so both Opus options write ogg`() {
+        // An extension says what is in the file, not at what bitrate it was
+        // made: the two Opus options are both Opus in Ogg. Nothing reads a
+        // format back from an extension (the owner's decision, 2026-09-13).
+        assertEquals("ogg", RecorderPreferences.formatExtension(RecorderPreferences.FORMAT_OPUS))
+        assertEquals("ogg", RecorderPreferences.formatExtension(RecorderPreferences.FORMAT_OPUS_SPEECH))
+        assertEquals("m4a", RecorderPreferences.formatExtension(RecorderPreferences.FORMAT_AAC))
+        assertEquals("wav", RecorderPreferences.formatExtension(RecorderPreferences.FORMAT_WAV16))
+        RecorderPreferences.FORMATS.forEach { assertTrue(RecorderPreferences.formatExtension(it).isNotBlank()) }
     }
 
     // What the buttons do
