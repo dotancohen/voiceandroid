@@ -412,6 +412,19 @@ class VoiceRepository(private val context: Context) {
     /**
      * Get the current device ID.
      */
+    /** Move this phone to another account by its code (Stage 1); the full current id typed by hand is the proof. */
+    suspend fun moveToAccount(setupText: String, typedCurrentId: String): Result<Moved> = withContext(Dispatchers.IO) {
+        try {
+            val moved = ensureInitialized().moveToAccountByCode(setupText.trim(), typedCurrentId.trim())
+            AppLogger.i(TAG, "Moved ${moved.notesMoved} notes to account ${moved.accountId.take(8)} through ${moved.peerName}")
+            Result.success(Moved(moved.accountId, moved.peerName, moved.notesMoved, moved.tagsMerged))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /** Join an account from a setup text: a scanned code or a pasted text. */
     suspend fun pairWith(setupText: String): Result<Joined> = withContext(Dispatchers.IO) {
         try {
@@ -2047,6 +2060,9 @@ data class ImportAudioResult(
 
 /** What a successful join gives back. */
 data class Joined(val accountId: String, val peerId: String, val peerName: String, val peerUrl: String, val granted: Boolean)
+
+/** What a move to another account gave back (Stage 1). */
+data class Moved(val accountId: String, val peerName: String, val notesMoved: Long, val tagsMerged: Long)
 
 /**
  * One snapshot of the database, as listed by [VoiceRepository.listSnapshots].

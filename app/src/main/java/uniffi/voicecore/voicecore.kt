@@ -952,6 +952,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1121,6 +1123,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_move_to_account(`ptr`: Pointer,`accountId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_move_to_account_by_code(`ptr`: Pointer,`setupText`: RustBuffer.ByValue,`typedCurrentId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_not_duplicated(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_offer_code(`ptr`: Pointer,`urls`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1471,6 +1475,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_move_to_account(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_move_to_account_by_code(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_not_duplicated(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_offer_code(
@@ -1797,6 +1803,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_move_to_account() != 24734.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_move_to_account_by_code() != 46062.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_not_duplicated() != 10787.toShort()) {
@@ -2809,6 +2818,13 @@ public interface VoiceClientInterface {
      * peer is forgotten.
      */
     fun `moveToAccount`(`accountId`: kotlin.String)
+    
+    /**
+     * Move this phone to another account by its code (Stage 1): the
+     * deliberate way to merge two accounts. The interface asks for the full
+     * current account id typed by hand before calling this.
+     */
+    fun `moveToAccountByCode`(`setupText`: kotlin.String, `typedCurrentId`: kotlin.String): MovedData
     
     /**
      * What is on this phone only (Stage 10): the line at the top of the
@@ -4472,6 +4488,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Move this phone to another account by its code (Stage 1): the
+     * deliberate way to merge two accounts. The interface asks for the full
+     * current account id typed by hand before calling this.
+     */
+    @Throws(VoiceCoreException::class)override fun `moveToAccountByCode`(`setupText`: kotlin.String, `typedCurrentId`: kotlin.String): MovedData {
+            return FfiConverterTypeMovedData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_move_to_account_by_code(
+        it, FfiConverterString.lower(`setupText`),FfiConverterString.lower(`typedCurrentId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * What is on this phone only (Stage 10): the line at the top of the
      * sync screen. Nowhere else.
      */
@@ -5776,6 +5810,49 @@ public object FfiConverterTypeJoinedData: FfiConverterRustBuffer<JoinedData> {
             FfiConverterString.write(value.`peerName`, buf)
             FfiConverterString.write(value.`peerUrl`, buf)
             FfiConverterBoolean.write(value.`granted`, buf)
+    }
+}
+
+
+
+/**
+ * What a move to another account gives back (Stage 1)
+ */
+data class MovedData (
+    var `accountId`: kotlin.String, 
+    var `peerName`: kotlin.String, 
+    var `notesMoved`: kotlin.Long, 
+    var `tagsMerged`: kotlin.Long
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeMovedData: FfiConverterRustBuffer<MovedData> {
+    override fun read(buf: ByteBuffer): MovedData {
+        return MovedData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterLong.read(buf),
+            FfiConverterLong.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: MovedData) = (
+            FfiConverterString.allocationSize(value.`accountId`) +
+            FfiConverterString.allocationSize(value.`peerName`) +
+            FfiConverterLong.allocationSize(value.`notesMoved`) +
+            FfiConverterLong.allocationSize(value.`tagsMerged`)
+    )
+
+    override fun write(value: MovedData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`accountId`, buf)
+            FfiConverterString.write(value.`peerName`, buf)
+            FfiConverterLong.write(value.`notesMoved`, buf)
+            FfiConverterLong.write(value.`tagsMerged`, buf)
     }
 }
 

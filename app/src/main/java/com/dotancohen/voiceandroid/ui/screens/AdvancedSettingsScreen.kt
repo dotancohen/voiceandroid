@@ -21,6 +21,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.OutlinedButton
@@ -305,6 +306,28 @@ fun AdvancedSettingsScreen(
                 steps = UiPreferences.MAX_LIST_LINES - 2,
                 modifier = Modifier.fillMaxWidth()
             )
+
+            // Move this device to another account (Stage 1): deliberate, no shortcut
+            val moveViewModel: SnapshotsViewModel = viewModel()
+            val moveMessage by moveViewModel.moveMessage.collectAsState()
+            val noteCount by moveViewModel.noteCount.collectAsState()
+            val currentAccount by moveViewModel.accountId.collectAsState()
+            LaunchedEffect(Unit) { moveViewModel.loadNoteCount() }
+            var moveCode by remember { mutableStateOf("") }
+            var typedCurrent by remember { mutableStateOf("") }
+            Text("Move this device to another account", style = MaterialTheme.typography.titleMedium)
+            Text(
+                "For merging two accounts: the $noteCount notes on this phone join the other account, tags with one path become one, and nothing is deleted. Paste the code shown by a device of the other account, then type this account's full id by hand.",
+                style = MaterialTheme.typography.bodySmall
+            )
+            OutlinedTextField(value = moveCode, onValueChange = { moveCode = it }, label = { Text("The other account's code") }, placeholder = { Text("voice://pair?...") }, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = typedCurrent, onValueChange = { typedCurrent = it }, label = { Text("This account's id, typed in full") }, placeholder = { Text(currentAccount) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedButton(
+                onClick = { moveViewModel.moveToAccount(moveCode, typedCurrent) },
+                enabled = moveCode.startsWith("voice://pair?") && typedCurrent.trim().length == 32,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text("Move $noteCount notes to the other account") }
+            moveMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
 
             // Snapshots: a copy of the database before every sync, kept five deep
             Spacer(modifier = Modifier.height(24.dp))
