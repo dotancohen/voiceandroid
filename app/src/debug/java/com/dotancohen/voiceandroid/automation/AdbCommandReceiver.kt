@@ -70,6 +70,8 @@ class AdbCommandReceiver : BroadcastReceiver() {
             "DELIVER" -> syncResult(repo.operate("deliver", intent.arg("peer")).getOrThrow())
             "SEND" -> syncResult(repo.operate("send", intent.arg("peer")).getOrThrow())
             "FETCH" -> syncResult(repo.operate("fetch", intent.arg("peer")).getOrThrow())
+            "SHOW_CODE" -> repo.offerCode(repo.listenUrls(com.dotancohen.voiceandroid.data.SyncListenerService.PORT).getOrThrow()).getOrThrow().let { "CODE $it" }
+            "USE_CODE" -> repo.pairWith(intent.need("text")).getOrThrow().let { "JOINED account=${it.accountId} peer=${it.peerId} name=${it.peerName} granted=${it.granted}" }
             "PEERS" -> repo.listPeers().getOrThrow().joinToString("\n") { "PEER id=${it.peerId} name=${it.name} url=${it.url} last=${it.isLast} last_operation=${it.lastOperation}" }.ifEmpty { "no peers" }
             "ADD_PEER" -> { repo.addPeer(intent.need("peer"), intent.arg("name") ?: intent.need("peer").take(8), intent.need("url")).getOrThrow(); "added ${intent.need("peer")}" }
             "FORGET_PEER" -> "forgotten=${repo.forgetPeer(intent.need("peer")).getOrThrow()}"

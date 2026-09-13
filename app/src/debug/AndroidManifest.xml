@@ -9,6 +9,8 @@
             android:exported="true">
             <intent-filter>
                 <action android:name="com.dotancohen.voiceandroid.action.PING" />
+                <action android:name="com.dotancohen.voiceandroid.action.SHOW_CODE" />
+                <action android:name="com.dotancohen.voiceandroid.action.USE_CODE" />
                 <action android:name="com.dotancohen.voiceandroid.action.SYNC_NOW" />
                 <action android:name="com.dotancohen.voiceandroid.action.INITIAL_SYNC" />
                 <action android:name="com.dotancohen.voiceandroid.action.SET_SYNC" />

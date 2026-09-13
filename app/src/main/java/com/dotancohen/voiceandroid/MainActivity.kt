@@ -37,6 +37,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         pendingRoute.value = intent?.getStringExtra(EXTRA_ROUTE)
+        takeSetupLink(intent)
         askForNotificationPermission()
 
         setContent {
@@ -73,6 +74,15 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         pendingRoute.value = intent.getStringExtra(EXTRA_ROUTE)
+        takeSetupLink(intent)
+    }
+
+    /** A `voice://pair?…` link tapped in another app (Stage 9): the sync screen uses it. */
+    private fun takeSetupLink(intent: Intent?) {
+        val text = intent?.dataString ?: return
+        if (!com.dotancohen.voiceandroid.data.PairingRequests.isSetupLink(text)) return
+        com.dotancohen.voiceandroid.data.PairingRequests.link.value = text
+        pendingRoute.value = "sync_settings"
     }
 
     companion object {

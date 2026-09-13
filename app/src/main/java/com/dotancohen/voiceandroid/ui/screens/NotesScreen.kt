@@ -16,6 +16,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -153,6 +155,8 @@ fun NotesScreen(
     onNewRecording: () -> Unit = {},
     /** The gear in the toolbar: the only way into Settings. */
     onNavigateToSettings: () -> Unit = {},
+    /** The first run's "Pair with another device" (Stage 9): the sync screen with the code reader open. */
+    onPairWithAnotherDevice: () -> Unit = {},
     /** Whether the user asked for a button to switch the interface size. */
     uiSizeOffersSwitch: Boolean = false,
     /** Whether the interface is large right now. */
@@ -707,17 +711,21 @@ fun NotesScreen(
                         modifier = Modifier.padding(8.dp)
                     )
                 }
-                notes.isEmpty() -> {
-                    val message = if (activeSearchQuery != null) {
-                        "No notes match the search."
-                    } else {
-                        "No notes yet. Sync with the server to get notes."
-                    }
+                notes.isEmpty() && activeSearchQuery != null -> {
                     Text(
-                        text = message,
+                        text = "No notes match the search.",
                         modifier = Modifier.padding(8.dp),
                         style = MaterialTheme.typography.bodyMedium
                     )
+                }
+                notes.isEmpty() -> {
+                    // The first run (Stage 9): two choices, and never a settings screen
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text("No notes yet.", style = MaterialTheme.typography.titleMedium)
+                        Text("Is Voice already running on another device? Pair with it and its notes come here. Otherwise start on your own.", style = MaterialTheme.typography.bodyMedium)
+                        Button(onClick = onPairWithAnotherDevice, modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Pair with another device" }) { Text("Pair with another device") }
+                        OutlinedButton(onClick = onNewNote, modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Start on my own" }) { Text("Start on my own") }
+                    }
                 }
                 else -> {
                     // Track which audio file is currently expanded for playback

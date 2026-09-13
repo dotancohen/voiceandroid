@@ -133,6 +133,10 @@ fun VoiceApp(
                         }
                     },
                     onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onPairWithAnotherDevice = {
+                        com.dotancohen.voiceandroid.data.PairingRequests.openReader.value = true
+                        navController.navigate(Screen.SyncSettings.route)
+                    },
                     uiSizeOffersSwitch = uiSize.offersSwitch,
                     uiIsLarge = uiSize.large.value,
                     onToggleUiSize = { uiSize.toggle() },

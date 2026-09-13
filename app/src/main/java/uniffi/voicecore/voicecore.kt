@@ -654,8 +654,33 @@ internal open class UniffiForeignFutureStructVoid(
 internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructVoid.UniffiByValue,)
 }
+internal interface UniffiCallbackInterfaceKeystoreWrapperMethod0 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`clear`: RustBuffer.ByValue,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,)
+}
+internal interface UniffiCallbackInterfaceKeystoreWrapperMethod1 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`wrapped`: RustBuffer.ByValue,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,)
+}
 internal interface UniffiCallbackInterfaceOperationProgressMethod0 : com.sun.jna.Callback {
     fun callback(`uniffiHandle`: Long,`stage`: RustBuffer.ByValue,`done`: Long,`total`: Long,`bytes`: Long,`sentence`: RustBuffer.ByValue,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,)
+}
+@Structure.FieldOrder("wrap", "unwrap", "uniffiFree")
+internal open class UniffiVTableCallbackInterfaceKeystoreWrapper(
+    @JvmField internal var `wrap`: UniffiCallbackInterfaceKeystoreWrapperMethod0? = null,
+    @JvmField internal var `unwrap`: UniffiCallbackInterfaceKeystoreWrapperMethod1? = null,
+    @JvmField internal var `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+) : Structure() {
+    class UniffiByValue(
+        `wrap`: UniffiCallbackInterfaceKeystoreWrapperMethod0? = null,
+        `unwrap`: UniffiCallbackInterfaceKeystoreWrapperMethod1? = null,
+        `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+    ): UniffiVTableCallbackInterfaceKeystoreWrapper(`wrap`,`unwrap`,`uniffiFree`,), Structure.ByValue
+
+   internal fun uniffiSetValue(other: UniffiVTableCallbackInterfaceKeystoreWrapper) {
+        `wrap` = other.`wrap`
+        `unwrap` = other.`unwrap`
+        `uniffiFree` = other.`uniffiFree`
+    }
+
 }
 @Structure.FieldOrder("report", "uniffiFree")
 internal open class UniffiVTableCallbackInterfaceOperationProgress(
@@ -985,6 +1010,11 @@ internal open class UniffiVTableCallbackInterfaceOperationProgress(
 
 
 
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -995,6 +1025,7 @@ internal interface UniffiLib : Library {
             .also { lib: UniffiLib ->
                 uniffiCheckContractApiVersion(lib)
                 uniffiCheckApiChecksums(lib)
+                uniffiCallbackInterfaceKeystoreWrapper.register(lib)
                 uniffiCallbackInterfaceOperationProgress.register(lib)
                 }
         }
@@ -1010,6 +1041,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_free_voiceclient(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_constructor_voiceclient_new(`dataDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Pointer
+    fun uniffi_voicecore_fn_constructor_voiceclient_new_with_keystore(`dataDir`: RustBuffer.ByValue,`wrapper`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
     fun uniffi_voicecore_fn_method_voiceclient_accept_conflict(`ptr`: Pointer,`conflictId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1256,6 +1289,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_upload(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_withdraw_code(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_voicecore_fn_init_callback_vtable_keystorewrapper(`vtable`: UniffiVTableCallbackInterfaceKeystoreWrapper,
     ): Unit
     fun uniffi_voicecore_fn_init_callback_vtable_operationprogress(`vtable`: UniffiVTableCallbackInterfaceOperationProgress,
     ): Unit
@@ -1622,6 +1657,12 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_withdraw_code(
     ): Short
     fun uniffi_voicecore_checksum_constructor_voiceclient_new(
+    ): Short
+    fun uniffi_voicecore_checksum_constructor_voiceclient_new_with_keystore(
+    ): Short
+    fun uniffi_voicecore_checksum_method_keystorewrapper_wrap(
+    ): Short
+    fun uniffi_voicecore_checksum_method_keystorewrapper_unwrap(
     ): Short
     fun uniffi_voicecore_checksum_method_operationprogress_report(
     ): Short
@@ -2017,6 +2058,15 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 26098.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new_with_keystore() != 1279.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_keystorewrapper_wrap() != 48358.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_keystorewrapper_unwrap() != 37463.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_operationprogress_report() != 55445.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -2259,6 +2309,25 @@ public object FfiConverterString: FfiConverter<String, RustBuffer.ByValue> {
         val byteBuf = toUtf8(value)
         buf.putInt(byteBuf.limit())
         buf.put(byteBuf)
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterByteArray: FfiConverterRustBuffer<ByteArray> {
+    override fun read(buf: ByteBuffer): ByteArray {
+        val len = buf.getInt()
+        val byteArr = ByteArray(len)
+        buf.get(byteArr)
+        return byteArr
+    }
+    override fun allocationSize(value: ByteArray): ULong {
+        return 4UL + value.size.toULong()
+    }
+    override fun write(value: ByteArray, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        buf.put(value)
     }
 }
 
@@ -5475,8 +5544,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     
 
     
+    companion object {
+        
+    /**
+     * The client with the phone's Keystore wrapping the device key on disk (Stage 14).
+     */
+    @Throws(VoiceCoreException::class) fun `newWithKeystore`(`dataDir`: kotlin.String, `wrapper`: KeystoreWrapper): VoiceClient {
+            return FfiConverterTypeVoiceClient.lift(
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_constructor_voiceclient_new_with_keystore(
+        FfiConverterString.lower(`dataDir`),FfiConverterTypeKeystoreWrapper.lower(`wrapper`),_status)
+}
+    )
+    }
     
-    companion object
+
+        
+    }
     
 }
 
@@ -6986,12 +7070,14 @@ public object FfiConverterTypeVoiceCoreError : FfiConverterRustBuffer<VoiceCoreE
 
 
 /**
- * Where an operation's progress goes on the phone (Stage 4): the
- * foreground service's notification.
+ * The phone's Keystore (Stage 14): wraps a secret before the core writes
+ * it and unwraps it after the core reads it. The clear bytes live in memory only.
  */
-public interface OperationProgress {
+public interface KeystoreWrapper {
     
-    fun `report`(`stage`: kotlin.String, `done`: kotlin.Long, `total`: kotlin.Long, `bytes`: kotlin.ULong, `sentence`: kotlin.String)
+    fun `wrap`(`clear`: kotlin.ByteArray): kotlin.ByteArray
+    
+    fun `unwrap`(`wrapped`: kotlin.ByteArray): kotlin.ByteArray
     
     companion object
 }
@@ -7028,6 +7114,76 @@ public abstract class FfiConverterCallbackInterface<CallbackInterface: Any>: Ffi
         buf.putLong(lower(value))
     }
 }
+
+// Put the implementation in an object so we don't pollute the top-level namespace
+internal object uniffiCallbackInterfaceKeystoreWrapper {
+    internal object `wrap`: UniffiCallbackInterfaceKeystoreWrapperMethod0 {
+        override fun callback(`uniffiHandle`: Long,`clear`: RustBuffer.ByValue,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeKeystoreWrapper.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`wrap`(
+                    FfiConverterByteArray.lift(`clear`),
+                )
+            }
+            val writeReturn = { value: kotlin.ByteArray -> uniffiOutReturn.setValue(FfiConverterByteArray.lower(value)) }
+            uniffiTraitInterfaceCall(uniffiCallStatus, makeCall, writeReturn)
+        }
+    }
+    internal object `unwrap`: UniffiCallbackInterfaceKeystoreWrapperMethod1 {
+        override fun callback(`uniffiHandle`: Long,`wrapped`: RustBuffer.ByValue,`uniffiOutReturn`: RustBuffer,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeKeystoreWrapper.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`unwrap`(
+                    FfiConverterByteArray.lift(`wrapped`),
+                )
+            }
+            val writeReturn = { value: kotlin.ByteArray -> uniffiOutReturn.setValue(FfiConverterByteArray.lower(value)) }
+            uniffiTraitInterfaceCall(uniffiCallStatus, makeCall, writeReturn)
+        }
+    }
+
+    internal object uniffiFree: UniffiCallbackInterfaceFree {
+        override fun callback(handle: Long) {
+            FfiConverterTypeKeystoreWrapper.handleMap.remove(handle)
+        }
+    }
+
+    internal var vtable = UniffiVTableCallbackInterfaceKeystoreWrapper.UniffiByValue(
+        `wrap`,
+        `unwrap`,
+        uniffiFree,
+    )
+
+    // Registers the foreign callback with the Rust side.
+    // This method is generated for each callback interface.
+    internal fun register(lib: UniffiLib) {
+        lib.uniffi_voicecore_fn_init_callback_vtable_keystorewrapper(vtable)
+    }
+}
+
+/**
+ * The ffiConverter which transforms the Callbacks in to handles to pass to Rust.
+ *
+ * @suppress
+ */
+public object FfiConverterTypeKeystoreWrapper: FfiConverterCallbackInterface<KeystoreWrapper>()
+
+
+
+
+
+/**
+ * Where an operation's progress goes on the phone (Stage 4): the
+ * foreground service's notification.
+ */
+public interface OperationProgress {
+    
+    fun `report`(`stage`: kotlin.String, `done`: kotlin.Long, `total`: kotlin.Long, `bytes`: kotlin.ULong, `sentence`: kotlin.String)
+    
+    companion object
+}
+
+
 
 // Put the implementation in an object so we don't pollute the top-level namespace
 internal object uniffiCallbackInterfaceOperationProgress {

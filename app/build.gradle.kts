@@ -130,6 +130,12 @@ dependencies {
 
     // DocumentFile for accessing files via SAF
     implementation("androidx.documentfile:documentfile:1.0.1")
+    // The code shown and read at pairing (Stage 9)
+    implementation(libs.zxing.core)
+    implementation(libs.androidx.camera.core)
+    implementation(libs.androidx.camera.camera2)
+    implementation(libs.androidx.camera.lifecycle)
+    implementation(libs.androidx.camera.view)
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation("androidx.compose.ui:ui-test-manifest")

@@ -14,6 +14,10 @@ espressoCore = "3.6.1"
 # Runs Android's own framework classes on the JVM, so a Compose screen can be
 # tested without a phone. Used by the tests in app/src/test.
 robolectric = "4.14.1"
+# The QR code shown and read at pairing (Stage 9): pure Java, offline, no Play Services
+zxing = "3.5.3"
+# The camera that reads a code
+camerax = "1.4.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -38,6 +42,11 @@ androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-test-core = { group = "androidx.test", name = "core", version = "1.6.1" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+androidx-camera-core = { group = "androidx.camera", name = "camera-core", version.ref = "camerax" }
+androidx-camera-camera2 = { group = "androidx.camera", name = "camera-camera2", version.ref = "camerax" }
+androidx-camera-lifecycle = { group = "androidx.camera", name = "camera-lifecycle", version.ref = "camerax" }
+androidx-camera-view = { group = "androidx.camera", name = "camera-view", version.ref = "camerax" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

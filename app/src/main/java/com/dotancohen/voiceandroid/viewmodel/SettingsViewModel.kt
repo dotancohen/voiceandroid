@@ -302,7 +302,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _joinMessage = MutableStateFlow<String?>(null)
     val joinMessage: StateFlow<String?> = _joinMessage.asStateFlow()
 
-    /** Use a setup text pasted or scanned: join its account (PAIR-4), or grant a server this one (PAIR-5). */
+    /** The peer just paired with (Stage 9): the next screen is it, with one Exchange button. */
+    private val _justJoined = MutableStateFlow<com.dotancohen.voiceandroid.data.Joined?>(null)
+    val justJoined: StateFlow<com.dotancohen.voiceandroid.data.Joined?> = _justJoined.asStateFlow()
+
+    fun dismissJoined() { _justJoined.value = null }
+
+    /** Use a setup text pasted, scanned or tapped as a link: join its account (PAIR-4), or grant a server this one (PAIR-5). */
     fun pairWith(setupText: String) {
         viewModelScope.launch {
             _joinMessage.value = null
@@ -311,12 +317,51 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     _joinMessage.value = if (joined.granted) {
                         "${joined.peerName} now hosts this account. Press Deliver to send it your notes and recordings."
                     } else {
-                        "Joined account ${joined.accountId.take(8)} through ${joined.peerName}. Press Sync."
+                        "Joined account ${joined.accountId.take(8)} through ${joined.peerName}."
                     }
                     refreshPeers()
+                    _justJoined.value = joined
                 }
                 .onFailure { _joinMessage.value = "Could not join: ${it.message}" }
         }
+    }
+
+    /** This phone's setup text while it is shown (Stage 9, PAIR-1), and the seconds until it is hidden again. */
+    private val _myCode = MutableStateFlow<String?>(null)
+    val myCode: StateFlow<String?> = _myCode.asStateFlow()
+    private val _codeSecondsLeft = MutableStateFlow(0)
+    val codeSecondsLeft: StateFlow<Int> = _codeSecondsLeft.asStateFlow()
+    private var codeTicker: kotlinx.coroutines.Job? = null
+
+    /**
+     * Show this phone's code: the listener is started, because the reading
+     * device claims from it, and the code stays on screen for [CODE_SHOWN_SECONDS].
+     */
+    fun showMyCode() {
+        viewModelScope.launch {
+            if (!repository.listenerRunning()) setListening(true)
+            repository.listenUrls(com.dotancohen.voiceandroid.data.SyncListenerService.PORT).onSuccess { _listenUrls.value = it }
+            repository.offerCode(_listenUrls.value)
+                .onSuccess { code ->
+                    _myCode.value = code
+                    codeTicker?.cancel()
+                    codeTicker = viewModelScope.launch {
+                        for (left in CODE_SHOWN_SECONDS downTo 1) {
+                            _codeSecondsLeft.value = left
+                            kotlinx.coroutines.delay(1000)
+                        }
+                        hideMyCode()
+                    }
+                }
+                .onFailure { _joinMessage.value = "Could not make a code: ${it.message}" }
+        }
+    }
+
+    fun hideMyCode() {
+        codeTicker?.cancel()
+        codeTicker = null
+        _myCode.value = null
+        _codeSecondsLeft.value = 0
     }
 
     /** The rows of the last connection check, or null (Stage 12). */
@@ -506,5 +551,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     companion object {
         private const val TAG = "SettingsViewModel"
+        /** How long the code stays on screen; the token itself lives ten minutes. */
+        const val CODE_SHOWN_SECONDS = 60
     }
 }

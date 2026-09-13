@@ -46,6 +46,16 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dotancohen.voiceandroid.viewmodel.SettingsViewModel
 import androidx.compose.material3.Switch
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.dotancohen.voiceandroid.data.PairingRequests
+import com.dotancohen.voiceandroid.ui.components.QrCodeImage
+import com.dotancohen.voiceandroid.ui.components.QrReader
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,6 +74,13 @@ fun SyncSettingsScreen(
     val isSyncing by viewModel.isSyncing.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
     val joinMessage by viewModel.joinMessage.collectAsState()
+    val justJoined by viewModel.justJoined.collectAsState()
+    val myCode by viewModel.myCode.collectAsState()
+    val codeSecondsLeft by viewModel.codeSecondsLeft.collectAsState()
+    val pairingLink by PairingRequests.link.collectAsState()
+    val openReaderRequest by PairingRequests.openReader.collectAsState()
+    var readerOpen by remember { mutableStateOf(false) }
+    val context = LocalContext.current
     val checkRows by viewModel.checkRows.collectAsState()
     val listening by viewModel.listening.collectAsState()
     val listenUrls by viewModel.listenUrls.collectAsState()
@@ -85,6 +102,24 @@ fun SyncSettingsScreen(
     LaunchedEffect(Unit) {
         viewModel.refreshProof()
         viewModel.updateDebugInfo()
+    }
+    // A setup text that arrived as a link, or the first-run screen's "Pair with another device" (Stage 9)
+    LaunchedEffect(pairingLink) {
+        val link = pairingLink ?: return@LaunchedEffect
+        PairingRequests.link.value = null
+        viewModel.pairWith(link)
+    }
+    LaunchedEffect(openReaderRequest) {
+        if (openReaderRequest) { PairingRequests.openReader.value = false; readerOpen = true }
+    }
+    if (readerOpen) {
+        Dialog(onDismissRequest = { readerOpen = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+            QrReader(
+                onSetupText = { text -> readerOpen = false; viewModel.pairWith(text) },
+                onClose = { readerOpen = false },
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 
     Column(modifier = Modifier.fillMaxSize()) {
@@ -350,25 +385,47 @@ fun SyncSettingsScreen(
                         }
                     }
 
-                    // A setup text shown by another device: a code to join
-                    // its account, or a server's grant text to host this one
-                    var setupText by remember { mutableStateOf("") }
-                    OutlinedTextField(
-                        value = setupText,
-                        onValueChange = { setupText = it },
-                        label = { Text("Setup text from another device") },
-                        placeholder = { Text("voice://pair?...") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedButton(
-                        onClick = { viewModel.pairWith(setupText) },
-                        enabled = setupText.isNotBlank(),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text("Use setup text")
+                    // Pairing (Stage 9): show this phone's code, or read another device's
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(onClick = { if (myCode == null) viewModel.showMyCode() else viewModel.hideMyCode() }, modifier = Modifier.weight(1f)) {
+                            Text(if (myCode == null) "Show my code" else "Hide my code")
+                        }
+                        OutlinedButton(onClick = { readerOpen = true }, modifier = Modifier.weight(1f)) { Text("Read a code") }
+                    }
+                    myCode?.let { code ->
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Treat this like a password: whoever reads it joins your account. Hidden in $codeSecondsLeft s.", style = MaterialTheme.typography.bodySmall)
+                                QrCodeImage(code, modifier = Modifier.fillMaxWidth(0.8f))
+                                Text(code, style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { contentDescription = "Setup text $code" })
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    OutlinedButton(onClick = {
+                                        (context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager).setPrimaryClip(ClipData.newPlainText("Voice setup text", code))
+                                    }, modifier = Modifier.weight(1f)) { Text("Copy") }
+                                    OutlinedButton(onClick = {
+                                        val send = Intent(Intent.ACTION_SEND).apply { type = "text/plain"; putExtra(Intent.EXTRA_TEXT, code) }
+                                        context.startActivity(Intent.createChooser(send, "Send the setup text"))
+                                    }, modifier = Modifier.weight(1f)) { Text("Share") }
+                                }
+                            }
+                        }
                     }
                     joinMessage?.let { message ->
                         Text(text = message, color = MaterialTheme.colorScheme.primary)
+                    }
+                    // After pairing: the new peer, with one Exchange button (Stage 9)
+                    justJoined?.let { joined ->
+                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
+                            Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(if (joined.granted) "${joined.peerName} hosts this account now. Deliver sends it what this phone holds." else "Paired with ${joined.peerName}. Exchange brings its notes and recordings here, and yours there.")
+                                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Button(onClick = { viewModel.dismissJoined(); viewModel.operate(if (joined.granted) "deliver" else "exchange", joined.peerId) }, enabled = !isSyncing, modifier = Modifier.weight(1f)) {
+                                        Text(if (joined.granted) "Deliver now" else "Exchange now")
+                                    }
+                                    OutlinedButton(onClick = { viewModel.dismissJoined() }, modifier = Modifier.weight(1f)) { Text("Later") }
+                                }
+                            }
+                        }
                     }
 
                     // Upload button: recordings to the bucket, never part of a sync

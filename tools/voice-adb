@@ -23,6 +23,8 @@ Usage: voice-adb <command> [arguments]
 Device and sync
   ping                               is the app reachable; prints device name and id
   status                             device, server, note count, unresolved conflicts, pending changes
+  show-code                          this phone's setup text (CODE voice://pair?...); the listener must run
+  use-code <setup-text>              pair with the device that showed the setup text
   peers                              one PEER line per peer: id, name, url, last used, last operation
   add-peer <peer-id> <url> [name]    a peer typed by hand: its device id and where it listens
   forget-peer <peer-id>              forget a peer; its card does not bring it back
@@ -143,6 +145,8 @@ case "$cmd" in
     help|-h|--help) usage ;;
     ping) send PING ;;
     status) send STATUS ;;
+    show-code) send SHOW_CODE ;;
+    use-code) send USE_CODE --es text "$1" ;;
     peers) send PEERS ;;
     add-peer) send ADD_PEER --es peer "$1" --es url "$2" ${3:+--es name "$3"} ;;
     forget-peer) send FORGET_PEER --es peer "$1" ;;
