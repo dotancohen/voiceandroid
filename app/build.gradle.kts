@@ -95,6 +95,21 @@ android {
             // Robolectric reads the application's resources and manifest, so
             // they have to be packaged for the JVM tests as well.
             isIncludeAndroidResources = true
+            // The core itself, built for this computer, for the tests that
+            // call it through its bindings (see hostCoreForTests below)
+            all {
+                it.systemProperty(
+                    "uniffi.component.voicecore.libraryOverride",
+                    layout.buildDirectory.file("host-core/libvoicecore.so").get().asFile.absolutePath
+                )
+                it.dependsOn("hostCoreForTests")
+                // An S3 server on this computer for the storage tests (moto, Apache 2.0)
+                it.systemProperty(
+                    "voice.test.motoServer",
+                    layout.buildDirectory.file("s3-test-venv/bin/moto_server").get().asFile.absolutePath
+                )
+                it.dependsOn("s3ServerForTests")
+            }
         }
     }
 
@@ -147,6 +162,8 @@ dependencies {
     // isReturnDefaultValues on, answers 0 and null instead of parsing, which
     // would let a test read a fixture file and quietly see nothing in it.
     testImplementation("org.json:json:20250107")
+    // JNA's desktop jar, whose native part loads the core on this computer in JVM tests
+    testImplementation("net.java.dev.jna:jna:5.14.0")
 
     // Compose screens, tested on the JVM: Robolectric supplies the Android
     // framework, ui-test-junit4 hosts a composable and drives it (see
@@ -246,4 +263,43 @@ tasks.register("generateKotlinBindings") {
 tasks.named("preBuild") {
     // Uncomment when ready to build Rust
     // dependsOn("buildRust")
+}
+
+// The core built for this computer, with the phone's bindings, for the JVM
+// tests that call it. Cargo's output directory is shared by the whole family
+// (.cargo/config.toml), and the desktop's Python module is also named
+// libvoicecore.so there, so the library is copied to this build's own
+// directory the moment it is built.
+tasks.register("hostCoreForTests") {
+    group = "rust"
+    description = "Build the core for this computer with the phone's bindings, for the JVM tests"
+    val core = File(rootDir, "submodules/voicecore")
+    val target = File(rootDir, "../.cargo-target/release/libvoicecore.so")
+    val copied = layout.buildDirectory.file("host-core/libvoicecore.so")
+    doLast {
+        exec {
+            workingDir = core
+            commandLine("cargo", "build", "--release", "--features", "uniffi")
+        }
+        copy {
+            from(target)
+            into(copied.get().asFile.parentFile)
+        }
+    }
+}
+
+// moto's S3 server, installed once into this build's own Python environment,
+// for the storage tests: the same server the desktop's tests use
+// (Voice/tests/local_s3.py). The first build needs the network to install it.
+tasks.register("s3ServerForTests") {
+    group = "verification"
+    description = "Install moto's S3 server into the build directory for the storage tests"
+    val venv = layout.buildDirectory.dir("s3-test-venv")
+    doLast {
+        val dir = venv.get().asFile
+        if (!File(dir, "bin/moto_server").exists()) {
+            exec { commandLine("python3", "-m", "venv", dir.absolutePath) }
+            exec { commandLine(File(dir, "bin/pip").absolutePath, "install", "--quiet", "moto[server]==5.2.3") }
+        }
+    }
 }

@@ -1029,6 +1029,14 @@ internal open class UniffiVTableCallbackInterfaceOperationProgress(
 
 
 
+
+
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1076,6 +1084,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_check_connection(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_check_files_here(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_chosen_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_clear_audio_file_storage(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1105,6 +1115,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_download_missing_audio_files(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_encryption_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_file_locations(`ptr`: Pointer,`audioId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_filter_notes(`ptr`: Pointer,`tagIds`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1144,8 +1156,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_file_storage_provider(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_get_max_sync_file_size_mb(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Int
+    fun uniffi_voicecore_fn_method_voiceclient_get_max_upload_mb(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Long
     fun uniffi_voicecore_fn_method_voiceclient_get_note_conflict_types(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_note_conflicts(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1186,6 +1198,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_is_note_too_big_to_sync(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_issues(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_join(`ptr`: Pointer,`setupText`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_list_devices(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -1232,6 +1246,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_recording_key_import(`ptr`: Pointer,`text`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_remove_local_copy(`ptr`: Pointer,`audioId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_rename_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1266,7 +1282,7 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_local_timezone(`ptr`: Pointer,`offsetSeconds`: Int,`zoneName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voicecore_fn_method_voiceclient_set_max_sync_file_size_mb(`ptr`: Pointer,`sizeMb`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_set_max_upload_mb(`ptr`: Pointer,`megabytes`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_primary_attachment(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`attachmentId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1460,6 +1476,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_check_connection(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_check_files_here(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_chosen_peer(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_clear_audio_file_storage(
@@ -1489,6 +1507,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_download_missing_audio_files(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_encryption_state(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_file_locations(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_filter_notes(
     ): Short
@@ -1528,7 +1548,7 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_file_storage_provider(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_get_max_sync_file_size_mb(
+    fun uniffi_voicecore_checksum_method_voiceclient_get_max_upload_mb(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_note_conflict_types(
     ): Short
@@ -1569,6 +1589,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_is_note_marked(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_note_too_big_to_sync(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_issues(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_join(
     ): Short
@@ -1616,6 +1638,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_recording_key_import(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_remove_local_copy(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_rename_peer(
@@ -1650,7 +1674,7 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_local_timezone(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_set_max_sync_file_size_mb(
+    fun uniffi_voicecore_checksum_method_voiceclient_set_max_upload_mb(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_primary_attachment(
     ): Short
@@ -1761,6 +1785,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_check_connection() != 2799.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_check_files_here() != 8773.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_chosen_peer() != 8319.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1804,6 +1831,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_encryption_state() != 36391.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_file_locations() != 61945.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_filter_notes() != 10478.toShort()) {
@@ -1863,7 +1893,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_file_storage_provider() != 62777.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_max_sync_file_size_mb() != 57949.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_max_upload_mb() != 20680.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_note_conflict_types() != 37172.toShort()) {
@@ -1924,6 +1954,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_note_too_big_to_sync() != 26083.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_issues() != 46404.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_join() != 27673.toShort()) {
@@ -1995,6 +2028,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_recording_key_import() != 3328.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_local_copy() != 55591.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 22162.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -2046,7 +2082,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_local_timezone() != 42189.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_max_sync_file_size_mb() != 18258.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_max_upload_mb() != 8536.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_primary_attachment() != 10239.toShort()) {
@@ -2649,6 +2685,13 @@ public interface VoiceClientInterface {
     fun `checkConnection`(`peerId`: kotlin.String): List<CheckRowData>
     
     /**
+     * Compare this phone's audio folder with what it has stated about its
+     * copies (FILE-22). Returns how many files are here now and how many
+     * are gone, in that order.
+     */
+    fun `checkFilesHere`(): List<kotlin.UInt>
+    
+    /**
      * The peer an operation runs with: the one named, else the one of the
      * last operation, else the only one. With several and none named, the
      * caller must choose.
@@ -2761,6 +2804,12 @@ public interface VoiceClientInterface {
     fun `encryptionState`(): EncryptionStateData
     
     /**
+     * Every statement about where a recording's copies are (FILE-22), the
+     * bucket first.
+     */
+    fun `fileLocations`(`audioId`: kotlin.String): List<FileLocationData>
+    
+    /**
      * Filter notes by tag IDs.
      *
      * Returns notes that have ALL the specified tags.
@@ -2865,9 +2914,9 @@ public interface VoiceClientInterface {
     fun `getFileStorageProvider`(): kotlin.String
     
     /**
-     * Get the maximum sync file size in MB
+     * The account's upload limit in megabytes (FILE-23), the same on every device.
      */
-    fun `getMaxSyncFileSizeMb`(): kotlin.UInt
+    fun `getMaxUploadMb`(): kotlin.ULong
     
     /**
      * Get the types of unresolved conflicts for a specific note.
@@ -3010,6 +3059,12 @@ public interface VoiceClientInterface {
      * Check if a note is tagged as too-big to sync
      */
     fun `isNoteTooBigToSync`(`noteId`: kotlin.String): kotlin.Boolean
+    
+    /**
+     * What the user should know about (ISSUE-1); this phone's folder is
+     * compared first.
+     */
+    fun `issues`(): IssuesData
     
     /**
      * Join an account from a setup text (PAIR-4): a scanned QR code or a
@@ -3156,6 +3211,12 @@ public interface VoiceClientInterface {
     fun `recordingKeyImport`(`text`: kotlin.String)
     
     /**
+     * Remove this phone's copy of a recording to save space; the recording
+     * stays. Refused when no other place holds the file (FILE-22).
+     */
+    fun `removeLocalCopy`(`audioId`: kotlin.String)
+    
+    /**
      * Remove a tag from a note
      *
      * Soft-deletes the note_tag association between the note and tag.
@@ -3272,9 +3333,9 @@ public interface VoiceClientInterface {
     fun `setLocalTimezone`(`offsetSeconds`: kotlin.Int, `zoneName`: kotlin.String?)
     
     /**
-     * Set the maximum sync file size in MB
+     * Set the account's upload limit in megabytes (FILE-23).
      */
-    fun `setMaxSyncFileSizeMb`(`sizeMb`: kotlin.UInt)
+    fun `setMaxUploadMb`(`megabytes`: kotlin.ULong)
     
     /**
      * Make one of a note's attachments the one that stands for it: the
@@ -3710,6 +3771,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Compare this phone's audio folder with what it has stated about its
+     * copies (FILE-22). Returns how many files are here now and how many
+     * are gone, in that order.
+     */
+    @Throws(VoiceCoreException::class)override fun `checkFilesHere`(): List<kotlin.UInt> {
+            return FfiConverterSequenceUInt.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_check_files_here(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * The peer an operation runs with: the one named, else the one of the
      * last operation, else the only one. With several and none named, the
      * caller must choose.
@@ -3978,6 +4057,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_encryption_state(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Every statement about where a recording's copies are (FILE-22), the
+     * bucket first.
+     */
+    @Throws(VoiceCoreException::class)override fun `fileLocations`(`audioId`: kotlin.String): List<FileLocationData> {
+            return FfiConverterSequenceTypeFileLocationData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_file_locations(
+        it, FfiConverterString.lower(`audioId`),_status)
 }
     }
     )
@@ -4296,13 +4392,13 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Get the maximum sync file size in MB
+     * The account's upload limit in megabytes (FILE-23), the same on every device.
      */
-    @Throws(VoiceCoreException::class)override fun `getMaxSyncFileSizeMb`(): kotlin.UInt {
-            return FfiConverterUInt.lift(
+    @Throws(VoiceCoreException::class)override fun `getMaxUploadMb`(): kotlin.ULong {
+            return FfiConverterULong.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_max_sync_file_size_mb(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_max_upload_mb(
         it, _status)
 }
     }
@@ -4666,6 +4762,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_is_note_too_big_to_sync(
         it, FfiConverterString.lower(`noteId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * What the user should know about (ISSUE-1); this phone's folder is
+     * compared first.
+     */
+    @Throws(VoiceCoreException::class)override fun `issues`(): IssuesData {
+            return FfiConverterTypeIssuesData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_issues(
+        it, _status)
 }
     }
     )
@@ -5063,6 +5176,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Remove this phone's copy of a recording to save space; the recording
+     * stays. Refused when no other place holds the file (FILE-22).
+     */
+    @Throws(VoiceCoreException::class)override fun `removeLocalCopy`(`audioId`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_remove_local_copy(
+        it, FfiConverterString.lower(`audioId`),_status)
+}
+    }
+    
+    
+
+    
+    /**
      * Remove a tag from a note
      *
      * Soft-deletes the note_tag association between the note and tag.
@@ -5355,14 +5484,14 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Set the maximum sync file size in MB
+     * Set the account's upload limit in megabytes (FILE-23).
      */
-    @Throws(VoiceCoreException::class)override fun `setMaxSyncFileSizeMb`(`sizeMb`: kotlin.UInt)
+    @Throws(VoiceCoreException::class)override fun `setMaxUploadMb`(`megabytes`: kotlin.ULong)
         = 
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_max_sync_file_size_mb(
-        it, FfiConverterUInt.lower(`sizeMb`),_status)
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_max_upload_mb(
+        it, FfiConverterULong.lower(`megabytes`),_status)
 }
     }
     
@@ -6270,6 +6399,55 @@ public object FfiConverterTypeEncryptionStateData: FfiConverterRustBuffer<Encryp
 
 
 /**
+ * One statement about where a recording's copy is (FILE-22)
+ */
+data class FileLocationData (
+    /**
+     * "cloud", or a device id
+     */
+    var `place`: kotlin.String, 
+    var `present`: kotlin.Boolean, 
+    /**
+     * Milliseconds
+     */
+    var `changedAt`: kotlin.Long, 
+    var `changedBy`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeFileLocationData: FfiConverterRustBuffer<FileLocationData> {
+    override fun read(buf: ByteBuffer): FileLocationData {
+        return FileLocationData(
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterLong.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: FileLocationData) = (
+            FfiConverterString.allocationSize(value.`place`) +
+            FfiConverterBoolean.allocationSize(value.`present`) +
+            FfiConverterLong.allocationSize(value.`changedAt`) +
+            FfiConverterString.allocationSize(value.`changedBy`)
+    )
+
+    override fun write(value: FileLocationData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`place`, buf)
+            FfiConverterBoolean.write(value.`present`, buf)
+            FfiConverterLong.write(value.`changedAt`, buf)
+            FfiConverterString.write(value.`changedBy`, buf)
+    }
+}
+
+
+
+/**
  * Result of importing an audio file
  */
 data class ImportAudioResultData (
@@ -6305,6 +6483,61 @@ public object FfiConverterTypeImportAudioResultData: FfiConverterRustBuffer<Impo
     override fun write(value: ImportAudioResultData, buf: ByteBuffer) {
             FfiConverterString.write(value.`noteId`, buf)
             FfiConverterString.write(value.`audioFileId`, buf)
+    }
+}
+
+
+
+/**
+ * What the user should know about (ISSUE-1)
+ */
+data class IssuesData (
+    var `recordingsNotInCloud`: List<RecordingNotInCloudData>, 
+    var `maxUploadBytes`: kotlin.ULong, 
+    var `orphanedTranscriptions`: List<OrphanedTranscriptionData>, 
+    var `orphanedAttachments`: List<OrphanedAttachmentData>, 
+    var `orphanedRecordings`: List<OrphanedRecordingData>, 
+    var `tagsWithWhitespace`: List<TagWithWhitespaceData>, 
+    var `count`: kotlin.UInt
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeIssuesData: FfiConverterRustBuffer<IssuesData> {
+    override fun read(buf: ByteBuffer): IssuesData {
+        return IssuesData(
+            FfiConverterSequenceTypeRecordingNotInCloudData.read(buf),
+            FfiConverterULong.read(buf),
+            FfiConverterSequenceTypeOrphanedTranscriptionData.read(buf),
+            FfiConverterSequenceTypeOrphanedAttachmentData.read(buf),
+            FfiConverterSequenceTypeOrphanedRecordingData.read(buf),
+            FfiConverterSequenceTypeTagWithWhitespaceData.read(buf),
+            FfiConverterUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: IssuesData) = (
+            FfiConverterSequenceTypeRecordingNotInCloudData.allocationSize(value.`recordingsNotInCloud`) +
+            FfiConverterULong.allocationSize(value.`maxUploadBytes`) +
+            FfiConverterSequenceTypeOrphanedTranscriptionData.allocationSize(value.`orphanedTranscriptions`) +
+            FfiConverterSequenceTypeOrphanedAttachmentData.allocationSize(value.`orphanedAttachments`) +
+            FfiConverterSequenceTypeOrphanedRecordingData.allocationSize(value.`orphanedRecordings`) +
+            FfiConverterSequenceTypeTagWithWhitespaceData.allocationSize(value.`tagsWithWhitespace`) +
+            FfiConverterUInt.allocationSize(value.`count`)
+    )
+
+    override fun write(value: IssuesData, buf: ByteBuffer) {
+            FfiConverterSequenceTypeRecordingNotInCloudData.write(value.`recordingsNotInCloud`, buf)
+            FfiConverterULong.write(value.`maxUploadBytes`, buf)
+            FfiConverterSequenceTypeOrphanedTranscriptionData.write(value.`orphanedTranscriptions`, buf)
+            FfiConverterSequenceTypeOrphanedAttachmentData.write(value.`orphanedAttachments`, buf)
+            FfiConverterSequenceTypeOrphanedRecordingData.write(value.`orphanedRecordings`, buf)
+            FfiConverterSequenceTypeTagWithWhitespaceData.write(value.`tagsWithWhitespace`, buf)
+            FfiConverterUInt.write(value.`count`, buf)
     }
 }
 
@@ -6552,6 +6785,122 @@ public object FfiConverterTypeNoteData: FfiConverterRustBuffer<NoteData> {
 
 
 
+data class OrphanedAttachmentData (
+    var `attachmentId`: kotlin.String, 
+    var `noteId`: kotlin.String, 
+    var `targetId`: kotlin.String, 
+    var `attachmentType`: kotlin.String, 
+    var `noteMissing`: kotlin.Boolean, 
+    var `targetMissing`: kotlin.Boolean
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeOrphanedAttachmentData: FfiConverterRustBuffer<OrphanedAttachmentData> {
+    override fun read(buf: ByteBuffer): OrphanedAttachmentData {
+        return OrphanedAttachmentData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: OrphanedAttachmentData) = (
+            FfiConverterString.allocationSize(value.`attachmentId`) +
+            FfiConverterString.allocationSize(value.`noteId`) +
+            FfiConverterString.allocationSize(value.`targetId`) +
+            FfiConverterString.allocationSize(value.`attachmentType`) +
+            FfiConverterBoolean.allocationSize(value.`noteMissing`) +
+            FfiConverterBoolean.allocationSize(value.`targetMissing`)
+    )
+
+    override fun write(value: OrphanedAttachmentData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`attachmentId`, buf)
+            FfiConverterString.write(value.`noteId`, buf)
+            FfiConverterString.write(value.`targetId`, buf)
+            FfiConverterString.write(value.`attachmentType`, buf)
+            FfiConverterBoolean.write(value.`noteMissing`, buf)
+            FfiConverterBoolean.write(value.`targetMissing`, buf)
+    }
+}
+
+
+
+data class OrphanedRecordingData (
+    var `audioId`: kotlin.String, 
+    var `filename`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeOrphanedRecordingData: FfiConverterRustBuffer<OrphanedRecordingData> {
+    override fun read(buf: ByteBuffer): OrphanedRecordingData {
+        return OrphanedRecordingData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: OrphanedRecordingData) = (
+            FfiConverterString.allocationSize(value.`audioId`) +
+            FfiConverterString.allocationSize(value.`filename`)
+    )
+
+    override fun write(value: OrphanedRecordingData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`audioId`, buf)
+            FfiConverterString.write(value.`filename`, buf)
+    }
+}
+
+
+
+data class OrphanedTranscriptionData (
+    var `transcriptionId`: kotlin.String, 
+    var `audioFileId`: kotlin.String, 
+    var `contentStart`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeOrphanedTranscriptionData: FfiConverterRustBuffer<OrphanedTranscriptionData> {
+    override fun read(buf: ByteBuffer): OrphanedTranscriptionData {
+        return OrphanedTranscriptionData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: OrphanedTranscriptionData) = (
+            FfiConverterString.allocationSize(value.`transcriptionId`) +
+            FfiConverterString.allocationSize(value.`audioFileId`) +
+            FfiConverterString.allocationSize(value.`contentStart`)
+    )
+
+    override fun write(value: OrphanedTranscriptionData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`transcriptionId`, buf)
+            FfiConverterString.write(value.`audioFileId`, buf)
+            FfiConverterString.write(value.`contentStart`, buf)
+    }
+}
+
+
+
 /**
  * A peer of this phone (Stage 5)
  */
@@ -6648,6 +6997,56 @@ public object FfiConverterTypePeerSummaryData: FfiConverterRustBuffer<PeerSummar
             FfiConverterString.write(value.`peerName`, buf)
             FfiConverterOptionalLong.write(value.`lastReachedAt`, buf)
             FfiConverterString.write(value.`lastOperation`, buf)
+    }
+}
+
+
+
+/**
+ * A recording that is not in the bucket, and why (ISSUE-1)
+ */
+data class RecordingNotInCloudData (
+    var `audioId`: kotlin.String, 
+    var `filename`: kotlin.String, 
+    var `sizeBytes`: kotlin.Long?, 
+    /**
+     * no_bucket, too_large, waiting_for_upload or no_copy_known
+     */
+    var `reason`: kotlin.String, 
+    var `heldBy`: List<kotlin.String>
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeRecordingNotInCloudData: FfiConverterRustBuffer<RecordingNotInCloudData> {
+    override fun read(buf: ByteBuffer): RecordingNotInCloudData {
+        return RecordingNotInCloudData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalLong.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterSequenceString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: RecordingNotInCloudData) = (
+            FfiConverterString.allocationSize(value.`audioId`) +
+            FfiConverterString.allocationSize(value.`filename`) +
+            FfiConverterOptionalLong.allocationSize(value.`sizeBytes`) +
+            FfiConverterString.allocationSize(value.`reason`) +
+            FfiConverterSequenceString.allocationSize(value.`heldBy`)
+    )
+
+    override fun write(value: RecordingNotInCloudData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`audioId`, buf)
+            FfiConverterString.write(value.`filename`, buf)
+            FfiConverterOptionalLong.write(value.`sizeBytes`, buf)
+            FfiConverterString.write(value.`reason`, buf)
+            FfiConverterSequenceString.write(value.`heldBy`, buf)
     }
 }
 
@@ -6976,6 +7375,42 @@ public object FfiConverterTypeTagData: FfiConverterRustBuffer<TagData> {
 
 
 
+data class TagWithWhitespaceData (
+    var `tagId`: kotlin.String, 
+    var `name`: kotlin.String, 
+    var `path`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeTagWithWhitespaceData: FfiConverterRustBuffer<TagWithWhitespaceData> {
+    override fun read(buf: ByteBuffer): TagWithWhitespaceData {
+        return TagWithWhitespaceData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: TagWithWhitespaceData) = (
+            FfiConverterString.allocationSize(value.`tagId`) +
+            FfiConverterString.allocationSize(value.`name`) +
+            FfiConverterString.allocationSize(value.`path`)
+    )
+
+    override fun write(value: TagWithWhitespaceData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`tagId`, buf)
+            FfiConverterString.write(value.`name`, buf)
+            FfiConverterString.write(value.`path`, buf)
+    }
+}
+
+
+
 /**
  * A transcription from the database
  */
@@ -7072,6 +7507,10 @@ data class UploadResultData (
      */
     var `deferred`: kotlin.Int, 
     /**
+     * Files larger than the account's upload limit, left where they are (FILE-23)
+     */
+    var `tooLarge`: kotlin.Int, 
+    /**
      * One message per failure
      */
     var `errors`: List<kotlin.String>
@@ -7090,6 +7529,7 @@ public object FfiConverterTypeUploadResultData: FfiConverterRustBuffer<UploadRes
             FfiConverterInt.read(buf),
             FfiConverterInt.read(buf),
             FfiConverterInt.read(buf),
+            FfiConverterInt.read(buf),
             FfiConverterSequenceString.read(buf),
         )
     }
@@ -7099,6 +7539,7 @@ public object FfiConverterTypeUploadResultData: FfiConverterRustBuffer<UploadRes
             FfiConverterInt.allocationSize(value.`skipped`) +
             FfiConverterInt.allocationSize(value.`failed`) +
             FfiConverterInt.allocationSize(value.`deferred`) +
+            FfiConverterInt.allocationSize(value.`tooLarge`) +
             FfiConverterSequenceString.allocationSize(value.`errors`)
     )
 
@@ -7107,6 +7548,7 @@ public object FfiConverterTypeUploadResultData: FfiConverterRustBuffer<UploadRes
             FfiConverterInt.write(value.`skipped`, buf)
             FfiConverterInt.write(value.`failed`, buf)
             FfiConverterInt.write(value.`deferred`, buf)
+            FfiConverterInt.write(value.`tooLarge`, buf)
             FfiConverterSequenceString.write(value.`errors`, buf)
     }
 }
@@ -7860,6 +8302,34 @@ public object FfiConverterOptionalSequenceFloat: FfiConverterRustBuffer<List<kot
 /**
  * @suppress
  */
+public object FfiConverterSequenceUInt: FfiConverterRustBuffer<List<kotlin.UInt>> {
+    override fun read(buf: ByteBuffer): List<kotlin.UInt> {
+        val len = buf.getInt()
+        return List<kotlin.UInt>(len) {
+            FfiConverterUInt.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<kotlin.UInt>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterUInt.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<kotlin.UInt>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterUInt.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceFloat: FfiConverterRustBuffer<List<kotlin.Float>> {
     override fun read(buf: ByteBuffer): List<kotlin.Float> {
         val len = buf.getInt()
@@ -8056,6 +8526,34 @@ public object FfiConverterSequenceTypeDeviceCardData: FfiConverterRustBuffer<Lis
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeFileLocationData: FfiConverterRustBuffer<List<FileLocationData>> {
+    override fun read(buf: ByteBuffer): List<FileLocationData> {
+        val len = buf.getInt()
+        return List<FileLocationData>(len) {
+            FfiConverterTypeFileLocationData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<FileLocationData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeFileLocationData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<FileLocationData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeFileLocationData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeNoteAttachmentData: FfiConverterRustBuffer<List<NoteAttachmentData>> {
     override fun read(buf: ByteBuffer): List<NoteAttachmentData> {
         val len = buf.getInt()
@@ -8102,6 +8600,90 @@ public object FfiConverterSequenceTypeNoteData: FfiConverterRustBuffer<List<Note
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeNoteData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeOrphanedAttachmentData: FfiConverterRustBuffer<List<OrphanedAttachmentData>> {
+    override fun read(buf: ByteBuffer): List<OrphanedAttachmentData> {
+        val len = buf.getInt()
+        return List<OrphanedAttachmentData>(len) {
+            FfiConverterTypeOrphanedAttachmentData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<OrphanedAttachmentData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeOrphanedAttachmentData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<OrphanedAttachmentData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeOrphanedAttachmentData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeOrphanedRecordingData: FfiConverterRustBuffer<List<OrphanedRecordingData>> {
+    override fun read(buf: ByteBuffer): List<OrphanedRecordingData> {
+        val len = buf.getInt()
+        return List<OrphanedRecordingData>(len) {
+            FfiConverterTypeOrphanedRecordingData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<OrphanedRecordingData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeOrphanedRecordingData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<OrphanedRecordingData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeOrphanedRecordingData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeOrphanedTranscriptionData: FfiConverterRustBuffer<List<OrphanedTranscriptionData>> {
+    override fun read(buf: ByteBuffer): List<OrphanedTranscriptionData> {
+        val len = buf.getInt()
+        return List<OrphanedTranscriptionData>(len) {
+            FfiConverterTypeOrphanedTranscriptionData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<OrphanedTranscriptionData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeOrphanedTranscriptionData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<OrphanedTranscriptionData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeOrphanedTranscriptionData.write(it, buf)
         }
     }
 }
@@ -8168,6 +8750,34 @@ public object FfiConverterSequenceTypePeerSummaryData: FfiConverterRustBuffer<Li
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeRecordingNotInCloudData: FfiConverterRustBuffer<List<RecordingNotInCloudData>> {
+    override fun read(buf: ByteBuffer): List<RecordingNotInCloudData> {
+        val len = buf.getInt()
+        return List<RecordingNotInCloudData>(len) {
+            FfiConverterTypeRecordingNotInCloudData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<RecordingNotInCloudData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeRecordingNotInCloudData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<RecordingNotInCloudData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeRecordingNotInCloudData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeSnapshotData: FfiConverterRustBuffer<List<SnapshotData>> {
     override fun read(buf: ByteBuffer): List<SnapshotData> {
         val len = buf.getInt()
@@ -8214,6 +8824,34 @@ public object FfiConverterSequenceTypeTagData: FfiConverterRustBuffer<List<TagDa
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeTagData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeTagWithWhitespaceData: FfiConverterRustBuffer<List<TagWithWhitespaceData>> {
+    override fun read(buf: ByteBuffer): List<TagWithWhitespaceData> {
+        val len = buf.getInt()
+        return List<TagWithWhitespaceData>(len) {
+            FfiConverterTypeTagWithWhitespaceData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<TagWithWhitespaceData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeTagWithWhitespaceData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<TagWithWhitespaceData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeTagWithWhitespaceData.write(it, buf)
         }
     }
 }

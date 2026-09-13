@@ -1,5 +1,8 @@
 package com.dotancohen.voiceandroid.ui.components
 
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -99,6 +102,10 @@ fun AudioPlayerWidget(
     autoPlay: Boolean = false,
     /** Mark one of the recordings as the one that stands for the note. */
     onSetPrimary: ((AudioFile) -> Unit)? = null,
+    /** Where a recording's copies are (FILE-22). */
+    onShowLocations: ((AudioFile) -> Unit)? = null,
+    /** Remove this phone's copy of a recording (FILE-22). */
+    onRemoveLocal: ((AudioFile) -> Unit)? = null,
     /**
      * Which note these recordings are in, and its first line — for the
      * notification drawer, which says what is playing and opens that note
@@ -340,7 +347,9 @@ fun AudioPlayerWidget(
                         onTranscribe = onTranscribe?.let { cb -> { cb(audioFile) } },
                         transcriptionPending = audioFile.id in pendingTranscriptionIds,
                         isPrimary = audioFile.id == primaryAudioFileId,
-                        onSetPrimary = onSetPrimary?.let { cb -> { cb(audioFile) } }
+                        onSetPrimary = onSetPrimary?.let { cb -> { cb(audioFile) } },
+                        onShowLocations = onShowLocations?.let { cb -> { cb(audioFile) } },
+                        onRemoveLocal = onRemoveLocal?.let { cb -> { cb(audioFile) } }
                     )
                 }
             }
@@ -454,7 +463,11 @@ fun AudioFileListItem(
     /** This is the recording that stands for the note. */
     isPrimary: Boolean = false,
     /** Make this the recording that stands for the note. */
-    onSetPrimary: (() -> Unit)? = null
+    onSetPrimary: (() -> Unit)? = null,
+    /** Where this recording's copies are. */
+    onShowLocations: (() -> Unit)? = null,
+    /** Remove this phone's copy of this recording. */
+    onRemoveLocal: (() -> Unit)? = null
 ) {
     Surface(
         modifier = Modifier
@@ -512,6 +525,27 @@ fun AudioFileListItem(
                         modifier = Modifier.size(16.dp),
                         tint = if (isPrimary) StarGold else MaterialTheme.colorScheme.outline
                     )
+                }
+            }
+            // The recording's own menu: where its copies are, and removing this phone's copy
+            if (onShowLocations != null || onRemoveLocal != null) {
+                var menuOpen by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { menuOpen = true }, modifier = Modifier.size(32.dp)) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = "More for ${audioFile.filename}",
+                            modifier = Modifier.size(16.dp)
+                        )
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        onShowLocations?.let { show ->
+                            DropdownMenuItem(text = { Text("Where are the copies?") }, onClick = { menuOpen = false; show() })
+                        }
+                        onRemoveLocal?.let { remove ->
+                            DropdownMenuItem(text = { Text("Remove from this phone") }, onClick = { menuOpen = false; remove() })
+                        }
+                    }
                 }
             }
             Icon(

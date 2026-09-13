@@ -92,11 +92,11 @@ fun SyncSettingsScreen(
     val debugInfo by viewModel.debugInfo.collectAsState()
     val notDuplicatedLine by viewModel.notDuplicatedLine.collectAsState()
     val peerSummaries by viewModel.peerSummaries.collectAsState()
-    val maxSyncFileSizeMb by viewModel.maxSyncFileSizeMb.collectAsState()
+    val maxUploadMb by viewModel.maxUploadMb.collectAsState()
 
     var editedDeviceId by remember(deviceId) { mutableStateOf(deviceId) }
     var editedDeviceName by remember(deviceName) { mutableStateOf(deviceName) }
-    var editedMaxFileSizeMb by remember(maxSyncFileSizeMb) { mutableStateOf(maxSyncFileSizeMb.toString()) }
+    var editedMaxUploadMb by remember(maxUploadMb) { mutableStateOf(maxUploadMb.toString()) }
 
     // Check for unsynced changes and update debug info when this screen becomes visible
     LaunchedEffect(Unit) {
@@ -268,40 +268,39 @@ fun SyncSettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Sync Limits",
+                        text = "Upload limit",
                         style = MaterialTheme.typography.titleMedium
                     )
 
                     Text(
-                        text = "Files larger than this limit will not be synced. They will be tagged with '_system/_nonsynced/_too-big' and remain local only.",
+                        text = "Recordings larger than this are not uploaded to the bucket. They stay on the devices that hold them and are listed under Issues. The limit is the account's: every device uses the same one.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
                     OutlinedTextField(
-                        value = editedMaxFileSizeMb,
+                        value = editedMaxUploadMb,
                         onValueChange = { newValue ->
                             // Only allow numeric input
                             if (newValue.isEmpty() || newValue.all { it.isDigit() }) {
-                                editedMaxFileSizeMb = newValue
+                                editedMaxUploadMb = newValue
                             }
                         },
-                        label = { Text("Max File Size (MB)") },
+                        label = { Text("Upload limit (MB)") },
                         placeholder = { Text("100") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        supportingText = { Text("Default: 100 MB. Set to 0 for unlimited.") }
+                        supportingText = { Text("100 MB until it is set; at least 1 MB") }
                     )
 
                     Button(
                         onClick = {
-                            val sizeMb = editedMaxFileSizeMb.toUIntOrNull() ?: 100u
-                            viewModel.saveMaxSyncFileSizeMb(sizeMb)
+                            editedMaxUploadMb.toULongOrNull()?.let { viewModel.saveMaxUploadMb(it) }
                         },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Save File Size Limit")
+                        Text("Save the upload limit")
                     }
                 }
             }

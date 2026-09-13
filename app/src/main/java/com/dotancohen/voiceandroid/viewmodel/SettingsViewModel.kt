@@ -60,8 +60,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val debugInfo: StateFlow<String?> = _debugInfo.asStateFlow()
 
     // Max sync file size (in MB)
-    private val _maxSyncFileSizeMb = MutableStateFlow<UInt>(100u)
-    val maxSyncFileSizeMb: StateFlow<UInt> = _maxSyncFileSizeMb.asStateFlow()
+    /** The account's upload limit in megabytes (FILE-23), the same on every device. */
+    private val _maxUploadMb = MutableStateFlow<ULong>(100u)
+    val maxUploadMb: StateFlow<ULong> = _maxUploadMb.asStateFlow()
 
     // Unsynced changes indicator
     private val _isUploading = MutableStateFlow(false)
@@ -91,7 +92,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         viewModelScope.launch { com.dotancohen.voiceandroid.data.OperationState.error.collect { _syncError.value = it } }
         loadSettings()
         refreshProof()
-        loadMaxSyncFileSize()
+        loadMaxUploadMb()
     }
 
     /** The proof line and the peer summaries (Stage 10): read on the screen's opening and after every operation. */
@@ -154,28 +155,29 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    private fun loadMaxSyncFileSize() {
+    private fun loadMaxUploadMb() {
         viewModelScope.launch {
-            repository.getMaxSyncFileSizeMb()
-                .onSuccess { _maxSyncFileSizeMb.value = it }
-                .onFailure { AppLogger.e(TAG, "Failed to load max sync file size", it) }
+            repository.getMaxUploadMb()
+                .onSuccess { _maxUploadMb.value = it }
+                .onFailure { AppLogger.e(TAG, "Failed to read the account's upload limit", it) }
         }
     }
 
     /**
-     * Save the maximum file size (in MB) that will be synced.
-     * Files larger than this will be tagged with _system/_nonsynced/_too-big.
+     * Set the account's upload limit (FILE-23). Recordings larger than this
+     * stay on the devices that hold them and are listed under Issues; the
+     * limit reaches every device of the account at its next sync.
      */
-    fun saveMaxSyncFileSizeMb(sizeMb: UInt) {
+    fun saveMaxUploadMb(megabytes: ULong) {
         viewModelScope.launch {
-            repository.setMaxSyncFileSizeMb(sizeMb)
+            repository.setMaxUploadMb(megabytes)
                 .onSuccess {
-                    _maxSyncFileSizeMb.value = sizeMb
-                    AppLogger.i(TAG, "Max sync file size set to $sizeMb MB")
+                    _maxUploadMb.value = megabytes
+                    AppLogger.i(TAG, "The account's upload limit is $megabytes MB")
                 }
                 .onFailure { e ->
-                    _syncError.value = "Failed to set max sync file size: ${e.message}"
-                    AppLogger.e(TAG, "Failed to set max sync file size", e)
+                    _syncError.value = "The upload limit was not set: ${e.message}"
+                    AppLogger.e(TAG, "Failed to set the account's upload limit", e)
                 }
         }
     }

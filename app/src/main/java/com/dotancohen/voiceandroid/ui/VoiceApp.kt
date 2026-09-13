@@ -1,5 +1,6 @@
 package com.dotancohen.voiceandroid.ui
 
+import com.dotancohen.voiceandroid.ui.screens.IssuesScreen
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -71,6 +72,7 @@ sealed class Screen(val route: String, val title: String) {
     data object TranscriptionSettings : Screen("transcription_settings", "Transcription")
     data object AdvancedSettings : Screen("advanced_settings", "Advanced")
     data object Trash : Screen("trash", "Trash")
+    data object Issues : Screen("issues", "Issues")
     data object TranscriptionQueue : Screen("transcription_queue", "Transcription queue")
     data object MissingData : Screen("missing_data", "Missing data")
 }
@@ -185,6 +187,9 @@ fun VoiceApp(
                     }
                 )
             }
+            composable(Screen.Issues.route) {
+                IssuesScreen(onBack = { navController.popBackStack() })
+            }
             composable(Screen.MissingData.route) {
                 MissingDataScreen(onBack = { navController.popBackStack() })
             }
@@ -259,6 +264,9 @@ fun VoiceApp(
                     },
                     onNavigateToTrash = {
                         navController.navigate(Screen.Trash.route)
+                    },
+                    onNavigateToIssues = {
+                        navController.navigate(Screen.Issues.route)
                     },
                     onNavigateToTranscriptionQueue = {
                         navController.navigate(Screen.TranscriptionQueue.route)

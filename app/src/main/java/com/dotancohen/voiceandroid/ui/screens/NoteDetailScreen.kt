@@ -164,6 +164,7 @@ fun NoteDetailScreen(
     /** The recording whose transcriptions are shown: the one the player is on */
     var selectedAudioIndex by remember { mutableStateOf(0) }
     var transcribeTarget by remember { mutableStateOf<AudioFile?>(null) }
+    var removeLocalTarget by remember { mutableStateOf<AudioFile?>(null) }
     var showTimes by remember { mutableStateOf(false) }
     var shareRequested by remember { mutableStateOf(false) }
     var showNoteMenu by remember { mutableStateOf(false) }
@@ -1016,6 +1017,30 @@ fun NoteDetailScreen(
                             }
                         } else {
                             // Some or all files are available locally - show player
+                            // Where a recording's copies are, and removing this phone's copy (FILE-22)
+                            val locationLines by viewModel.locationLines.collectAsState()
+                            locationLines?.let { lines ->
+                                AlertDialog(
+                                    onDismissRequest = { viewModel.dismissLocations() },
+                                    title = { Text("Where the copies are") },
+                                    text = { Text(lines.joinToString("\n")) },
+                                    confirmButton = { TextButton(onClick = { viewModel.dismissLocations() }) { Text("Close") } }
+                                )
+                            }
+                            removeLocalTarget?.let { target ->
+                                AlertDialog(
+                                    onDismissRequest = { removeLocalTarget = null },
+                                    title = { Text("Remove from this phone") },
+                                    text = { Text("Remove ${target.filename} from this phone? The recording stays, and it can be fetched again from wherever else it is kept.") },
+                                    confirmButton = {
+                                        TextButton(onClick = {
+                                            removeLocalTarget = null
+                                            viewModel.removeLocalCopy(target)
+                                        }) { Text("Remove") }
+                                    },
+                                    dismissButton = { TextButton(onClick = { removeLocalTarget = null }) { Text("Cancel") } }
+                                )
+                            }
                             AudioPlayerWidget(
                                 audioFiles = audioFiles,
                                 getFilePath = { audioId ->
@@ -1030,6 +1055,8 @@ fun NoteDetailScreen(
                                 primaryAudioFileId = primaryAudioFileId,
                                 autoPlay = UiPreferences(LocalContext.current).autoplayOnOpen,
                                 onSetPrimary = { audioFile -> viewModel.setPrimaryAudioFile(audioFile) },
+                                onShowLocations = { audioFile -> viewModel.showLocations(audioFile) },
+                                onRemoveLocal = { audioFile -> removeLocalTarget = audioFile },
                                 noteId = noteId,
                                 noteLine = note?.content?.lineSequence()?.firstOrNull()?.take(60)
                             )

@@ -1,5 +1,6 @@
 package com.dotancohen.voiceandroid.viewmodel
 
+import com.dotancohen.voiceandroid.util.IssuesText
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -282,6 +283,40 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
      * Make one of this note's recordings the one that stands for it, or take
      * the mark off the one that has it.
      */
+    /** Where the copies of the recording being asked about are, as lines; null when no one asked. */
+    private val _locationLines = MutableStateFlow<List<String>?>(null)
+    val locationLines: StateFlow<List<String>?> = _locationLines.asStateFlow()
+
+    /** Where a recording's copies are (FILE-22): this phone's folder is compared first. */
+    fun showLocations(audioFile: AudioFile) {
+        viewModelScope.launch {
+            repository.checkFilesHere()
+            val names = repository.deviceNames().getOrNull().orEmpty()
+            val here = repository.getDeviceId().getOrNull().orEmpty()
+            repository.fileLocations(audioFile.id)
+                .onSuccess { locations ->
+                    _locationLines.value = IssuesText.locationLines(locations, names, here) { millis ->
+                        java.text.DateFormat.getDateTimeInstance().format(java.util.Date(millis))
+                    }
+                }
+                .onFailure { e -> _error.value = "Could not read where the copies are: ${e.message}" }
+        }
+    }
+
+    fun dismissLocations() {
+        _locationLines.value = null
+    }
+
+    /** Remove this phone's copy of a recording; refused when no other place holds it (FILE-22). */
+    fun removeLocalCopy(audioFile: AudioFile) {
+        val noteId = _note.value?.id ?: return
+        viewModelScope.launch {
+            repository.removeLocalCopy(audioFile.id)
+                .onSuccess { loadNote(noteId) }
+                .onFailure { e -> _error.value = "Not removed: ${e.message}" }
+        }
+    }
+
     fun setPrimaryAudioFile(audioFile: AudioFile) {
         val noteId = _note.value?.id ?: return
         viewModelScope.launch {

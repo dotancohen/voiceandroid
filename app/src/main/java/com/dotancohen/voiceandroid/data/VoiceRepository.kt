@@ -1,5 +1,7 @@
 package com.dotancohen.voiceandroid.data
 
+import uniffi.voicecore.FileLocationData
+import uniffi.voicecore.IssuesData
 import android.content.Context
 import android.os.Build
 import android.os.Environment
@@ -831,6 +833,89 @@ class VoiceRepository(private val context: Context) {
         try {
             val counts = ensureInitialized().notDuplicated()
             Result.success(NotDuplicated(counts.notes, counts.recordings))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Every statement about where a recording's copies are (FILE-22), the bucket first. */
+    suspend fun fileLocations(audioId: String): Result<List<FileLocationData>> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().fileLocations(audioId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Compare this phone's audio folder with what it has stated about its copies (FILE-22). */
+    suspend fun checkFilesHere(): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            ensureInitialized().checkFilesHere()
+            Result.success(Unit)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Remove this phone's copy of a recording to save space; the recording
+     * stays. Refused when no other place holds the file (FILE-22).
+     */
+    suspend fun removeLocalCopy(audioId: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            ensureInitialized().removeLocalCopy(audioId)
+            Result.success(Unit)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** The account's upload limit in megabytes (FILE-23), the same on every device. */
+    suspend fun getMaxUploadMb(): Result<ULong> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().getMaxUploadMb())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Set the account's upload limit in megabytes; refused before a bucket is set up (FILE-23). */
+    suspend fun setMaxUploadMb(megabytes: ULong): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            ensureInitialized().setMaxUploadMb(megabytes)
+            Result.success(Unit)
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** What the user should know about (ISSUE-1); this phone's folder is compared first. */
+    suspend fun issues(): Result<IssuesData> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().issues())
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** The name of every device of the account, by id, from their cards. */
+    suspend fun deviceNames(): Result<Map<String, String>> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().listDevices().filter { it.name.isNotBlank() }.associate { it.deviceId to it.name })
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -1911,38 +1996,6 @@ class VoiceRepository(private val context: Context) {
     // Sync Configuration Methods
     // =========================================================================
 
-    /**
-     * Get the maximum sync file size in MB.
-     * Files larger than this will be tagged as _system/_nonsynced/_too-big.
-     */
-    suspend fun getMaxSyncFileSizeMb(): Result<UInt> = withContext(Dispatchers.IO) {
-        try {
-            val voiceClient = ensureInitialized()
-            Result.success(voiceClient.getMaxSyncFileSizeMb())
-        } catch (e: VoiceCoreException) {
-            Result.failure(Exception(e.message))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Set the maximum sync file size in MB.
-     * Files larger than this will be tagged as _system/_nonsynced/_too-big.
-     *
-     * @param sizeMb The maximum file size in MB (e.g., 100 for 100MB)
-     */
-    suspend fun setMaxSyncFileSizeMb(sizeMb: UInt): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val voiceClient = ensureInitialized()
-            voiceClient.setMaxSyncFileSizeMb(sizeMb)
-            Result.success(Unit)
-        } catch (e: VoiceCoreException) {
-            Result.failure(Exception(e.message))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
     // =========================================================================
     // Cloud Storage Download Methods

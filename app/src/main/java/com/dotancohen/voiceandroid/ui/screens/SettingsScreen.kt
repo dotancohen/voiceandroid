@@ -1,5 +1,6 @@
 package com.dotancohen.voiceandroid.ui.screens
 
+import androidx.compose.material.icons.filled.Info
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -78,6 +79,8 @@ fun SettingsScreen(
     onNavigateToTranscription: () -> Unit = {},
     onNavigateToAdvanced: () -> Unit = {},
     onNavigateToTrash: () -> Unit = {},
+    /** What needs the user's attention (ISSUE-1). */
+    onNavigateToIssues: () -> Unit = {},
     onNavigateToTranscriptionQueue: () -> Unit = {},
     onNavigateToMissingData: () -> Unit = {}
 ) {
@@ -373,6 +376,21 @@ fun SettingsScreen(
                     modifier = Modifier.padding(end = 8.dp)
                 )
                 Text("Trash")
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Issues: recordings not in cloud storage, orphaned rows, tags with spaces
+            OutlinedButton(
+                onClick = onNavigateToIssues,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Info,
+                    contentDescription = null,
+                    modifier = Modifier.padding(end = 8.dp)
+                )
+                Text("Issues")
             }
 
             Spacer(modifier = Modifier.height(8.dp))
