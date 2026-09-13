@@ -1691,6 +1691,10 @@ class VoiceRepository(private val context: Context) {
             val localName = ensureInitialized().getAudioFile(audioFileId)?.localName?.takeIf { it.isNotEmpty() }
                 ?: return@withContext Result.failure(Exception("The recording $audioFileId has no row yet"))
             val destFile = File(audioFileDir, localName)
+            // A file already in the folder is never overwritten (FILE-15)
+            if (destFile.exists()) {
+                return@withContext Result.failure(Exception("A file named $localName is already in the audio folder; nothing was overwritten"))
+            }
             context.contentResolver.openInputStream(sourceUri)?.use { input ->
                 destFile.outputStream().use { output ->
                     input.copyTo(output)

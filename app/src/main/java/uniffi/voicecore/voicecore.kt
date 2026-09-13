@@ -1893,10 +1893,10 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_version() != 52368.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_import_audio_file() != 1998.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_import_audio_file() != 63049.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_import_audio_file_into_note() != 46741.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_import_audio_file_into_note() != 39206.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 23157.toShort()) {
@@ -2929,6 +2929,9 @@ public interface VoiceClientInterface {
      * * `file_created_at` - Unix timestamp of when the file was created (optional)
      * * `duration_seconds` - Duration of the audio file in seconds (optional)
      *
+     * The file keeps its own name in the audio folder; a name already taken
+     * there gets ` (2)` and so on (FILE-15).
+     *
      * # Returns
      * ImportAudioResultData with note_id and audio_file_id
      */
@@ -2939,8 +2942,8 @@ public interface VoiceClientInterface {
      *
      * The phone records inside the note now, so the note is there before
      * the recording is: pressing Save attaches the file to that note rather
-     * than making a second one. Returns the new audio file id, which is
-     * also the name the file is stored under.
+     * than making a second one. Returns the new audio file id; the file's
+     * name, its start and the tail of its id, is on the row (FILE-15).
      */
     fun `importAudioFileIntoNote`(`noteId`: kotlin.String, `filename`: kotlin.String, `fileCreatedAt`: kotlin.Long?, `durationSeconds`: kotlin.Long?): kotlin.String
     
@@ -4509,6 +4512,9 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
      * * `file_created_at` - Unix timestamp of when the file was created (optional)
      * * `duration_seconds` - Duration of the audio file in seconds (optional)
      *
+     * The file keeps its own name in the audio folder; a name already taken
+     * there gets ` (2)` and so on (FILE-15).
+     *
      * # Returns
      * ImportAudioResultData with note_id and audio_file_id
      */
@@ -4530,8 +4536,8 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
      *
      * The phone records inside the note now, so the note is there before
      * the recording is: pressing Save attaches the file to that note rather
-     * than making a second one. Returns the new audio file id, which is
-     * also the name the file is stored under.
+     * than making a second one. Returns the new audio file id; the file's
+     * name, its start and the tail of its id, is on the row (FILE-15).
      */
     @Throws(VoiceCoreException::class)override fun `importAudioFileIntoNote`(`noteId`: kotlin.String, `filename`: kotlin.String, `fileCreatedAt`: kotlin.Long?, `durationSeconds`: kotlin.Long?): kotlin.String {
             return FfiConverterString.lift(
