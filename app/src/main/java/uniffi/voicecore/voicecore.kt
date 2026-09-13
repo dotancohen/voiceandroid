@@ -1023,8 +1023,6 @@ internal open class UniffiVTableCallbackInterfaceOperationProgress(
 
 
 
-
-
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1050,9 +1048,7 @@ internal interface UniffiLib : Library {
     ): Pointer
     fun uniffi_voicecore_fn_free_voiceclient(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voicecore_fn_constructor_voiceclient_new(`dataDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Pointer
-    fun uniffi_voicecore_fn_constructor_voiceclient_new_with_keystore(`dataDir`: RustBuffer.ByValue,`wrapper`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_constructor_voiceclient_new(`dataDir`: RustBuffer.ByValue,`wrapper`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Pointer
     fun uniffi_voicecore_fn_method_voiceclient_accept_conflict(`ptr`: Pointer,`conflictId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1688,8 +1684,6 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_constructor_voiceclient_new(
     ): Short
-    fun uniffi_voicecore_checksum_constructor_voiceclient_new_with_keystore(
-    ): Short
     fun uniffi_voicecore_checksum_method_keystorewrapper_wrap(
     ): Short
     fun uniffi_voicecore_checksum_method_keystorewrapper_unwrap(
@@ -2100,10 +2094,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_withdraw_code() != 58304.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 26098.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new_with_keystore() != 1279.toShort()) {
+    if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 3350.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_keystorewrapper_wrap() != 48358.toShort()) {
@@ -3410,13 +3401,14 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
         this.cleanable = UniffiLib.CLEANER.register(this, UniffiCleanAction(pointer))
     }
     /**
-     * Create a new VoiceClient with the given data directory
+     * Create the VoiceClient over a data directory. With the phone's Keystore
+     * (`wrapper`) the keys are wrapped on disk (AUTH-9); tests pass none.
      */
-    constructor(`dataDir`: kotlin.String) :
+    constructor(`dataDir`: kotlin.String, `wrapper`: KeystoreWrapper?) :
         this(
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_constructor_voiceclient_new(
-        FfiConverterString.lower(`dataDir`),_status)
+        FfiConverterString.lower(`dataDir`),FfiConverterOptionalTypeKeystoreWrapper.lower(`wrapper`),_status)
 }
     )
 
@@ -5706,23 +5698,8 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     
 
     
-    companion object {
-        
-    /**
-     * The client with the phone's Keystore wrapping the device key on disk (Stage 14).
-     */
-    @Throws(VoiceCoreException::class) fun `newWithKeystore`(`dataDir`: kotlin.String, `wrapper`: KeystoreWrapper): VoiceClient {
-            return FfiConverterTypeVoiceClient.lift(
-    uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_constructor_voiceclient_new_with_keystore(
-        FfiConverterString.lower(`dataDir`),FfiConverterTypeKeystoreWrapper.lower(`wrapper`),_status)
-}
-    )
-    }
     
-
-        
-    }
+    companion object
     
 }
 
@@ -7682,6 +7659,38 @@ public object FfiConverterOptionalTypeVersionData: FfiConverterRustBuffer<Versio
         } else {
             buf.put(1)
             FfiConverterTypeVersionData.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeKeystoreWrapper: FfiConverterRustBuffer<KeystoreWrapper?> {
+    override fun read(buf: ByteBuffer): KeystoreWrapper? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeKeystoreWrapper.read(buf)
+    }
+
+    override fun allocationSize(value: KeystoreWrapper?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeKeystoreWrapper.allocationSize(value)
+        }
+    }
+
+    override fun write(value: KeystoreWrapper?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeKeystoreWrapper.write(value, buf)
         }
     }
 }

@@ -104,7 +104,7 @@ class VoiceRepository(private val context: Context) {
         try {
             AppLogger.i(TAG, "Initializing VoiceRepository, dataDir=$dataDir")
             if (client == null) {
-                client = VoiceClient.newWithKeystore(dataDir, com.dotancohen.voiceandroid.util.SecretWrap.keystore())
+                client = VoiceClient(dataDir, com.dotancohen.voiceandroid.util.SecretWrap.keystore())
                 AppLogger.i(TAG, "VoiceClient created")
             }
             // A card should read "Galaxy A14", not the core's placeholder (Stage 5)
@@ -157,7 +157,7 @@ class VoiceRepository(private val context: Context) {
 
     @Synchronized
     private fun ensureInitialized(): VoiceClient {
-        return client ?: VoiceClient.newWithKeystore(dataDir, com.dotancohen.voiceandroid.util.SecretWrap.keystore()).also {
+        return client ?: VoiceClient(dataDir, com.dotancohen.voiceandroid.util.SecretWrap.keystore()).also {
             client = it
             // Configure audiofile directory for the new client
             it.setAudiofileDirectory(audioFileDir)
