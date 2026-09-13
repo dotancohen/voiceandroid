@@ -97,8 +97,8 @@ data class AudioFile(
     val storageProvider: String? = null,
     /** Object key in cloud storage once uploaded */
     val storageKey: String? = null,
-    /** The file's name in the audio directory (Stage 13): the recording's start, the tail of its id, the extension */
-    val localName: String = "",
+    /** The file's name on disk, the same on every device (FILE-15): a recording's start and the tail of its id, or an imported file's own name */
+    val diskName: String = "",
     /** The SHA-256 of the file's bytes, lowercase hex, once computed (Stage 13) */
     val contentSha256: String? = null
 ) {

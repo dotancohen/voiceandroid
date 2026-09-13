@@ -5766,10 +5766,10 @@ data class AudioFileData (
      */
     var `storageUploadedAt`: Stamp?, 
     /**
-     * The file's name in the audio directory (Stage 13): the recording's
-     * start, the tail of its id and the extension
+     * The file's name on disk, the same on every device (FILE-15): a
+     * recording's start and the tail of its id, or an imported file's own name
      */
-    var `localName`: kotlin.String, 
+    var `diskName`: kotlin.String, 
     /**
      * The SHA-256 of the file's bytes, lowercase hex, once computed (Stage 13)
      */
@@ -5815,7 +5815,7 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
             FfiConverterOptionalString.allocationSize(value.`storageProvider`) +
             FfiConverterOptionalString.allocationSize(value.`storageKey`) +
             FfiConverterOptionalTypeStamp.allocationSize(value.`storageUploadedAt`) +
-            FfiConverterString.allocationSize(value.`localName`) +
+            FfiConverterString.allocationSize(value.`diskName`) +
             FfiConverterOptionalString.allocationSize(value.`contentSha256`)
     )
 
@@ -5832,7 +5832,7 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
             FfiConverterOptionalString.write(value.`storageProvider`, buf)
             FfiConverterOptionalString.write(value.`storageKey`, buf)
             FfiConverterOptionalTypeStamp.write(value.`storageUploadedAt`, buf)
-            FfiConverterString.write(value.`localName`, buf)
+            FfiConverterString.write(value.`diskName`, buf)
             FfiConverterOptionalString.write(value.`contentSha256`, buf)
     }
 }

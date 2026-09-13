@@ -702,7 +702,7 @@ class VoiceRepository(private val context: Context) {
                     deletedAt = data.deletedAt,
                     storageProvider = data.storageProvider,
                     storageKey = data.storageKey,
-                    localName = data.localName,
+                    diskName = data.diskName,
                     contentSha256 = data.contentSha256
                 )
             }
@@ -733,7 +733,7 @@ class VoiceRepository(private val context: Context) {
                     deletedAt = data.deletedAt,
                     storageProvider = data.storageProvider,
                     storageKey = data.storageKey,
-                    localName = data.localName,
+                    diskName = data.diskName,
                     contentSha256 = data.contentSha256
                 )
             }
@@ -778,7 +778,7 @@ class VoiceRepository(private val context: Context) {
                     deletedAt = data.deletedAt,
                     storageProvider = data.storageProvider,
                     storageKey = data.storageKey,
-                    localName = data.localName,
+                    diskName = data.diskName,
                     contentSha256 = data.contentSha256
                 )
             }
@@ -1687,13 +1687,13 @@ class VoiceRepository(private val context: Context) {
         audioFileId: String
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            // The row names the file (Stage 13): the recording's start, the tail of its id, the extension
-            val localName = ensureInitialized().getAudioFile(audioFileId)?.localName?.takeIf { it.isNotEmpty() }
+            // The row names the file (FILE-15): a recording's start and the tail of its id, or an imported file's own name
+            val diskName = ensureInitialized().getAudioFile(audioFileId)?.diskName?.takeIf { it.isNotEmpty() }
                 ?: return@withContext Result.failure(Exception("The recording $audioFileId has no row yet"))
-            val destFile = File(audioFileDir, localName)
+            val destFile = File(audioFileDir, diskName)
             // A file already in the folder is never overwritten (FILE-15)
             if (destFile.exists()) {
-                return@withContext Result.failure(Exception("A file named $localName is already in the audio folder; nothing was overwritten"))
+                return@withContext Result.failure(Exception("A file named $diskName is already in the audio folder; nothing was overwritten"))
             }
             context.contentResolver.openInputStream(sourceUri)?.use { input ->
                 destFile.outputStream().use { output ->
