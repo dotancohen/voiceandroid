@@ -351,7 +351,21 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _syncError.value = null
             _lastOperation.value = operation
             AppLogger.i(TAG, "Starting $operation")
-            repository.operate(operation, peerId)
+            var outcome = repository.operate(operation, peerId)
+            // The remembered address first; when the peer is not reached
+            // there, the network is asked where it is (Stage 7)
+            val silence = outcome.getOrNull()?.let { !it.success && com.dotancohen.voiceandroid.data.PeerDiscovery.looksUnreachable(it.errorMessage) } ?: com.dotancohen.voiceandroid.data.PeerDiscovery.looksUnreachable(outcome.exceptionOrNull()?.message)
+            val peer = _peers.value.firstOrNull { it.peerId == peerId } ?: lastPeer.value
+            if (silence && peer != null) {
+                val accountId = repository.getAccountId().getOrNull() ?: ""
+                val found = runCatching { com.dotancohen.voiceandroid.data.PeerDiscovery(getApplication()).find(accountId, peer.peerId) }.getOrNull()
+                if (found != null && found.url.trimEnd('/') != peer.url.trimEnd('/')) {
+                    AppLogger.i(TAG, "${peer.name} answered from ${found.url}; remembering it")
+                    repository.addPeer(peer.peerId, peer.name, found.url)
+                    outcome = repository.operate(operation, peer.peerId)
+                }
+            }
+            outcome
                 .onSuccess { result ->
                     _syncResult.value = result
                     AppLogger.i(TAG, "$operation completed: received=${result.notesReceived}, sent=${result.notesSent}, files sent=${result.filesSent}, fetched=${result.filesFetched}")

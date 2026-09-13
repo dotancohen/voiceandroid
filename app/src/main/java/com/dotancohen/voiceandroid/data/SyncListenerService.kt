@@ -27,6 +27,7 @@ import kotlinx.coroutines.launch
  */
 class SyncListenerService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    private var discovery: PeerDiscovery? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -50,6 +51,14 @@ class SyncListenerService : Service() {
                 .onSuccess { urls ->
                     AppLogger.i(TAG, "Listening at ${urls.joinToString()}")
                     getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification(urls.firstOrNull() ?: "no address"))
+                    // Announced on the network while listening (Stage 7)
+                    val accountId = repository.getAccountId().getOrNull() ?: ""
+                    val deviceId = repository.getDeviceId().getOrNull() ?: ""
+                    val name = repository.getDeviceName().getOrNull() ?: ""
+                    val fingerprint = repository.certificateFingerprint().getOrNull() ?: ""
+                    if (accountId.isNotEmpty() && deviceId.isNotEmpty()) {
+                        discovery = PeerDiscovery(applicationContext).also { it.announce(PORT, accountId, deviceId, name, fingerprint) }
+                    }
                 }
                 .onFailure {
                     AppLogger.e(TAG, "The listener could not start", it)
@@ -90,6 +99,8 @@ class SyncListenerService : Service() {
     }
 
     override fun onDestroy() {
+        discovery?.stopAnnouncing()
+        discovery = null
         VoiceRepository.getInstance(applicationContext).stopListener()
         scope.cancel()
         super.onDestroy()

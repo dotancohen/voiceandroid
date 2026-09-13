@@ -19,6 +19,9 @@
     <!-- Internet permission for sync -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Finding peers on the local network (Stage 7): mDNS needs multicast -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
     <!-- Storage permissions for audio files -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
