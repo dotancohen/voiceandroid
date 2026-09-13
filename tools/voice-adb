@@ -30,6 +30,7 @@ Device and sync
   exchange                           sync, then send and fetch recordings
   deliver                            sync, then send recordings
   check <peer-id>                    the connection check: one line per thing that can be wrong
+  proof                              the sync screen's line: what is on this device only
   listen-on / listen-off             the listener switch on the sync screen
   initial-sync                       same as tapping Full Re-sync
   airplane on|off                    airplane mode (no app involved)
@@ -144,6 +145,7 @@ case "$cmd" in
     exchange) send EXCHANGE ;;
     deliver) send DELIVER ;;
     check) send CHECK --es peer "$1" ;;
+    proof) send PROOF ;;
     listen-on) send LISTEN_ON ;;
     listen-off) send LISTEN_OFF ;;
     initial-sync) send INITIAL_SYNC ;;

@@ -39,7 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -68,7 +67,8 @@ fun SyncSettingsScreen(
     val syncResult by viewModel.syncResult.collectAsState()
     val syncError by viewModel.syncError.collectAsState()
     val debugInfo by viewModel.debugInfo.collectAsState()
-    val hasUnsyncedChanges by viewModel.hasUnsyncedChanges.collectAsState()
+    val notDuplicatedLine by viewModel.notDuplicatedLine.collectAsState()
+    val peerSummaries by viewModel.peerSummaries.collectAsState()
     val maxSyncFileSizeMb by viewModel.maxSyncFileSizeMb.collectAsState()
 
     var editedServerUrl by remember(serverUrl) { mutableStateOf(serverUrl) }
@@ -79,7 +79,7 @@ fun SyncSettingsScreen(
 
     // Check for unsynced changes and update debug info when this screen becomes visible
     LaunchedEffect(Unit) {
-        viewModel.checkUnsyncedChanges()
+        viewModel.refreshProof()
         viewModel.updateDebugInfo()
     }
 
@@ -103,6 +103,21 @@ fun SyncSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Proof (Stage 10): what is on this phone only, and when each peer was last reached.
+            // This line, here, is the only place it is said: no notification, no badge.
+            Text(
+                text = notDuplicatedLine ?: "Counting what is on this device only…",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics { contentDescription = notDuplicatedLine ?: "Counting what is on this device only" }
+            )
+            peerSummaries.forEach { peer ->
+                val reached = peer.lastReachedAt?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it * 1000)) } ?: "never"
+                Text(
+                    text = "${peer.peerName.ifEmpty { peer.peerId.take(8) }}: last reached $reached" + (if (peer.lastOperation.isEmpty()) "" else ", last operation ${peer.lastOperation}"),
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
             // Sync Server Configuration
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -258,14 +273,6 @@ fun SyncSettingsScreen(
                     OutlinedButton(
                         onClick = { viewModel.sync() },
                         enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank(),
-                        colors = if (hasUnsyncedChanges) {
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color(0xFFFFEB3B),
-                                contentColor = Color.Black
-                            )
-                        } else {
-                            ButtonDefaults.outlinedButtonColors()
-                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         if (isSyncing) {
@@ -287,7 +294,7 @@ fun SyncSettingsScreen(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = null
                                 )
-                                Text(if (hasUnsyncedChanges) "Sync (changes pending)" else "Sync")
+                                Text("Sync")
                             }
                         }
                     }

@@ -61,8 +61,13 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _uploadMessage = MutableStateFlow<String?>(null)
     val uploadMessage: StateFlow<String?> = _uploadMessage.asStateFlow()
 
-    private val _hasUnsyncedChanges = MutableStateFlow(false)
-    val hasUnsyncedChanges: StateFlow<Boolean> = _hasUnsyncedChanges.asStateFlow()
+    /** The one line at the top of the sync screen (Stage 10), or null before it is known. */
+    private val _notDuplicatedLine = MutableStateFlow<String?>(null)
+    val notDuplicatedLine: StateFlow<String?> = _notDuplicatedLine.asStateFlow()
+
+    /** Every peer dealt with: when it was last reached and by what (Stage 10). */
+    private val _peerSummaries = MutableStateFlow<List<com.dotancohen.voiceandroid.data.PeerSummary>>(emptyList())
+    val peerSummaries: StateFlow<List<com.dotancohen.voiceandroid.data.PeerSummary>> = _peerSummaries.asStateFlow()
 
     // Pending audio path awaiting permission grant (persisted to survive activity recreation)
     private val _pendingAudioPath = MutableStateFlow<String?>(
@@ -72,18 +77,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     init {
         loadSettings()
-        checkUnsyncedChanges()
+        refreshProof()
         loadMaxSyncFileSize()
     }
 
-    /**
-     * Check if there are local changes that haven't been synced.
-     */
-    fun checkUnsyncedChanges() {
+    /** The proof line and the peer summaries (Stage 10): read on the screen's opening and after every operation. */
+    fun refreshProof() {
         viewModelScope.launch {
-            repository.hasUnsyncedChanges()
-                .onSuccess { _hasUnsyncedChanges.value = it }
-                .onFailure { _hasUnsyncedChanges.value = false }
+            repository.notDuplicated()
+                .onSuccess { _notDuplicatedLine.value = it.sentence() }
+                .onFailure { _notDuplicatedLine.value = null }
+            repository.peerSummaries().onSuccess { _peerSummaries.value = it }
         }
     }
 
@@ -334,7 +338,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     CriticalLog.logSyncError("exchange", exception.message ?: "Unknown error")
                 }
             updateDebugInfo()
-            checkUnsyncedChanges()
+            refreshProof()
             _isSyncing.value = false
         }
     }
@@ -384,7 +388,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             updateDebugInfo()
 
             // Check for any remaining unsynced changes
-            checkUnsyncedChanges()
+            refreshProof()
 
             _isSyncing.value = false
         }
@@ -448,7 +452,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             updateDebugInfo()
 
             // Check for any remaining unsynced changes
-            checkUnsyncedChanges()
+            refreshProof()
 
             _isSyncing.value = false
         }

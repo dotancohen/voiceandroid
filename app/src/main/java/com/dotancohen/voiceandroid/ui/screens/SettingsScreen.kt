@@ -48,7 +48,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.ui.graphics.Color
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -89,14 +88,13 @@ fun SettingsScreen(
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncResult by viewModel.syncResult.collectAsState()
     val syncError by viewModel.syncError.collectAsState()
-    val hasUnsyncedChanges by viewModel.hasUnsyncedChanges.collectAsState()
     val logContent by viewModel.logContent.collectAsState()
 
     val context = LocalContext.current
 
     // Check for unsynced changes when screen becomes visible
     LaunchedEffect(Unit) {
-        viewModel.checkUnsyncedChanges()
+        viewModel.refreshProof()
     }
 
     // State for permission dialog
@@ -233,14 +231,6 @@ fun SettingsScreen(
                     OutlinedButton(
                         onClick = { viewModel.sync() },
                         enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank(),
-                        colors = if (hasUnsyncedChanges) {
-                            ButtonDefaults.outlinedButtonColors(
-                                containerColor = Color(0xFFFFEB3B),
-                                contentColor = Color.Black
-                            )
-                        } else {
-                            ButtonDefaults.outlinedButtonColors()
-                        },
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         if (isSyncing) {
@@ -262,7 +252,7 @@ fun SettingsScreen(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = null
                                 )
-                                Text(if (hasUnsyncedChanges) "Sync (changes pending)" else "Sync")
+                                Text("Sync")
                             }
                         }
                     }

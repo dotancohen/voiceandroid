@@ -39,6 +39,23 @@ data class SyncResult(
     val clockSkewSeconds: Long = 0
 )
 
+/** What is on this phone only (Stage 10). */
+data class NotDuplicated(val notes: Long, val recordings: Long) {
+    /** The one line of the sync screen. */
+    fun sentence(): String {
+        if (notes == 0L && recordings == 0L) return "Everything is duplicated off this device."
+        val notePart = "$notes note" + (if (notes != 1L) "s" else "")
+        val recordingPart = "$recordings recording" + (if (recordings != 1L) "s" else "")
+        return "$notePart and $recordingPart are not duplicated off this device."
+    }
+}
+
+/** A peer known to hold a copy of a recording, and when that was learnt (Stage 10). */
+data class RecordingCopy(val peerId: String, val at: Long)
+
+/** A peer as remembered: when it was last reached and by which operation (Stage 10). */
+data class PeerSummary(val peerId: String, val peerName: String, val lastReachedAt: Long?, val lastOperation: String)
+
 /** One row of a connection check (Stage 12): what was checked, whether it passed, a sentence and a code. */
 data class CheckRow(val name: String, val passed: Boolean, val detail: String, val code: String)
 

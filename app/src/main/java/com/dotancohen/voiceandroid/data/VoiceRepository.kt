@@ -730,13 +730,33 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /**
-     * Check if there are local changes that haven't been synced.
-     */
-    suspend fun hasUnsyncedChanges(): Result<Boolean> = withContext(Dispatchers.IO) {
+    /** What is on this phone only (Stage 10): notes and recordings not duplicated anywhere else. */
+    suspend fun notDuplicated(): Result<NotDuplicated> = withContext(Dispatchers.IO) {
         try {
-            val voiceClient = ensureInitialized()
-            Result.success(voiceClient.hasUnsyncedChanges())
+            val counts = ensureInitialized().notDuplicated()
+            Result.success(NotDuplicated(counts.notes, counts.recordings))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** The peers known to hold a copy of a recording (Stage 10). */
+    suspend fun copiesOf(audioId: String): Result<List<RecordingCopy>> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().copiesOf(audioId).map { RecordingCopy(it.peerId, it.at) })
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** Every peer dealt with: when it was last reached and by which operation (Stage 10). */
+    suspend fun peerSummaries(): Result<List<PeerSummary>> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().peerSummaries().map { PeerSummary(it.peerId, it.peerName, it.lastReachedAt, it.lastOperation) })
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
