@@ -37,6 +37,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -57,6 +59,7 @@ fun SyncSettingsScreen(
     val isSyncing by viewModel.isSyncing.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
     val joinMessage by viewModel.joinMessage.collectAsState()
+    val checkRows by viewModel.checkRows.collectAsState()
     val listening by viewModel.listening.collectAsState()
     val listenUrls by viewModel.listenUrls.collectAsState()
     val certificateFingerprint by viewModel.certificateFingerprint.collectAsState()
@@ -370,6 +373,24 @@ fun SyncSettingsScreen(
                                 color = MaterialTheme.colorScheme.tertiary
                             )
                         }
+                        if (result.requestId.isNotEmpty()) {
+                            Text(text = "Request ${result.requestId}", style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+
+                    // The connection check: one line per thing that can be wrong, each with its code
+                    OutlinedButton(
+                        onClick = { viewModel.checkConnection() },
+                        modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Check the connection to the peer" }
+                    ) {
+                        Text("Check connection")
+                    }
+                    checkRows?.forEach { row ->
+                        Text(
+                            text = (if (row.passed) "✓ " else "✗ ") + row.name + ": " + row.detail + (if (row.code.isEmpty()) "" else " (" + row.code + ")"),
+                            color = if (row.passed) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall
+                        )
                     }
 
                     // Sync error

@@ -62,6 +62,7 @@ class AdbCommandReceiver : BroadcastReceiver() {
 
             "SYNC" -> syncResult(repo.sync().getOrThrow())
             "EXCHANGE" -> syncResult(repo.operate("exchange").getOrThrow())
+            "CHECK" -> repo.checkConnection(intent.need("peer")).getOrThrow().joinToString("\n") { (if (it.passed) "ok   " else "FAIL ") + it.name + ": " + it.detail + (if (it.code.isEmpty()) "" else " (" + it.code + ")") }
             "LISTEN_ON" -> { com.dotancohen.voiceandroid.data.SyncListenerService.start(context); "OK listening" }
             "LISTEN_OFF" -> { com.dotancohen.voiceandroid.data.SyncListenerService.stop(context); "OK stopped" }
             "DELIVER" -> syncResult(repo.operate("deliver").getOrThrow())
@@ -428,8 +429,9 @@ class AdbCommandReceiver : BroadcastReceiver() {
 
     private fun syncResult(r: com.dotancohen.voiceandroid.data.SyncResult): String {
         val warnings = if (r.warnings.isEmpty()) "" else " warnings=" + JSONArray(r.warnings)
-        return if (r.success) "success received=${r.notesReceived} sent=${r.notesSent}$warnings"
-        else "failed error=${r.errorMessage}$warnings"
+        val request = if (r.requestId.isEmpty()) "" else " request=${r.requestId}"
+        return if (r.success) "success received=${r.notesReceived} sent=${r.notesSent}$warnings$request"
+        else "failed error=${r.errorMessage}$warnings$request"
     }
 
     private suspend fun noteJson(repo: VoiceRepository, n: com.dotancohen.voiceandroid.data.Note): JSONObject {

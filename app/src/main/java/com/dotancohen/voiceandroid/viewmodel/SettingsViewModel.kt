@@ -296,6 +296,25 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
+    /** The rows of the last connection check, or null (Stage 12). */
+    private val _checkRows = MutableStateFlow<List<com.dotancohen.voiceandroid.data.CheckRow>?>(null)
+    val checkRows: StateFlow<List<com.dotancohen.voiceandroid.data.CheckRow>?> = _checkRows.asStateFlow()
+
+    /** Check the connection to the configured peer: nothing is changed. */
+    fun checkConnection() {
+        val peerId = _serverPeerId.value
+        if (peerId.isBlank()) {
+            _checkRows.value = listOf(com.dotancohen.voiceandroid.data.CheckRow("Peer", false, "No peer is configured", ""))
+            return
+        }
+        viewModelScope.launch {
+            _checkRows.value = null
+            repository.checkConnection(peerId)
+                .onSuccess { _checkRows.value = it }
+                .onFailure { _checkRows.value = listOf(com.dotancohen.voiceandroid.data.CheckRow("Check", false, it.message ?: "The check could not run", "")) }
+        }
+    }
+
     /** Exchange with the peer: sync, then send and fetch recordings (the terms table). */
     fun exchange() {
         if (_isSyncing.value) return

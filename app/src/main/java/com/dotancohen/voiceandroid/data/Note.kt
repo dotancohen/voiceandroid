@@ -32,8 +32,15 @@ data class SyncResult(
     val bytesMoved: Long = 0,
     val errorMessage: String? = null,
     /** Non-fatal problems, e.g. a cloud upload that will be retried on the next sync */
-    val warnings: List<String> = emptyList()
+    val warnings: List<String> = emptyList(),
+    /** The id of the operation, on every request of it and in both logs (Stage 12) */
+    val requestId: String = "",
+    /** The peer's clock minus this phone's, in seconds, past a minute; else 0 */
+    val clockSkewSeconds: Long = 0
 )
+
+/** One row of a connection check (Stage 12): what was checked, whether it passed, a sentence and a code. */
+data class CheckRow(val name: String, val passed: Boolean, val detail: String, val code: String)
 
 /**
  * Data class representing an audio file attachment.

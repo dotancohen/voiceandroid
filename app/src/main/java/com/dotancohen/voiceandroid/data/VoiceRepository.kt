@@ -246,7 +246,9 @@ class VoiceRepository(private val context: Context) {
                 notesReceived = result.notesReceived,
                 notesSent = result.notesSent,
                 errorMessage = result.errorMessage,
-                warnings = result.warnings
+                warnings = result.warnings,
+                requestId = result.requestId,
+                clockSkewSeconds = result.clockSkewSeconds
             ))
         } catch (e: VoiceCoreException) {
             AppLogger.e(TAG, "Sync failed", e)
@@ -274,13 +276,26 @@ class VoiceRepository(private val context: Context) {
                 filesFetched = result.filesFetched,
                 bytesMoved = result.bytesMoved.toLong(),
                 errorMessage = result.errorMessage,
-                warnings = result.warnings
+                warnings = result.warnings,
+                requestId = result.requestId,
+                clockSkewSeconds = result.clockSkewSeconds
             ))
         } catch (e: VoiceCoreException) {
             AppLogger.e(TAG, "$operation failed", e)
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
             AppLogger.e(TAG, "$operation failed", e)
+            Result.failure(e)
+        }
+    }
+
+    /** Check the connection to a peer: one row per thing that can be wrong (Stage 12). Nothing is changed. */
+    suspend fun checkConnection(peerId: String): Result<List<CheckRow>> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().checkConnection(peerId).map { CheckRow(it.name, it.passed, it.detail, it.code) })
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }
@@ -331,7 +346,9 @@ class VoiceRepository(private val context: Context) {
                 notesReceived = result.notesReceived,
                 notesSent = result.notesSent,
                 errorMessage = result.errorMessage,
-                warnings = result.warnings
+                warnings = result.warnings,
+                requestId = result.requestId,
+                clockSkewSeconds = result.clockSkewSeconds
             ))
         } catch (e: VoiceCoreException) {
             AppLogger.e(TAG, "Initial sync failed", e)

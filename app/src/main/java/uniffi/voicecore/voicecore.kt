@@ -942,6 +942,8 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -980,6 +982,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_audio_file_in_cloud(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_certificate_fingerprint(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_check_connection(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_clear_audio_file_storage(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1321,6 +1325,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_certificate_fingerprint(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_check_connection(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_clear_audio_file_storage(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_clear_sync_state(
@@ -1572,6 +1578,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_certificate_fingerprint() != 62287.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_check_connection() != 2799.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_audio_file_storage() != 14206.toShort()) {
@@ -2346,6 +2355,12 @@ public interface VoiceClientInterface {
      * if there is none yet: what a peer pins, and what the sync screen shows.
      */
     fun `certificateFingerprint`(): kotlin.String
+    
+    /**
+     * Check the connection to a peer (Stage 12): one row per thing that
+     * can be wrong, each with its refusal code. Nothing is changed.
+     */
+    fun `checkConnection`(`peerId`: kotlin.String): List<CheckRowData>
     
     /**
      * Clear an audio file's cloud storage information.
@@ -3259,6 +3274,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_certificate_fingerprint(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Check the connection to a peer (Stage 12): one row per thing that
+     * can be wrong, each with its refusal code. Nothing is changed.
+     */
+    @Throws(VoiceCoreException::class)override fun `checkConnection`(`peerId`: kotlin.String): List<CheckRowData> {
+            return FfiConverterSequenceTypeCheckRowData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_check_connection(
+        it, FfiConverterString.lower(`peerId`),_status)
 }
     }
     )
@@ -5222,6 +5254,49 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
 
 
 /**
+ * One row of a connection check (Stage 12)
+ */
+data class CheckRowData (
+    var `name`: kotlin.String, 
+    var `passed`: kotlin.Boolean, 
+    var `detail`: kotlin.String, 
+    var `code`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeCheckRowData: FfiConverterRustBuffer<CheckRowData> {
+    override fun read(buf: ByteBuffer): CheckRowData {
+        return CheckRowData(
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: CheckRowData) = (
+            FfiConverterString.allocationSize(value.`name`) +
+            FfiConverterBoolean.allocationSize(value.`passed`) +
+            FfiConverterString.allocationSize(value.`detail`) +
+            FfiConverterString.allocationSize(value.`code`)
+    )
+
+    override fun write(value: CheckRowData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`name`, buf)
+            FfiConverterBoolean.write(value.`passed`, buf)
+            FfiConverterString.write(value.`detail`, buf)
+            FfiConverterString.write(value.`code`, buf)
+    }
+}
+
+
+
+/**
  * A recorded disagreement between two versions of one field.
  *
  * `kind` is one of "text", "scalar", "flags", "membership", "delete";
@@ -5810,7 +5885,15 @@ data class SyncResultData (
     /**
      * Non-fatal problems, e.g. a cloud upload that will be retried next sync
      */
-    var `warnings`: List<kotlin.String>
+    var `warnings`: List<kotlin.String>, 
+    /**
+     * The id of the operation, on every request of it and in both logs
+     */
+    var `requestId`: kotlin.String, 
+    /**
+     * The peer's clock minus this phone's, in seconds, past a minute; else 0
+     */
+    var `clockSkewSeconds`: kotlin.Long
 ) {
     
     companion object
@@ -5830,6 +5913,8 @@ public object FfiConverterTypeSyncResultData: FfiConverterRustBuffer<SyncResultD
             FfiConverterULong.read(buf),
             FfiConverterOptionalString.read(buf),
             FfiConverterSequenceString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterLong.read(buf),
         )
     }
 
@@ -5841,7 +5926,9 @@ public object FfiConverterTypeSyncResultData: FfiConverterRustBuffer<SyncResultD
             FfiConverterInt.allocationSize(value.`filesFetched`) +
             FfiConverterULong.allocationSize(value.`bytesMoved`) +
             FfiConverterOptionalString.allocationSize(value.`errorMessage`) +
-            FfiConverterSequenceString.allocationSize(value.`warnings`)
+            FfiConverterSequenceString.allocationSize(value.`warnings`) +
+            FfiConverterString.allocationSize(value.`requestId`) +
+            FfiConverterLong.allocationSize(value.`clockSkewSeconds`)
     )
 
     override fun write(value: SyncResultData, buf: ByteBuffer) {
@@ -5853,6 +5940,8 @@ public object FfiConverterTypeSyncResultData: FfiConverterRustBuffer<SyncResultD
             FfiConverterULong.write(value.`bytesMoved`, buf)
             FfiConverterOptionalString.write(value.`errorMessage`, buf)
             FfiConverterSequenceString.write(value.`warnings`, buf)
+            FfiConverterString.write(value.`requestId`, buf)
+            FfiConverterLong.write(value.`clockSkewSeconds`, buf)
     }
 }
 
@@ -6666,6 +6755,34 @@ public object FfiConverterSequenceTypeAudioFileData: FfiConverterRustBuffer<List
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeAudioFileData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeCheckRowData: FfiConverterRustBuffer<List<CheckRowData>> {
+    override fun read(buf: ByteBuffer): List<CheckRowData> {
+        val len = buf.getInt()
+        return List<CheckRowData>(len) {
+            FfiConverterTypeCheckRowData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<CheckRowData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeCheckRowData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<CheckRowData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeCheckRowData.write(it, buf)
         }
     }
 }
