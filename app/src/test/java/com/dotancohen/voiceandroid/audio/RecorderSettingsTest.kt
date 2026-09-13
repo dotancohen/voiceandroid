@@ -43,6 +43,16 @@ class RecorderSettingsTest {
     }
 
     @Test
+    fun `the speech bitrate is a fourth format beside the three, in the same container`() {
+        assertEquals(listOf("opus", "opus32", "aac", "wav16"), RecorderPreferences.FORMATS)
+        assertEquals("ogg", RecorderPreferences.formatExtension(RecorderPreferences.FORMAT_OPUS_SPEECH))
+        assertEquals("Opus, speech, 32 kb/s (.ogg)", RecorderPreferences.formatTitle(RecorderPreferences.FORMAT_OPUS_SPEECH))
+        val prefs = settings("recording_format" to "opus32")
+        assertEquals(RecorderPreferences.FORMAT_OPUS_SPEECH, prefs.recordingFormat)
+        assertEquals("the default is untouched", RecorderPreferences.FORMAT_OPUS, settings().recordingFormat)
+    }
+
+    @Test
     fun `a call behaviour nobody has heard of pauses`() {
         // Pausing is the safe answer: the recording waits rather than
         // filling minutes with silence the user did not ask for.

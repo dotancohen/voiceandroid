@@ -46,7 +46,11 @@ adb exec-out "run-as $PACKAGE tar -cf - -C /data/data/$PACKAGE files" > "$OUT/pr
   || die "could not read the private data"
 
 # --- the recordings -------------------------------------------------------
+# Since Stage 13 recordings live in the shared Recordings/Voice folder, which
+# survives the application; the application's own files directory is copied
+# too, for recordings made before that.
 AUDIO="/storage/emulated/0/Android/data/$PACKAGE/files"
+SHARED="/storage/emulated/0/Recordings/Voice"
 say "  recordings"
 if adb shell "[ -d '$AUDIO' ]" ; then
     adb exec-out "tar -cf - -C $(dirname "$AUDIO") $(basename "$AUDIO")" > "$OUT/external-files.tar" \
@@ -54,6 +58,13 @@ if adb shell "[ -d '$AUDIO' ]" ; then
 else
     say "    (no external files directory on the phone)"
     : > "$OUT/external-files.tar"
+fi
+if adb shell "[ -d '$SHARED' ]" ; then
+    adb exec-out "tar -cf - -C $(dirname "$SHARED") $(basename "$SHARED")" > "$OUT/shared-recordings.tar" \
+      || die "could not read the shared recordings folder"
+else
+    say "    (no Recordings/Voice folder on the phone)"
+    : > "$OUT/shared-recordings.tar"
 fi
 
 # --- prove it ------------------------------------------------------------
@@ -70,9 +81,9 @@ DB_ENTRY=$(tar -tf "$OUT/private-files.tar" | grep -c 'files/notes\.db$' || true
 WAL=$(tar -tf "$OUT/private-files.tar" | grep -c 'files/notes\.db-wal$' || true)
 [ "$WAL" -ge 1 ] || say "    note: no notes.db-wal in the archive (the app may have checkpointed it)"
 
-RECORDINGS=$(tar -tf "$OUT/external-files.tar" | grep -cE '\.(opus|m4a|wav|mp3|ogg)$' || true)
+RECORDINGS=$(cat "$OUT/external-files.tar" "$OUT/shared-recordings.tar" | tar -tf - 2>/dev/null | grep -cE '\.(opus|m4a|wav|mp3|ogg)$' || true)
 PRIVATE_BYTES=$(stat -c %s "$OUT/private-files.tar")
-EXTERNAL_BYTES=$(stat -c %s "$OUT/external-files.tar")
+EXTERNAL_BYTES=$(( $(stat -c %s "$OUT/external-files.tar") + $(stat -c %s "$OUT/shared-recordings.tar") ))
 
 cat > "$OUT/what-is-in-here.txt" <<EOF
 Voice backup from the phone
@@ -85,6 +96,7 @@ Voice backup from the phone
 To restore, with the app installed and stopped:
   adb exec-out run-as $PACKAGE tar -xf - -C /data/data/$PACKAGE < private-files.tar
   adb push --sync <extracted external files> /storage/emulated/0/Android/data/$PACKAGE/
+  adb push --sync <extracted Voice folder> /storage/emulated/0/Recordings/
 EOF
 
 say ""

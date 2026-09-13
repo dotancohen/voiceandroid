@@ -129,26 +129,34 @@ class RecorderPreferences internal constructor(
 
         /** Opus 128 kb/s at 48 kHz in an Ogg container (.ogg). */
         const val FORMAT_OPUS = "opus"
+        /**
+         * Opus 32 kb/s at 48 kHz in the same Ogg container (Stage 13): transparent
+         * for voice, and Whisper resamples to 16 kHz regardless. Added beside the
+         * others, not in place of one; the default is unchanged.
+         */
+        const val FORMAT_OPUS_SPEECH = "opus32"
         /** AAC 96 kb/s at 44.1 kHz in an MP4 container (.m4a). */
         const val FORMAT_AAC = "aac"
         /** Uncompressed 16 kHz mono 16-bit PCM (.wav): Whisper's native input. */
         const val FORMAT_WAV16 = "wav16"
-        val FORMATS = listOf(FORMAT_OPUS, FORMAT_AAC, FORMAT_WAV16)
+        val FORMATS = listOf(FORMAT_OPUS, FORMAT_OPUS_SPEECH, FORMAT_AAC, FORMAT_WAV16)
 
         fun formatExtension(format: String): String = when (format) {
-            FORMAT_OPUS -> "ogg"
+            FORMAT_OPUS, FORMAT_OPUS_SPEECH -> "ogg"
             FORMAT_WAV16 -> "wav"
             else -> "m4a"
         }
 
         fun formatTitle(format: String): String = when (format) {
             FORMAT_OPUS -> "Opus, 128 kb/s, 48 kHz (.ogg)"
+            FORMAT_OPUS_SPEECH -> "Opus, speech, 32 kb/s (.ogg)"
             FORMAT_WAV16 -> "WAV, 16 kHz, 16-bit mono (.wav)"
             else -> "AAC, 96 kb/s, 44.1 kHz (.m4a)"
         }
 
         fun formatDescription(format: String): String = when (format) {
             FORMAT_OPUS -> "Best sound per megabyte and more than Whisper can use. About 1 MB per minute."
+            FORMAT_OPUS_SPEECH -> "Transparent for voice, a quarter of the size; transcription is unchanged. About 0.25 MB per minute, 14 MB an hour."
             FORMAT_WAV16 -> "Exactly what Whisper listens to, so on-device transcription needs no conversion. About 1.9 MB per minute."
             else -> "Plays everywhere. About 0.7 MB per minute."
         }

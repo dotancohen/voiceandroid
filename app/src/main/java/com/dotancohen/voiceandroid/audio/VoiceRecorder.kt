@@ -176,10 +176,10 @@ object VoiceRecorder {
             } else {
                 val r = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) MediaRecorder(app) else @Suppress("DEPRECATION") MediaRecorder()
                 r.setAudioSource(MediaRecorder.AudioSource.MIC)
-                if (format == RecorderPreferences.FORMAT_OPUS) {
+                if (format == RecorderPreferences.FORMAT_OPUS || format == RecorderPreferences.FORMAT_OPUS_SPEECH) {
                     r.setOutputFormat(MediaRecorder.OutputFormat.OGG)
                     r.setAudioEncoder(MediaRecorder.AudioEncoder.OPUS)
-                    r.setAudioEncodingBitRate(128_000)
+                    r.setAudioEncodingBitRate(if (format == RecorderPreferences.FORMAT_OPUS_SPEECH) 32_000 else 128_000)
                     r.setAudioSamplingRate(48_000)
                 } else {
                     r.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
@@ -365,7 +365,7 @@ object VoiceRecorder {
                 val ext = RecorderPreferences.formatExtension(format)
                 val filename = "Recording " + SimpleDateFormat("yyyy-MM-dd HH-mm-ss", Locale.US).format(Date(startedAt)) + "." + ext
                 val audioFileId = repository.importAudioFileIntoNote(note, filename, startedAt / 1000, duration).getOrThrow()
-                repository.copyAudioFileToStorage(app, Uri.fromFile(file), audioFileId, ext).getOrThrow()
+                repository.copyAudioFileToStorage(app, Uri.fromFile(file), audioFileId).getOrThrow()
                 file.delete()
                 tempFile = null
                 AppLogger.i(TAG, "Saved recording $filename into note ${note.take(8)} (${duration}s)")

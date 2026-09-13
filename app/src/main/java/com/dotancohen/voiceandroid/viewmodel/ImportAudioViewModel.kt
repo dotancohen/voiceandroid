@@ -343,7 +343,7 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
             .getOrElse { throw it }
 
         // Copy file to audio storage
-        repository.copyAudioFileToStorage(context, uri, importResult.audioFileId, extension)
+        repository.copyAudioFileToStorage(context, uri, importResult.audioFileId)
             .getOrElse { throw it }
 
         // Add tags to the note

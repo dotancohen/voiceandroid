@@ -30,12 +30,24 @@ class VoiceRepository(private val context: Context) {
     private val dataDir: String = context.filesDir.absolutePath
     private val prefs = context.getSharedPreferences("voice_settings", Context.MODE_PRIVATE)
 
-    // Default audio file directory (app's external storage - accessible via file manager)
-    val defaultAudioFileDir: String by lazy {
-        val dir = context.getExternalFilesDir("audio") ?: File(context.filesDir, "audio")
-        dir.mkdirs()
-        dir.absolutePath
-    }
+    /**
+     * Where recordings go unless the user chose a folder (Stage 13): the
+     * `Voice` folder of the shared Recordings directory, which survives the
+     * application being replaced or removed and is reachable over a cable;
+     * the application's own directory only until all-files access is granted.
+     * The folder holds recordings and nothing else.
+     */
+    val defaultAudioFileDir: String
+        get() {
+            val shared = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_RECORDINGS), "Voice")
+            val dir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && Environment.isExternalStorageManager() && (shared.isDirectory || shared.mkdirs())) {
+                shared
+            } else {
+                context.getExternalFilesDir("audio") ?: File(context.filesDir, "audio")
+            }
+            dir.mkdirs()
+            return dir.absolutePath
+        }
 
     // Current audio file directory (may be user-configured or default)
     private var _audioFileDir: String? = null
@@ -649,7 +661,8 @@ class VoiceRepository(private val context: Context) {
                     modifiedAt = data.modifiedAt,
                     deletedAt = data.deletedAt,
                     storageProvider = data.storageProvider,
-                    storageKey = data.storageKey
+                    storageKey = data.storageKey,
+                    localName = data.localName
                 )
             }
             Result.success(audioFiles)
@@ -678,7 +691,8 @@ class VoiceRepository(private val context: Context) {
                     modifiedAt = data.modifiedAt,
                     deletedAt = data.deletedAt,
                     storageProvider = data.storageProvider,
-                    storageKey = data.storageKey
+                    storageKey = data.storageKey,
+                    localName = data.localName
                 )
             }
             Result.success(audioFile)
@@ -721,7 +735,8 @@ class VoiceRepository(private val context: Context) {
                     modifiedAt = data.modifiedAt,
                     deletedAt = data.deletedAt,
                     storageProvider = data.storageProvider,
-                    storageKey = data.storageKey
+                    storageKey = data.storageKey,
+                    localName = data.localName
                 )
             }
             Result.success(audioFiles)
@@ -1626,11 +1641,13 @@ class VoiceRepository(private val context: Context) {
     suspend fun copyAudioFileToStorage(
         context: Context,
         sourceUri: android.net.Uri,
-        audioFileId: String,
-        extension: String
+        audioFileId: String
     ): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            val destFile = File(audioFileDir, "$audioFileId.$extension")
+            // The row names the file (Stage 13): the recording's start, the tail of its id, the extension
+            val localName = ensureInitialized().getAudioFile(audioFileId)?.localName?.takeIf { it.isNotEmpty() }
+                ?: return@withContext Result.failure(Exception("The recording $audioFileId has no row yet"))
+            val destFile = File(audioFileDir, localName)
             context.contentResolver.openInputStream(sourceUri)?.use { input ->
                 destFile.outputStream().use { output ->
                     input.copyTo(output)
