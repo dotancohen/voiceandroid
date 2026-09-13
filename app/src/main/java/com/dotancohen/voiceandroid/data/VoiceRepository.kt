@@ -748,6 +748,28 @@ class VoiceRepository(private val context: Context) {
     /**
      * Get the file path for an audio file (if it exists on disk).
      */
+    /**
+     * The bars of a recording's waveform from the levels a device kept with
+     * it (FILE-20), or null when no device decoded it yet.
+     */
+    suspend fun waveformBars(audioFileId: String, barCount: Int): List<Float>? = withContext(Dispatchers.IO) {
+        try {
+            ensureInitialized().waveformBars(audioFileId, barCount.toUInt())
+        } catch (e: Exception) {
+            AppLogger.w(TAG, "Could not read the waveform levels of $audioFileId: ${e.message}")
+            null
+        }
+    }
+
+    /** Keep the levels this phone decoded for a recording (FILE-20); they reach every device. */
+    suspend fun setWaveformLevels(audioFileId: String, levels: ByteArray) = withContext(Dispatchers.IO) {
+        try {
+            ensureInitialized().setWaveformLevels(audioFileId, levels)
+        } catch (e: Exception) {
+            AppLogger.w(TAG, "Could not keep the waveform levels of $audioFileId: ${e.message}")
+        }
+    }
+
     suspend fun getAudioFilePath(audioFileId: String): Result<String?> = withContext(Dispatchers.IO) {
         try {
             val voiceClient = ensureInitialized()

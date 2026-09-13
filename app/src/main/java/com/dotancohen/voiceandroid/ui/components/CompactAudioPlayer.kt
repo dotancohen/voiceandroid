@@ -125,7 +125,7 @@ fun CompactAudioPlayer(
     LaunchedEffect(filePath, playbackState.duration) {
         val path = filePath ?: return@LaunchedEffect
         if (waveform.isNotEmpty() || drawing) return@LaunchedEffect
-        waveformExtractor.cachedWaveform(path)?.let {
+        waveformExtractor.cachedWaveform(path, audioFileId)?.let {
             waveform = it
             askBeforeDrawing = false
             return@LaunchedEffect
@@ -134,7 +134,7 @@ fun CompactAudioPlayer(
         if (large) {
             askBeforeDrawing = true
         } else {
-            waveform = waveformExtractor.extractWaveform(path)
+            waveform = waveformExtractor.extractWaveform(path, audioFileId)
         }
     }
 
@@ -142,7 +142,7 @@ fun CompactAudioPlayer(
         val path = filePath ?: return
         drawing = true
         askBeforeDrawing = false
-        waveform = waveformExtractor.extractWaveform(path)
+        waveform = waveformExtractor.extractWaveform(path, audioFileId)
         drawing = false
     }
 

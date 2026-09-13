@@ -1023,6 +1023,12 @@ internal open class UniffiVTableCallbackInterfaceOperationProgress(
 
 
 
+
+
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1268,6 +1274,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_set_setting(`ptr`: Pointer,`key`: RustBuffer.ByValue,`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_set_waveform_levels(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,`levels`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_snapshot(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_start_listener(`ptr`: Pointer,`port`: Short,uniffi_out_err: UniffiRustCallStatus, 
@@ -1304,12 +1312,16 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_upload(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_waveform_bars(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,`barCount`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_withdraw_code(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_init_callback_vtable_keystorewrapper(`vtable`: UniffiVTableCallbackInterfaceKeystoreWrapper,
     ): Unit
     fun uniffi_voicecore_fn_init_callback_vtable_operationprogress(`vtable`: UniffiVTableCallbackInterfaceOperationProgress,
     ): Unit
+    fun uniffi_voicecore_fn_func_audio_file_formats(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_voicecore_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -1424,6 +1436,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun ffi_voicecore_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    fun uniffi_voicecore_checksum_func_audio_file_formats(
+    ): Short
     fun uniffi_voicecore_checksum_func_generate_device_id(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_accept_conflict(
@@ -1644,6 +1658,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_setting(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_set_waveform_levels(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_snapshot(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_start_listener(
@@ -1680,6 +1696,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_upload(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_waveform_bars(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_withdraw_code(
     ): Short
     fun uniffi_voicecore_checksum_constructor_voiceclient_new(
@@ -1707,6 +1725,9 @@ private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
 
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: UniffiLib) {
+    if (lib.uniffi_voicecore_checksum_func_audio_file_formats() != 14686.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_func_generate_device_id() != 30760.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -2037,6 +2058,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_setting() != 1953.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_waveform_levels() != 62183.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_snapshot() != 5591.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -2089,6 +2113,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_upload() != 59683.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_waveform_bars() != 54305.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_withdraw_code() != 58304.toShort()) {
@@ -2265,6 +2292,29 @@ public object FfiConverterLong: FfiConverter<Long, Long> {
 
     override fun write(value: Long, buf: ByteBuffer) {
         buf.putLong(value)
+    }
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterFloat: FfiConverter<Float, Float> {
+    override fun lift(value: Float): Float {
+        return value
+    }
+
+    override fun read(buf: ByteBuffer): Float {
+        return buf.getFloat()
+    }
+
+    override fun lower(value: Float): Float {
+        return value
+    }
+
+    override fun allocationSize(value: Float) = 4UL
+
+    override fun write(value: Float, buf: ByteBuffer) {
+        buf.putFloat(value)
     }
 }
 
@@ -3244,6 +3294,12 @@ public interface VoiceClientInterface {
     fun `setSetting`(`key`: kotlin.String, `value`: kotlin.String)
     
     /**
+     * Keep the levels a recording's waveform is drawn from (FILE-20), after
+     * this phone decoded it; they reach every device with the recording.
+     */
+    fun `setWaveformLevels`(`audioFileId`: kotlin.String, `levels`: kotlin.ByteArray)
+    
+    /**
      * Copy the database into its snapshot directory now; returns the path.
      */
     fun `snapshot`(): kotlin.String
@@ -3371,6 +3427,12 @@ public interface VoiceClientInterface {
      * Runs only when the user asks; a sync never uploads.
      */
     fun `upload`(): UploadResultData
+    
+    /**
+     * The bars of a recording's waveform from the levels a device kept, so
+     * the phone draws it without decoding (FILE-20); None when none did yet.
+     */
+    fun `waveformBars`(`audioFileId`: kotlin.String, `barCount`: kotlin.UInt): List<kotlin.Float>?
     
     /**
      * Hide the code: withdraw the offer.
@@ -5357,6 +5419,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Keep the levels a recording's waveform is drawn from (FILE-20), after
+     * this phone decoded it; they reach every device with the recording.
+     */
+    @Throws(VoiceCoreException::class)override fun `setWaveformLevels`(`audioFileId`: kotlin.String, `levels`: kotlin.ByteArray)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_waveform_levels(
+        it, FfiConverterString.lower(`audioFileId`),FfiConverterByteArray.lower(`levels`),_status)
+}
+    }
+    
+    
+
+    
+    /**
      * Copy the database into its snapshot directory now; returns the path.
      */
     @Throws(VoiceCoreException::class)override fun `snapshot`(): kotlin.String {
@@ -5674,6 +5752,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_upload(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * The bars of a recording's waveform from the levels a device kept, so
+     * the phone draws it without decoding (FILE-20); None when none did yet.
+     */
+    @Throws(VoiceCoreException::class)override fun `waveformBars`(`audioFileId`: kotlin.String, `barCount`: kotlin.UInt): List<kotlin.Float>? {
+            return FfiConverterOptionalSequenceFloat.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_waveform_bars(
+        it, FfiConverterString.lower(`audioFileId`),FfiConverterUInt.lower(`barCount`),_status)
 }
     }
     )
@@ -7733,6 +7828,66 @@ public object FfiConverterOptionalTypeOperationProgress: FfiConverterRustBuffer<
 /**
  * @suppress
  */
+public object FfiConverterOptionalSequenceFloat: FfiConverterRustBuffer<List<kotlin.Float>?> {
+    override fun read(buf: ByteBuffer): List<kotlin.Float>? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterSequenceFloat.read(buf)
+    }
+
+    override fun allocationSize(value: List<kotlin.Float>?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterSequenceFloat.allocationSize(value)
+        }
+    }
+
+    override fun write(value: List<kotlin.Float>?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterSequenceFloat.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceFloat: FfiConverterRustBuffer<List<kotlin.Float>> {
+    override fun read(buf: ByteBuffer): List<kotlin.Float> {
+        val len = buf.getInt()
+        return List<kotlin.Float>(len) {
+            FfiConverterFloat.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<kotlin.Float>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterFloat.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<kotlin.Float>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterFloat.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceString: FfiConverterRustBuffer<List<kotlin.String>> {
     override fun read(buf: ByteBuffer): List<kotlin.String> {
         val len = buf.getInt()
@@ -8157,6 +8312,19 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
         }
     }
 }
+        /**
+         * Every audio format a recording may be imported in, by extension: the one
+         * list, kept in the core.
+         */ fun `audioFileFormats`(): List<kotlin.String> {
+            return FfiConverterSequenceString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_func_audio_file_formats(
+        _status)
+}
+    )
+    }
+    
+
         /**
          * Generate a new UUID7 device ID
          */ fun `generateDeviceId`(): kotlin.String {

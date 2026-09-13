@@ -124,6 +124,7 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
     implementation(libs.androidx.media3.common)
+    implementation(libs.jellyfin.media3.ffmpeg.decoder)
 
     // JNA for UniFFI bindings
     implementation("net.java.dev.jna:jna:5.14.0@aar")

@@ -1,6 +1,7 @@
 package com.dotancohen.voiceandroid.audio
 
 import android.content.Context
+import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.util.AppLogger
 import com.dotancohen.voiceandroid.util.Magic
 import android.media.MediaCodec
@@ -46,8 +47,11 @@ class WaveformExtractor(private val context: Context) {
      * What lets a screen show the waveform of a long recording at once when it
      * was drawn before, and offer the button when it was not.
      */
-    suspend fun cachedWaveform(filePath: String): List<Float>? = withContext(Dispatchers.IO) {
+    suspend fun cachedWaveform(filePath: String, audioFileId: String? = null): List<Float>? = withContext(Dispatchers.IO) {
         try {
+            // Levels a device kept with the recording (FILE-20): the bars
+            // without decoding, whoever decoded it
+            storedBars(audioFileId)?.let { return@withContext it }
             val file = File(filePath)
             if (!file.exists()) return@withContext null
             WaveformCache(File(context.filesDir, CACHE_DIRECTORY))
@@ -57,8 +61,25 @@ class WaveformExtractor(private val context: Context) {
         }
     }
 
-    suspend fun extractWaveform(filePath: String): List<Float> = withContext(Dispatchers.IO) {
+    /**
+     * The bars from the levels a device kept with the recording (FILE-20),
+     * or null when no device decoded it yet.
+     */
+    private suspend fun storedBars(audioFileId: String?): List<Float>? {
+        if (audioFileId == null) return null
+        return VoiceRepository.getInstance(context)
+            .waveformBars(audioFileId, WAVEFORM_BAR_COUNT)
+            ?.takeIf { it.isNotEmpty() }
+    }
+
+    /**
+     * The waveform of a recording: from the levels a device kept with it
+     * (FILE-20), else from this phone's cache, else decoded here, when the
+     * levels are kept with the recording for every other device.
+     */
+    suspend fun extractWaveform(filePath: String, audioFileId: String? = null): List<Float> = withContext(Dispatchers.IO) {
         try {
+            storedBars(audioFileId)?.let { return@withContext it }
             val file = File(filePath)
             if (!file.exists()) {
                 return@withContext emptyList()
@@ -74,10 +95,18 @@ class WaveformExtractor(private val context: Context) {
             // convert audio. Two screens each asking for their own decoder is
             // how a waveform came back empty and was never drawn.
             val startedAt = System.currentTimeMillis()
+            var levels: ByteArray? = null
             val bars = decoding.withPermit {
                 // Another screen may have asked for the same recording while
                 // this one waited for the permit.
-                cache.read(file, fingerprint) ?: draw(filePath)
+                cache.read(file, fingerprint) ?: draw(filePath)?.let { accumulator ->
+                    levels = accumulator.levels()
+                    accumulator.bars()
+                } ?: emptyList()
+            }
+            val decodedLevels = levels
+            if (audioFileId != null && decodedLevels != null && decodedLevels.isNotEmpty()) {
+                VoiceRepository.getInstance(context).setWaveformLevels(audioFileId, decodedLevels)
             }
             if (bars.isNotEmpty()) {
                 cache.write(file, fingerprint, bars)
@@ -108,10 +137,10 @@ class WaveformExtractor(private val context: Context) {
      * the failure is immediate rather than a wait. One retry after a moment
      * turns "no waveform at all" into a waveform a moment later.
      */
-    private suspend fun draw(filePath: String): List<Float> {
+    private suspend fun draw(filePath: String): WaveformAccumulator? {
         repeat(2) { attempt ->
             try {
-                return extractWaveformFromFile(filePath)
+                return decodeFile(filePath)
             } catch (e: Throwable) {
                 if (attempt == 0) {
                     AppLogger.d(TAG, "No decoder for the waveform of $filePath yet ($e); trying once more")
@@ -121,10 +150,11 @@ class WaveformExtractor(private val context: Context) {
                 }
             }
         }
-        return emptyList()
+        return null
     }
 
-    private fun extractWaveformFromFile(filePath: String): List<Float> {
+    /** Decode the recording into an accumulator, which gives both its bars and its levels. */
+    private fun decodeFile(filePath: String): WaveformAccumulator? {
         val extractor = MediaExtractor()
         var decoder: MediaCodec? = null
 
@@ -146,18 +176,18 @@ class WaveformExtractor(private val context: Context) {
             }
 
             if (audioTrackIndex < 0 || audioFormat == null) {
-                return emptyList()
+                return null
             }
 
             extractor.selectTrack(audioTrackIndex)
 
-            val mime = audioFormat.getString(MediaFormat.KEY_MIME) ?: return emptyList()
+            val mime = audioFormat.getString(MediaFormat.KEY_MIME) ?: return null
             val sampleRate = audioFormat.getInteger(MediaFormat.KEY_SAMPLE_RATE)
             val channelCount = audioFormat.getIntegerOrDefault(MediaFormat.KEY_CHANNEL_COUNT, 1)
             val duration = audioFormat.getLongOrDefault(MediaFormat.KEY_DURATION, 0L)
 
             if (duration <= 0) {
-                return emptyList()
+                return null
             }
 
             // Create decoder
@@ -219,7 +249,7 @@ class WaveformExtractor(private val context: Context) {
                 }
             }
 
-            return accumulator.bars()
+            return accumulator
 
         } finally {
             decoder?.stop()
@@ -391,6 +421,22 @@ class WaveformAccumulator(private val barCount: Int = WAVEFORM_BAR_COUNT) {
                 if (slots[i] > loudestHere) loudestHere = slots[i]
             }
             scaled(loudestHere)
+        }
+    }
+
+    /**
+     * The levels the bars are drawn from, kept with the recording (FILE-20):
+     * one value from 0 to 255 per slot, the loudest slot at 255, as unsigned
+     * bytes. Any device draws the same bars from them without decoding the
+     * audio. Empty when no audio arrived at all.
+     */
+    fun levels(): ByteArray {
+        if (!any) return ByteArray(0)
+        if (inSlot > 0) commit()
+        var loudest = 0f
+        for (i in 0 until filled) if (slots[i] > loudest) loudest = slots[i]
+        return ByteArray(filled) { i ->
+            if (loudest > 0f) Math.round(slots[i] / loudest * 255f).coerceIn(0, 255).toByte() else 0
         }
     }
 

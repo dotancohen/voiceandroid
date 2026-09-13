@@ -6,6 +6,7 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -58,7 +59,7 @@ data class PlaybackState(
 class AudioPlayerManager(context: Context) {
 
     private val appContext = context.applicationContext
-    private val player: ExoPlayer = ExoPlayer.Builder(context).build()
+    private val player: ExoPlayer = buildPlayer(context)
     private val prefs = PlaybackPreferences(context)
 
     private val _playbackState = MutableStateFlow(PlaybackState(playbackSpeed = prefs.speed))
@@ -353,3 +354,16 @@ class AudioPlayerManager(context: Context) {
         _playbackState.value = _playbackState.value.update()
     }
 }
+
+/**
+ * The player, able to play every common audio format: the phone's own
+ * decoders first, and FFmpeg's for what the phone has no decoder for
+ * (EXTENSION_RENDERER_MODE_ON), such as MP2 or AC-3 on many phones.
+ */
+@OptIn(UnstableApi::class)
+private fun buildPlayer(context: Context): ExoPlayer =
+    ExoPlayer.Builder(
+        context,
+        DefaultRenderersFactory(context)
+            .setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_ON),
+    ).build()

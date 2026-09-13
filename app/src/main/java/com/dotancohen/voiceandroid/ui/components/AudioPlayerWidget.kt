@@ -118,12 +118,16 @@ fun AudioPlayerWidget(
     val playbackState by playerManager.playbackState.collectAsState()
     var waveforms by remember { mutableStateOf<Map<Int, List<Float>>>(emptyMap()) }
     var filePaths by remember { mutableStateOf<List<String>>(emptyList()) }
+    // The recording each of those files is, for the levels kept with it (FILE-20)
+    var fileIds by remember { mutableStateOf<List<String>>(emptyList()) }
 
     // Load file paths and set up player
     LaunchedEffect(audioFiles) {
-        val paths = audioFiles.mapNotNull { audioFile ->
-            getFilePath(audioFile.id)
+        val found = audioFiles.mapNotNull { audioFile ->
+            getFilePath(audioFile.id)?.let { audioFile.id to it }
         }
+        val paths = found.map { it.second }
+        fileIds = found.map { it.first }
         filePaths = paths
         // Say what each recording is called before any of them plays, so the
         // notification drawer names it rather than its id.
@@ -155,7 +159,7 @@ fun AudioPlayerWidget(
     LaunchedEffect(filePaths) {
         filePaths.forEachIndexed { index, path ->
             if (waveforms.containsKey(index)) return@forEachIndexed
-            waveformExtractor.cachedWaveform(path)?.let {
+            waveformExtractor.cachedWaveform(path, fileIds.getOrNull(index))?.let {
                 waveforms = waveforms + (index to it)
                 return@forEachIndexed
             }
@@ -165,7 +169,7 @@ fun AudioPlayerWidget(
             if (LargeRecording.isLarge(null, File(path).length())) {
                 askBeforeDrawing = askBeforeDrawing + index
             } else {
-                waveforms = waveforms + (index to waveformExtractor.extractWaveform(path))
+                waveforms = waveforms + (index to waveformExtractor.extractWaveform(path, fileIds.getOrNull(index)))
             }
         }
     }
@@ -174,7 +178,7 @@ fun AudioPlayerWidget(
         val path = filePaths.getOrNull(index) ?: return
         drawingNow = index
         askBeforeDrawing = askBeforeDrawing - index
-        waveforms = waveforms + (index to waveformExtractor.extractWaveform(path))
+        waveforms = waveforms + (index to waveformExtractor.extractWaveform(path, fileIds.getOrNull(index)))
         drawingNow = null
     }
 

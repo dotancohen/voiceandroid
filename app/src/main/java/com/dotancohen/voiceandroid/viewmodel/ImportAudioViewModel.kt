@@ -23,9 +23,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * Supported audio file extensions for import.
+ * Every common audio format a recording may be imported in, by extension: the
+ * one list, kept in the core. A file with any other extension is skipped.
  */
-val SUPPORTED_AUDIO_EXTENSIONS = setOf("mp3", "wav", "flac", "ogg", "opus", "m4a")
+val SUPPORTED_AUDIO_EXTENSIONS: Set<String> by lazy { uniffi.voicecore.audioFileFormats().toSet() }
 
 /**
  * Data class representing a tag with hierarchy information for selection.

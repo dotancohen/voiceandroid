@@ -197,6 +197,39 @@ class WaveformAccumulatorTest {
         assertTrue(result.all { it == 1f })
     }
 
+    /**
+     * FILE-20: the levels kept with a recording are the slots scaled so the
+     * loudest is 255, and the bars drawn from them (as the core draws them:
+     * the loudest of each share, scaled to the loudest) are the bars this
+     * phone draws itself, to within one step of 255.
+     */
+    @Test
+    fun `the levels kept with a recording draw the bars this phone draws`() {
+        val accumulator = WaveformAccumulator()
+        val total = 1_200 * 40
+        accumulator.expect(total.toLong())
+        for (i in 0 until total) accumulator.add(((i * 613 % 30_000) * (if (i % 7 == 0) -1 else 1)).toShort())
+        val bars = accumulator.bars()
+        val levels = accumulator.levels().map { it.toInt() and 0xff }
+        assertEquals(WAVEFORM_BAR_COUNT * 8, levels.size)
+        assertEquals(255, levels.max())
+        val loudest = levels.max().toFloat()
+        val redrawn = (0 until WAVEFORM_BAR_COUNT).map { bar ->
+            val from = bar * levels.size / WAVEFORM_BAR_COUNT
+            val to = maxOf(from + 1, (bar + 1) * levels.size / WAVEFORM_BAR_COUNT)
+            levels.subList(from, minOf(to, levels.size)).max() / loudest
+        }
+        for (i in bars.indices) assertEquals("bar $i", bars[i], redrawn[i], 1f / 255 + 0.0001f)
+    }
+
+    @Test
+    fun `the levels of silence are zero and of no audio are empty`() {
+        val silent = WaveformAccumulator()
+        repeat(5_000) { silent.add(0) }
+        assertTrue(silent.levels().isNotEmpty() && silent.levels().all { it == 0.toByte() })
+        assertEquals(0, WaveformAccumulator().levels().size)
+    }
+
     @Test
     fun `feeding it sample by sample agrees with the whole-list version`() {
         val samples = List(WAVEFORM_BAR_COUNT * 20) { ((it * 613) % 30_000).toShort() }
