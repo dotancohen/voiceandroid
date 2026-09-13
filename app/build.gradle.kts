@@ -18,13 +18,13 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         ndk {
-            // Architectures to build for (override with -PtargetAbi=arm64-v8a)
+            // The phones that use Voice are 64-bit ARM (the Galaxy S24 Ultra
+            // and the Galaxy A12), so only arm64-v8a is packed: the core, the
+            // transcription library and FFmpeg's decoders are built for it
+            // alone. Another architecture is asked for with -PtargetAbi=...,
+            // and its libraries must then be built for it first.
             val targetAbi = project.findProperty("targetAbi") as String?
-            if (targetAbi != null) {
-                abiFilters += listOf(targetAbi)
-            } else {
-                abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86")
-            }
+            abiFilters += listOf(targetAbi ?: "arm64-v8a")
         }
     }
 
@@ -131,7 +131,10 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation("androidx.compose.material:material-icons-extended")
+    // The core icon set only: the few extended icons the app uses are copied
+    // into app/src/main/java/androidx/compose/material/icons, because the
+    // extended set is thousands of classes the application never draws
+    implementation("androidx.compose.material:material-icons-core")
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.datastore.preferences)
 
@@ -186,11 +189,9 @@ tasks.register("buildRust") {
     description = "Build Rust library for Android"
 
     doLast {
+        // The one architecture packed into the application (see abiFilters)
         val targets = mapOf(
-            "aarch64-linux-android" to "arm64-v8a",
-            "armv7-linux-androideabi" to "armeabi-v7a",
-            "x86_64-linux-android" to "x86_64",
-            "i686-linux-android" to "x86"
+            "aarch64-linux-android" to "arm64-v8a"
         )
 
         val ndkHome = System.getenv("ANDROID_NDK_HOME")
