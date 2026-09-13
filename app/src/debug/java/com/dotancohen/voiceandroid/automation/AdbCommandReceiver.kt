@@ -60,27 +60,28 @@ class AdbCommandReceiver : BroadcastReceiver() {
         return when (action) {
             "PING" -> "pong device=${repo.getDeviceName().getOrNull()} id=${repo.getDeviceId().getOrNull()}"
 
-            "SYNC" -> syncResult(repo.sync().getOrThrow())
-            "EXCHANGE" -> syncResult(repo.operate("exchange").getOrThrow())
+            "SYNC" -> syncResult(repo.operate("sync", intent.arg("peer")).getOrThrow())
+            "EXCHANGE" -> syncResult(repo.operate("exchange", intent.arg("peer")).getOrThrow())
             "PROOF" -> repo.notDuplicated().getOrThrow().sentence()
-            "CHECK" -> repo.checkConnection(intent.need("peer")).getOrThrow().joinToString("\n") { (if (it.passed) "ok   " else "FAIL ") + it.name + ": " + it.detail + (if (it.code.isEmpty()) "" else " (" + it.code + ")") }
+            "CHECK" -> repo.checkConnection(intent.arg("peer") ?: repo.listPeers().getOrThrow().let { p -> (p.firstOrNull { it.isLast } ?: p.singleOrNull())?.peerId } ?: throw IllegalArgumentException("no peer; give --es peer")).getOrThrow().joinToString("\n") { (if (it.passed) "ok   " else "FAIL ") + it.name + ": " + it.detail + (if (it.code.isEmpty()) "" else " (" + it.code + ")") }
             "LISTEN_ON" -> { com.dotancohen.voiceandroid.data.SyncListenerService.start(context); "OK listening" }
             "LISTEN_OFF" -> { com.dotancohen.voiceandroid.data.SyncListenerService.stop(context); "OK stopped" }
-            "DELIVER" -> syncResult(repo.operate("deliver").getOrThrow())
+            "DELIVER" -> syncResult(repo.operate("deliver", intent.arg("peer")).getOrThrow())
+            "SEND" -> syncResult(repo.operate("send", intent.arg("peer")).getOrThrow())
+            "FETCH" -> syncResult(repo.operate("fetch", intent.arg("peer")).getOrThrow())
+            "PEERS" -> repo.listPeers().getOrThrow().joinToString("\n") { "PEER id=${it.peerId} name=${it.name} url=${it.url} last=${it.isLast} last_operation=${it.lastOperation}" }.ifEmpty { "no peers" }
+            "ADD_PEER" -> { repo.addPeer(intent.need("peer"), intent.arg("name") ?: intent.need("peer").take(8), intent.need("url")).getOrThrow(); "added ${intent.need("peer")}" }
+            "FORGET_PEER" -> "forgotten=${repo.forgetPeer(intent.need("peer")).getOrThrow()}"
+            "RENAME_PEER" -> "renamed=${repo.renamePeer(intent.need("peer"), intent.need("name")).getOrThrow()}"
             "UPLOAD" -> "OK " + repo.upload().getOrThrow().describe()
-            "INITIAL_SYNC" -> syncResult(repo.initialSync().getOrThrow())
-            "SET_SYNC" -> {
-                val deviceId = repo.getDeviceId().getOrThrow()
-                val deviceName = intent.arg("name") ?: repo.getDeviceName().getOrThrow()
-                repo.configureSync(intent.need("url"), intent.need("peer"), deviceId, deviceName).getOrThrow()
-                "url=${intent.need("url")} peer=${intent.need("peer")} device=$deviceName id=$deviceId"
-            }
+            "INITIAL_SYNC" -> syncResult(repo.initialSync(intent.arg("peer")).getOrThrow())
             "SET_DEVICE_NAME" -> { repo.setDeviceName(intent.need("name")).getOrThrow(); "name=${intent.need("name")}" }
             "STATUS" -> {
-                val cfg = repo.getSyncConfig().getOrNull()
+                val peers = repo.listPeers().getOrNull() ?: emptyList()
+                val last = peers.firstOrNull { it.isLast } ?: peers.singleOrNull()
                 val conflicts = repo.getUnresolvedConflictCount().getOrNull() ?: -1
                 val notes = repo.getAllNotes().getOrNull()?.size ?: -1
-                "account=${repo.getAccountId().getOrNull()} device=${repo.getDeviceName().getOrNull()} id=${repo.getDeviceId().getOrNull()} server=${cfg?.serverUrl} peer=${cfg?.serverPeerId} notes=$notes unresolved_conflicts=$conflicts not_duplicated=${repo.notDuplicated().getOrNull()?.let { "${it.notes}/${it.recordings}" }}"
+                "account=${repo.getAccountId().getOrNull()} device=${repo.getDeviceName().getOrNull()} id=${repo.getDeviceId().getOrNull()} peers=${peers.size} last_peer=${last?.peerId} last_peer_url=${last?.url} notes=$notes unresolved_conflicts=$conflicts not_duplicated=${repo.notDuplicated().getOrNull()?.let { "${it.notes}/${it.recordings}" }}"
             }
 
             "CREATE_NOTE" -> {

@@ -948,6 +948,10 @@ internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
 
 
 
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -979,6 +983,8 @@ internal interface UniffiLib : Library {
     ): Int
     fun uniffi_voicecore_fn_method_voiceclient_account_id(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_add_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,`name`: RustBuffer.ByValue,`url`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_add_tag_to_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_audio_file_exists_locally(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -989,11 +995,11 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_check_connection(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_chosen_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_clear_audio_file_storage(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_clear_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_voicecore_fn_method_voiceclient_configure_sync(`ptr`: Pointer,`syncConfig`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_copies_of(`ptr`: Pointer,`audioId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1019,6 +1025,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_filter_notes(`ptr`: Pointer,`tagIds`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_forget_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_get_all_audio_files(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_all_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -1071,8 +1079,6 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_setting(`ptr`: Pointer,`key`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_get_sync_config(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_system_tag_id_hex(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_tags_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1089,7 +1095,7 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_import_audio_file_into_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`filename`: RustBuffer.ByValue,`fileCreatedAt`: RustBuffer.ByValue,`durationSeconds`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_is_file_storage_enabled(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1097,11 +1103,11 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_is_note_too_big_to_sync(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
-    fun uniffi_voicecore_fn_method_voiceclient_is_sync_configured(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_join(`ptr`: Pointer,`setupText`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_list_devices(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_list_peers(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_list_snapshots(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1119,7 +1125,7 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_offer_code(`ptr`: Pointer,`urls`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_operate(`ptr`: Pointer,`operation`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_operate(`ptr`: Pointer,`operation`: RustBuffer.ByValue,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_pair_with(`ptr`: Pointer,`setupText`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1135,6 +1141,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_rename_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_rename_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,`newName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_reparent_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,`newParentId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1325,6 +1333,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_account_id(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_add_peer(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_audio_file_exists_locally(
@@ -1335,11 +1345,11 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_check_connection(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_chosen_peer(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_clear_audio_file_storage(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_clear_sync_state(
-    ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_configure_sync(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_copies_of(
     ): Short
@@ -1364,6 +1374,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_download_missing_audio_files(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_filter_notes(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_forget_peer(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files(
     ): Short
@@ -1417,8 +1429,6 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_setting(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_get_sync_config(
-    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_system_tag_id_hex(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_tags_for_note(
@@ -1443,11 +1453,11 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_is_note_too_big_to_sync(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_is_sync_configured(
-    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_join(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_list_devices(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_list_peers(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_list_snapshots(
     ): Short
@@ -1480,6 +1490,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_rebuild_note_list_cache(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_rename_peer(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_rename_tag(
     ): Short
@@ -1580,6 +1592,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_account_id() != 4136.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_add_peer() != 42074.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note() != 54360.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1595,13 +1610,13 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_check_connection() != 2799.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_chosen_peer() != 8319.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_audio_file_storage() != 14206.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_sync_state() != 33205.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_configure_sync() != 51278.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_copies_of() != 31043.toShort()) {
@@ -1638,6 +1653,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_filter_notes() != 10478.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_forget_peer() != 59729.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files() != 5578.toShort()) {
@@ -1718,9 +1736,6 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_setting() != 9317.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_sync_config() != 64316.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_system_tag_id_hex() != 50810.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1745,7 +1760,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_import_audio_file_into_note() != 46741.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 38631.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 23157.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_file_storage_enabled() != 7221.toShort()) {
@@ -1757,13 +1772,13 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_note_too_big_to_sync() != 26083.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_is_sync_configured() != 19345.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_join() != 27673.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_list_devices() != 22261.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_list_peers() != 47423.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_list_snapshots() != 7926.toShort()) {
@@ -1790,7 +1805,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_offer_code() != 29742.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_operate() != 28313.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_operate() != 15233.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_pair_with() != 32024.toShort()) {
@@ -1812,6 +1827,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 22162.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_rename_peer() != 20883.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_rename_tag() != 40579.toShort()) {
@@ -1871,7 +1889,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_stop_listener() != 10347.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_sync() != 52830.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_sync() != 36539.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_tag_note_too_big() != 57103.toShort()) {
@@ -2346,6 +2364,12 @@ public interface VoiceClientInterface {
     fun `accountId`(): kotlin.String
     
     /**
+     * Add a peer typed by hand (Stage 7, the third way): its device id,
+     * a name and where it listens. Pairing adds peers by itself.
+     */
+    fun `addPeer`(`peerId`: kotlin.String, `name`: kotlin.String, `url`: kotlin.String)
+    
+    /**
      * Add a tag to a note
      *
      * Creates a note_tag association between the note and tag.
@@ -2381,6 +2405,13 @@ public interface VoiceClientInterface {
     fun `checkConnection`(`peerId`: kotlin.String): List<CheckRowData>
     
     /**
+     * The peer an operation runs with: the one named, else the one of the
+     * last operation, else the only one. With several and none named, the
+     * caller must choose.
+     */
+    fun `chosenPeer`(`peerId`: kotlin.String?): kotlin.String
+    
+    /**
      * Clear an audio file's cloud storage information.
      *
      * This marks the file as local-only (not uploaded to cloud).
@@ -2397,11 +2428,6 @@ public interface VoiceClientInterface {
      * from the beginning and fetch all data fresh.
      */
     fun `clearSyncState`()
-    
-    /**
-     * Configure sync settings
-     */
-    fun `configureSync`(`syncConfig`: SyncServerConfig)
     
     /**
      * Where the copies of a recording are (Stage 10): the peers known to
@@ -2491,6 +2517,12 @@ public interface VoiceClientInterface {
      * Returns notes that have ALL the specified tags.
      */
     fun `filterNotes`(`tagIds`: List<kotlin.String>): List<NoteData>
+    
+    /**
+     * Forget a peer on this phone (Stage 5): its card does not bring it
+     * back until it is added again.
+     */
+    fun `forgetPeer`(`peerId`: kotlin.String): kotlin.Boolean
     
     /**
      * Get all audio files in the database (for debugging)
@@ -2643,11 +2675,6 @@ public interface VoiceClientInterface {
     fun `getSetting`(`key`: kotlin.String): kotlin.String?
     
     /**
-     * Get current sync configuration
-     */
-    fun `getSyncConfig`(): SyncServerConfig?
-    
-    /**
      * Get the _system tag ID as a hex string
      *
      * Used for filtering system tags from UI display.
@@ -2715,7 +2742,7 @@ public interface VoiceClientInterface {
      * Unlike sync(), this ignores timestamps and fetches all data.
      * Use this for first-time sync or to re-fetch everything.
      */
-    fun `initialSync`(): SyncResultData
+    fun `initialSync`(`peerId`: kotlin.String?): SyncResultData
     
     /**
      * Check if file storage is enabled (provider is not "none").
@@ -2733,11 +2760,6 @@ public interface VoiceClientInterface {
     fun `isNoteTooBigToSync`(`noteId`: kotlin.String): kotlin.Boolean
     
     /**
-     * Check if sync is configured
-     */
-    fun `isSyncConfigured`(): kotlin.Boolean
-    
-    /**
      * Join an account from a setup text (PAIR-4): a scanned QR code or a
      * pasted text. Refused before any network if this phone holds notes of
      * another account.
@@ -2748,6 +2770,13 @@ public interface VoiceClientInterface {
      * Every device of the account, by its card (CARD-1).
      */
     fun `listDevices`(): List<DeviceCardData>
+    
+    /**
+     * Every peer of this phone (Stage 5): the card's name or the local
+     * one, the remembered address, when it was last reached and by what,
+     * and whether it is the one the visible button names.
+     */
+    fun `listPeers`(): List<PeerData>
     
     /**
      * Every snapshot beside the database, newest first.
@@ -2797,7 +2826,7 @@ public interface VoiceClientInterface {
      * One operation with the configured peer: "sync", "deliver" (sync then
      * send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
-    fun `operate`(`operation`: kotlin.String): SyncResultData
+    fun `operate`(`operation`: kotlin.String, `peerId`: kotlin.String?): SyncResultData
     
     /**
      * Use a setup text (Stage 9): a code shown by a device that holds the
@@ -2852,6 +2881,11 @@ public interface VoiceClientInterface {
      * changed=false if the association didn't exist.
      */
     fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): TagChangeResultData
+    
+    /**
+     * A local name for a peer (Stage 5), shown in place of its card's.
+     */
+    fun `renamePeer`(`peerId`: kotlin.String, `name`: kotlin.String): kotlin.Boolean
     
     /**
      * Rename a tag
@@ -2981,7 +3015,8 @@ public interface VoiceClientInterface {
     fun `stopListener`()
     
     /**
-     * Sync with the configured server: database changes both ways, no files.
+     * Sync with the last peer, or the only one: database changes both
+     * ways, no files. `operate` names a peer.
      */
     fun `sync`(): SyncResultData
     
@@ -3239,6 +3274,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Add a peer typed by hand (Stage 7, the third way): its device id,
+     * a name and where it listens. Pairing adds peers by itself.
+     */
+    @Throws(VoiceCoreException::class)override fun `addPeer`(`peerId`: kotlin.String, `name`: kotlin.String, `url`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_add_peer(
+        it, FfiConverterString.lower(`peerId`),FfiConverterString.lower(`name`),FfiConverterString.lower(`url`),_status)
+}
+    }
+    
+    
+
+    
+    /**
      * Add a tag to a note
      *
      * Creates a note_tag association between the note and tag.
@@ -3329,6 +3380,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * The peer an operation runs with: the one named, else the one of the
+     * last operation, else the only one. With several and none named, the
+     * caller must choose.
+     */
+    @Throws(VoiceCoreException::class)override fun `chosenPeer`(`peerId`: kotlin.String?): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_chosen_peer(
+        it, FfiConverterOptionalString.lower(`peerId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Clear an audio file's cloud storage information.
      *
      * This marks the file as local-only (not uploaded to cloud).
@@ -3361,21 +3430,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_clear_sync_state(
         it, _status)
-}
-    }
-    
-    
-
-    
-    /**
-     * Configure sync settings
-     */
-    @Throws(VoiceCoreException::class)override fun `configureSync`(`syncConfig`: SyncServerConfig)
-        = 
-    callWithPointer {
-    uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_configure_sync(
-        it, FfiConverterTypeSyncServerConfig.lower(`syncConfig`),_status)
 }
     }
     
@@ -3596,6 +3650,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_filter_notes(
         it, FfiConverterSequenceString.lower(`tagIds`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Forget a peer on this phone (Stage 5): its card does not bring it
+     * back until it is added again.
+     */
+    @Throws(VoiceCoreException::class)override fun `forgetPeer`(`peerId`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_forget_peer(
+        it, FfiConverterString.lower(`peerId`),_status)
 }
     }
     )
@@ -4037,21 +4108,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Get current sync configuration
-     */override fun `getSyncConfig`(): SyncServerConfig? {
-            return FfiConverterOptionalTypeSyncServerConfig.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_sync_config(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    
-    /**
      * Get the _system tag ID as a hex string
      *
      * Used for filtering system tags from UI display.
@@ -4207,12 +4263,12 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
      * Unlike sync(), this ignores timestamps and fetches all data.
      * Use this for first-time sync or to re-fetch everything.
      */
-    @Throws(VoiceCoreException::class)override fun `initialSync`(): SyncResultData {
+    @Throws(VoiceCoreException::class)override fun `initialSync`(`peerId`: kotlin.String?): SyncResultData {
             return FfiConverterTypeSyncResultData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_initial_sync(
-        it, _status)
+        it, FfiConverterOptionalString.lower(`peerId`),_status)
 }
     }
     )
@@ -4269,21 +4325,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Check if sync is configured
-     */override fun `isSyncConfigured`(): kotlin.Boolean {
-            return FfiConverterBoolean.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_is_sync_configured(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    
-    /**
      * Join an account from a setup text (PAIR-4): a scanned QR code or a
      * pasted text. Refused before any network if this phone holds notes of
      * another account.
@@ -4309,6 +4350,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_list_devices(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Every peer of this phone (Stage 5): the card's name or the local
+     * one, the remembered address, when it was last reached and by what,
+     * and whether it is the one the visible button names.
+     */
+    @Throws(VoiceCoreException::class)override fun `listPeers`(): List<PeerData> {
+            return FfiConverterSequenceTypePeerData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_list_peers(
         it, _status)
 }
     }
@@ -4450,12 +4509,12 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
      * One operation with the configured peer: "sync", "deliver" (sync then
      * send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
-    @Throws(VoiceCoreException::class)override fun `operate`(`operation`: kotlin.String): SyncResultData {
+    @Throws(VoiceCoreException::class)override fun `operate`(`operation`: kotlin.String, `peerId`: kotlin.String?): SyncResultData {
             return FfiConverterTypeSyncResultData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_operate(
-        it, FfiConverterString.lower(`operation`),_status)
+        it, FfiConverterString.lower(`operation`),FfiConverterOptionalString.lower(`peerId`),_status)
 }
     }
     )
@@ -4585,6 +4644,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(
         it, FfiConverterString.lower(`noteId`),FfiConverterString.lower(`tagId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * A local name for a peer (Stage 5), shown in place of its card's.
+     */
+    @Throws(VoiceCoreException::class)override fun `renamePeer`(`peerId`: kotlin.String, `name`: kotlin.String): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_rename_peer(
+        it, FfiConverterString.lower(`peerId`),FfiConverterString.lower(`name`),_status)
 }
     }
     )
@@ -4916,7 +4991,8 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Sync with the configured server: database changes both ways, no files.
+     * Sync with the last peer, or the only one: database changes both
+     * ways, no files. `operate` names a peer.
      */
     @Throws(VoiceCoreException::class)override fun `sync`(): SyncResultData {
             return FfiConverterTypeSyncResultData.lift(
@@ -5854,6 +5930,64 @@ public object FfiConverterTypeNoteData: FfiConverterRustBuffer<NoteData> {
 
 
 /**
+ * A peer of this phone (Stage 5)
+ */
+data class PeerData (
+    var `peerId`: kotlin.String, 
+    var `name`: kotlin.String, 
+    var `url`: kotlin.String, 
+    var `certificateFingerprint`: kotlin.String, 
+    var `lastReachedAt`: kotlin.Long?, 
+    var `lastOperation`: kotlin.String, 
+    /**
+     * The one the visible button names
+     */
+    var `isLast`: kotlin.Boolean
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePeerData: FfiConverterRustBuffer<PeerData> {
+    override fun read(buf: ByteBuffer): PeerData {
+        return PeerData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalLong.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: PeerData) = (
+            FfiConverterString.allocationSize(value.`peerId`) +
+            FfiConverterString.allocationSize(value.`name`) +
+            FfiConverterString.allocationSize(value.`url`) +
+            FfiConverterString.allocationSize(value.`certificateFingerprint`) +
+            FfiConverterOptionalLong.allocationSize(value.`lastReachedAt`) +
+            FfiConverterString.allocationSize(value.`lastOperation`) +
+            FfiConverterBoolean.allocationSize(value.`isLast`)
+    )
+
+    override fun write(value: PeerData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`peerId`, buf)
+            FfiConverterString.write(value.`name`, buf)
+            FfiConverterString.write(value.`url`, buf)
+            FfiConverterString.write(value.`certificateFingerprint`, buf)
+            FfiConverterOptionalLong.write(value.`lastReachedAt`, buf)
+            FfiConverterString.write(value.`lastOperation`, buf)
+            FfiConverterBoolean.write(value.`isLast`, buf)
+    }
+}
+
+
+
+/**
  * A peer as remembered: when it was last reached and by which operation
  */
 data class PeerSummaryData (
@@ -6119,49 +6253,6 @@ public object FfiConverterTypeSyncResultData: FfiConverterRustBuffer<SyncResultD
             FfiConverterSequenceString.write(value.`warnings`, buf)
             FfiConverterString.write(value.`requestId`, buf)
             FfiConverterLong.write(value.`clockSkewSeconds`, buf)
-    }
-}
-
-
-
-/**
- * Configuration for sync server connection
- */
-data class SyncServerConfig (
-    var `serverUrl`: kotlin.String, 
-    var `serverPeerId`: kotlin.String, 
-    var `deviceId`: kotlin.String, 
-    var `deviceName`: kotlin.String
-) {
-    
-    companion object
-}
-
-/**
- * @suppress
- */
-public object FfiConverterTypeSyncServerConfig: FfiConverterRustBuffer<SyncServerConfig> {
-    override fun read(buf: ByteBuffer): SyncServerConfig {
-        return SyncServerConfig(
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: SyncServerConfig) = (
-            FfiConverterString.allocationSize(value.`serverUrl`) +
-            FfiConverterString.allocationSize(value.`serverPeerId`) +
-            FfiConverterString.allocationSize(value.`deviceId`) +
-            FfiConverterString.allocationSize(value.`deviceName`)
-    )
-
-    override fun write(value: SyncServerConfig, buf: ByteBuffer) {
-            FfiConverterString.write(value.`serverUrl`, buf)
-            FfiConverterString.write(value.`serverPeerId`, buf)
-            FfiConverterString.write(value.`deviceId`, buf)
-            FfiConverterString.write(value.`deviceName`, buf)
     }
 }
 
@@ -6790,38 +6881,6 @@ public object FfiConverterOptionalTypeStamp: FfiConverterRustBuffer<Stamp?> {
 /**
  * @suppress
  */
-public object FfiConverterOptionalTypeSyncServerConfig: FfiConverterRustBuffer<SyncServerConfig?> {
-    override fun read(buf: ByteBuffer): SyncServerConfig? {
-        if (buf.get().toInt() == 0) {
-            return null
-        }
-        return FfiConverterTypeSyncServerConfig.read(buf)
-    }
-
-    override fun allocationSize(value: SyncServerConfig?): ULong {
-        if (value == null) {
-            return 1UL
-        } else {
-            return 1UL + FfiConverterTypeSyncServerConfig.allocationSize(value)
-        }
-    }
-
-    override fun write(value: SyncServerConfig?, buf: ByteBuffer) {
-        if (value == null) {
-            buf.put(0)
-        } else {
-            buf.put(1)
-            FfiConverterTypeSyncServerConfig.write(value, buf)
-        }
-    }
-}
-
-
-
-
-/**
- * @suppress
- */
 public object FfiConverterOptionalTypeTranscriptionData: FfiConverterRustBuffer<TranscriptionData?> {
     override fun read(buf: ByteBuffer): TranscriptionData? {
         if (buf.get().toInt() == 0) {
@@ -7100,6 +7159,34 @@ public object FfiConverterSequenceTypeNoteData: FfiConverterRustBuffer<List<Note
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeNoteData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypePeerData: FfiConverterRustBuffer<List<PeerData>> {
+    override fun read(buf: ByteBuffer): List<PeerData> {
+        val len = buf.getInt()
+        return List<PeerData>(len) {
+            FfiConverterTypePeerData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<PeerData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypePeerData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<PeerData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypePeerData.write(it, buf)
         }
     }
 }

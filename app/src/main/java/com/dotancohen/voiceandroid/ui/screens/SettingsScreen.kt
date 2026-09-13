@@ -83,8 +83,8 @@ fun SettingsScreen(
 ) {
     val audiofileDirectory by viewModel.audiofileDirectory.collectAsState()
     val defaultAudiofileDirectory by viewModel.defaultAudiofileDirectory.collectAsState()
-    val serverUrl by viewModel.serverUrl.collectAsState()
-    val serverPeerId by viewModel.serverPeerId.collectAsState()
+    val lastPeer by viewModel.lastPeer.collectAsState()
+    val lastOperation by viewModel.lastOperation.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncResult by viewModel.syncResult.collectAsState()
     val syncError by viewModel.syncError.collectAsState()
@@ -227,10 +227,10 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
-                    // Sync button
+                    // The one button (Stage 5): the last peer, the operation the manual leads with
                     OutlinedButton(
-                        onClick = { viewModel.sync() },
-                        enabled = !isSyncing && serverUrl.isNotBlank() && serverPeerId.isNotBlank(),
+                        onClick = { viewModel.exchange() },
+                        enabled = !isSyncing && lastPeer != null,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         if (isSyncing) {
@@ -252,21 +252,24 @@ fun SettingsScreen(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = null
                                 )
-                                Text("Sync")
+                                Text(lastPeer?.let { "Exchange with ${it.name}" } ?: "No peer yet")
                             }
                         }
                     }
 
-                    // Sync result
+                    // The result, in one sentence
                     syncResult?.let { result ->
+                        val verb = lastOperation.replaceFirstChar { it.uppercase() }
+                        val peerName = lastPeer?.name ?: "the peer"
                         if (result.success) {
                             Text(
-                                text = "Sync successful! Received: ${result.notesReceived}, Sent: ${result.notesSent}",
+                                text = "$verb with $peerName: received ${result.notesReceived} changes and sent ${result.notesSent}" +
+                                    (if (result.filesSent > 0 || result.filesFetched > 0) ", sent ${result.filesSent} and fetched ${result.filesFetched} recordings" else "") + ".",
                                 color = MaterialTheme.colorScheme.primary
                             )
                         } else {
                             Text(
-                                text = "Sync failed: ${result.errorMessage ?: "Unknown error"}",
+                                text = "$verb with $peerName failed: ${result.errorMessage ?: "it did not say why"}",
                                 color = MaterialTheme.colorScheme.error
                             )
                         }

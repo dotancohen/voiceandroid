@@ -10,7 +10,6 @@ import uniffi.voicecore.VoiceClient
 import uniffi.voicecore.VoiceCoreException
 import uniffi.voicecore.ConflictData
 import uniffi.voicecore.VersionData
-import uniffi.voicecore.SyncServerConfig as UniFFISyncServerConfig
 import uniffi.voicecore.NoteData as UniFFINoteData
 import uniffi.voicecore.SyncResultData as UniFFISyncResultData
 import uniffi.voicecore.AudioFileData as UniFFIAudioFileData
@@ -96,6 +95,13 @@ class VoiceRepository(private val context: Context) {
                 client = VoiceClient(dataDir)
                 AppLogger.i(TAG, "VoiceClient created")
             }
+            // A card should read "Galaxy A14", not the core's placeholder (Stage 5)
+            ensureInitialized().let { c ->
+                if (c.getDeviceName() == CORE_DEFAULT_DEVICE_NAME) {
+                    c.setDeviceName(defaultDeviceName())
+                    AppLogger.i(TAG, "Device name set to ${defaultDeviceName()}")
+                }
+            }
 
             // Every timestamp written from here records the clock this phone
             // is reading, so a note keeps its time after the user travels
@@ -123,6 +129,17 @@ class VoiceRepository(private val context: Context) {
         } catch (e: Exception) {
             AppLogger.e(TAG, "Failed to initialize VoiceClient", e)
             Result.failure(e)
+        }
+    }
+
+    /** The model name as Android reports it, for a fresh phone's card. */
+    private fun defaultDeviceName(): String {
+        val model = android.os.Build.MODEL?.trim().orEmpty()
+        val maker = android.os.Build.MANUFACTURER?.trim().orEmpty()
+        return when {
+            model.isEmpty() -> "Phone"
+            maker.isEmpty() || model.startsWith(maker, ignoreCase = true) -> model
+            else -> "$maker $model"
         }
     }
 
@@ -205,24 +222,23 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /**
-     * Configure sync settings.
-     */
-    suspend fun configureSync(
-        serverUrl: String,
-        serverPeerId: String,
-        deviceId: String,
-        deviceName: String
-    ): Result<Unit> = withContext(Dispatchers.IO) {
+    /** Every peer of this phone (Stage 5). */
+    suspend fun listPeers(): Result<List<Peer>> = withContext(Dispatchers.IO) {
         try {
-            val voiceClient = ensureInitialized()
-            val config = UniFFISyncServerConfig(
-                serverUrl = serverUrl,
-                serverPeerId = serverPeerId,
-                deviceId = deviceId,
-                deviceName = deviceName
-            )
-            voiceClient.configureSync(config)
+            Result.success(ensureInitialized().listPeers().map {
+                Peer(it.peerId, it.name, it.url, it.certificateFingerprint, it.lastReachedAt, it.lastOperation, it.isLast)
+            })
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** A peer typed by hand (Stage 7, the third way): its device id, a name and where it listens. */
+    suspend fun addPeer(peerId: String, name: String, url: String): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            ensureInitialized().addPeer(peerId.trim(), name, url)
             Result.success(Unit)
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
@@ -231,9 +247,31 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
+    /** Forget a peer on this phone: its card does not bring it back until it is added again. */
+    suspend fun forgetPeer(peerId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().forgetPeer(peerId))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /** A local name for a peer, shown in place of its card's. */
+    suspend fun renamePeer(peerId: String, name: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().renamePeer(peerId, name))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     /**
-     * Sync with the configured server: database changes both ways. Files never
-     * move here; [upload] sends recordings to the bucket.
+     * Sync with the last peer, or the only one: database changes both ways.
+     * Files never move here; [upload] sends recordings to the bucket.
      */
     suspend fun sync(): Result<SyncResult> = withContext(Dispatchers.IO) {
         try {
@@ -263,10 +301,10 @@ class VoiceRepository(private val context: Context) {
      * One operation with the configured peer, by the terms table: "sync",
      * "deliver" (sync then send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
-    suspend fun operate(operation: String): Result<SyncResult> = withContext(Dispatchers.IO) {
+    suspend fun operate(operation: String, peerId: String? = null): Result<SyncResult> = withContext(Dispatchers.IO) {
         try {
-            AppLogger.i(TAG, "Starting $operation")
-            val result = ensureInitialized().operate(operation)
+            AppLogger.i(TAG, "Starting $operation" + (peerId?.let { " with ${it.take(8)}" } ?: ""))
+            val result = ensureInitialized().operate(operation, peerId)
             AppLogger.i(TAG, "$operation completed: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}, files sent=${result.filesSent}, fetched=${result.filesFetched}")
             Result.success(SyncResult(
                 success = result.success,
@@ -335,11 +373,11 @@ class VoiceRepository(private val context: Context) {
      * Perform initial sync - fetches full dataset from server.
      * Use this for first-time sync or to re-fetch everything.
      */
-    suspend fun initialSync(): Result<SyncResult> = withContext(Dispatchers.IO) {
+    suspend fun initialSync(peerId: String? = null): Result<SyncResult> = withContext(Dispatchers.IO) {
         try {
             AppLogger.i(TAG, "Starting initial sync (full dataset fetch)")
             val voiceClient = ensureInitialized()
-            val result = voiceClient.initialSync()
+            val result = voiceClient.initialSync(peerId)
             AppLogger.i(TAG, "Initial sync completed: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}")
             Result.success(SyncResult(
                 success = result.success,
@@ -553,28 +591,6 @@ class VoiceRepository(private val context: Context) {
         try {
             val voiceClient = ensureInitialized()
             Result.success(voiceClient.isSyncConfigured())
-        } catch (e: VoiceCoreException) {
-            Result.failure(Exception(e.message))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Get the current sync configuration.
-     */
-    suspend fun getSyncConfig(): Result<SyncServerConfig?> = withContext(Dispatchers.IO) {
-        try {
-            val voiceClient = ensureInitialized()
-            val config = voiceClient.getSyncConfig()
-            Result.success(config?.let {
-                SyncServerConfig(
-                    serverUrl = it.serverUrl,
-                    serverPeerId = it.serverPeerId,
-                    deviceId = it.deviceId,
-                    deviceName = it.deviceName
-                )
-            })
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -1971,6 +1987,9 @@ class VoiceRepository(private val context: Context) {
     }
 
     companion object {
+        /** The name the core gives a phone until the application names it. */
+        const val CORE_DEFAULT_DEVICE_NAME = "Voice Mobile"
+
         private const val TAG = "VoiceRepository"
 
         @Volatile
@@ -1986,15 +2005,6 @@ class VoiceRepository(private val context: Context) {
     }
 }
 
-/**
- * Data class for sync server configuration.
- */
-data class SyncServerConfig(
-    val serverUrl: String,
-    val serverPeerId: String,
-    val deviceId: String,
-    val deviceName: String
-)
 
 /**
  * Result of a tag change operation (add/remove tag from note).

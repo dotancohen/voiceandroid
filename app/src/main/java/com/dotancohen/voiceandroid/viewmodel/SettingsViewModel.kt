@@ -11,6 +11,9 @@ import com.dotancohen.voiceandroid.util.CriticalLog
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class SettingsViewModel(application: Application) : AndroidViewModel(application) {
@@ -18,11 +21,18 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val repository = VoiceRepository.getInstance(application)
     private val prefs = application.getSharedPreferences("voice_settings", Context.MODE_PRIVATE)
 
-    private val _serverUrl = MutableStateFlow(prefs.getString("server_url", "") ?: "")
-    val serverUrl: StateFlow<String> = _serverUrl.asStateFlow()
+    /** The peers of this phone (Stage 5), from the core; nothing is kept in preferences. */
+    private val _peers = MutableStateFlow<List<com.dotancohen.voiceandroid.data.Peer>>(emptyList())
+    val peers: StateFlow<List<com.dotancohen.voiceandroid.data.Peer>> = _peers.asStateFlow()
 
-    private val _serverPeerId = MutableStateFlow(prefs.getString("server_peer_id", "") ?: "")
-    val serverPeerId: StateFlow<String> = _serverPeerId.asStateFlow()
+    /** The peer the one visible button names: the last used, else the only one. */
+    val lastPeer: StateFlow<com.dotancohen.voiceandroid.data.Peer?> = _peers
+        .map { list -> list.firstOrNull { it.isLast } ?: list.singleOrNull() }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    /** A sentence after adding, renaming or forgetting a peer, or null. */
+    private val _peerMessage = MutableStateFlow<String?>(null)
+    val peerMessage: StateFlow<String?> = _peerMessage.asStateFlow()
 
     private val _deviceId = MutableStateFlow("")
     val deviceId: StateFlow<String> = _deviceId.asStateFlow()
@@ -88,6 +98,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 .onSuccess { _notDuplicatedLine.value = it.sentence() }
                 .onFailure { _notDuplicatedLine.value = null }
             repository.peerSummaries().onSuccess { _peerSummaries.value = it }
+            repository.listPeers().onSuccess { _peers.value = it }
         }
     }
 
@@ -198,23 +209,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun saveSettings(
-        serverUrl: String,
-        serverPeerId: String,
-        deviceId: String,
-        deviceName: String
-    ) {
+    fun saveSettings(deviceId: String, deviceName: String) {
         viewModelScope.launch {
-            // Save to SharedPreferences (for UI persistence)
-            prefs.edit()
-                .putString("server_url", serverUrl)
-                .putString("server_peer_id", serverPeerId)
-                .apply()
-
-            _serverUrl.value = serverUrl
-            _serverPeerId.value = serverPeerId
-
-            // Save to Voice Core
             if (deviceId != _deviceId.value) {
                 repository.setDeviceId(deviceId).onSuccess {
                     _deviceId.value = deviceId
@@ -226,16 +222,38 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     _deviceName.value = deviceName
                 }
             }
+        }
+    }
 
-            // Configure sync if all required fields are present
-            if (serverUrl.isNotBlank() && serverPeerId.isNotBlank()) {
-                repository.configureSync(
-                    serverUrl = serverUrl,
-                    serverPeerId = serverPeerId,
-                    deviceId = _deviceId.value,
-                    deviceName = _deviceName.value
-                )
-            }
+    /** The peers, read again from the core. */
+    fun refreshPeers() {
+        viewModelScope.launch {
+            repository.listPeers().onSuccess { _peers.value = it }
+        }
+    }
+
+    /** A peer typed by hand (Stage 7): its device id, a name and where it listens. */
+    fun addPeer(peerId: String, name: String, url: String) {
+        viewModelScope.launch {
+            repository.addPeer(peerId, name.ifBlank { peerId.take(8) }, url)
+                .onSuccess { _peerMessage.value = "Added ${name.ifBlank { peerId.take(8) }}."; refreshPeers() }
+                .onFailure { _peerMessage.value = "Not added: ${it.message}" }
+        }
+    }
+
+    fun forgetPeer(peerId: String) {
+        viewModelScope.launch {
+            repository.forgetPeer(peerId)
+                .onSuccess { _peerMessage.value = "Forgotten. Its card will not bring it back; add it again or pair again to undo."; refreshPeers() }
+                .onFailure { _peerMessage.value = "Not forgotten: ${it.message}" }
+        }
+    }
+
+    fun renamePeer(peerId: String, name: String) {
+        viewModelScope.launch {
+            repository.renamePeer(peerId, name)
+                .onSuccess { refreshPeers() }
+                .onFailure { _peerMessage.value = "Not renamed: ${it.message}" }
         }
     }
 
@@ -292,9 +310,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                     } else {
                         "Joined account ${joined.accountId.take(8)} through ${joined.peerName}. Press Sync."
                     }
-                    _serverUrl.value = joined.peerUrl
-                    _serverPeerId.value = joined.peerId
-                    prefs.edit().putString("server_url", joined.peerUrl).putString("server_peer_id", joined.peerId).apply()
+                    refreshPeers()
                 }
                 .onFailure { _joinMessage.value = "Could not join: ${it.message}" }
         }
@@ -304,11 +320,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _checkRows = MutableStateFlow<List<com.dotancohen.voiceandroid.data.CheckRow>?>(null)
     val checkRows: StateFlow<List<com.dotancohen.voiceandroid.data.CheckRow>?> = _checkRows.asStateFlow()
 
-    /** Check the connection to the configured peer: nothing is changed. */
-    fun checkConnection() {
-        val peerId = _serverPeerId.value
-        if (peerId.isBlank()) {
-            _checkRows.value = listOf(com.dotancohen.voiceandroid.data.CheckRow("Peer", false, "No peer is configured", ""))
+    /** Check the connection to a peer, the last one unless named: nothing is changed. */
+    fun checkConnection(peerId: String? = null) {
+        val peerId = peerId ?: lastPeer.value?.peerId
+        if (peerId.isNullOrBlank()) {
+            _checkRows.value = listOf(com.dotancohen.voiceandroid.data.CheckRow("Peer", false, "No peer yet: read a code shown by another device, or add one by its address", ""))
             return
         }
         viewModelScope.launch {
@@ -319,29 +335,40 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    /** Exchange with the peer: sync, then send and fetch recordings (the terms table). */
-    fun exchange() {
+    /** The operation of the last button press, for the result sentence. */
+    private val _lastOperation = MutableStateFlow("exchange")
+    val lastOperation: StateFlow<String> = _lastOperation.asStateFlow()
+
+    /**
+     * One operation of the terms table ("sync", "deliver", "exchange", "send",
+     * "fetch") with a peer: the one named, else the last used, else the only one.
+     */
+    fun operate(operation: String, peerId: String? = null) {
         if (_isSyncing.value) return
         viewModelScope.launch {
             _isSyncing.value = true
             _syncResult.value = null
             _syncError.value = null
-            AppLogger.i(TAG, "Starting exchange")
-            repository.operate("exchange")
+            _lastOperation.value = operation
+            AppLogger.i(TAG, "Starting $operation")
+            repository.operate(operation, peerId)
                 .onSuccess { result ->
                     _syncResult.value = result
-                    AppLogger.i(TAG, "Exchange completed: received=${result.notesReceived}, sent=${result.notesSent}, files sent=${result.filesSent}, fetched=${result.filesFetched}")
+                    AppLogger.i(TAG, "$operation completed: received=${result.notesReceived}, sent=${result.notesSent}, files sent=${result.filesSent}, fetched=${result.filesFetched}")
                 }
                 .onFailure { exception ->
                     _syncError.value = exception.message
-                    AppLogger.e(TAG, "Exchange failed", exception)
-                    CriticalLog.logSyncError("exchange", exception.message ?: "Unknown error")
+                    AppLogger.e(TAG, "$operation failed", exception)
+                    CriticalLog.logSyncError(operation, exception.message ?: "Unknown error")
                 }
             updateDebugInfo()
             refreshProof()
             _isSyncing.value = false
         }
     }
+
+    /** Exchange with the last peer: sync, then send and fetch recordings. */
+    fun exchange() = operate("exchange")
 
     /** Upload every recording the bucket does not hold yet. */
     fun upload() {
@@ -363,36 +390,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun sync() {
-        if (_isSyncing.value) return
-
-        viewModelScope.launch {
-            _isSyncing.value = true
-            _syncResult.value = null
-            _syncError.value = null
-            _debugInfo.value = null
-            AppLogger.i(TAG, "Starting sync")
-
-            repository.sync()
-                .onSuccess { result ->
-                    _syncResult.value = result
-                    AppLogger.i(TAG, "Sync completed: received=${result.notesReceived}, sent=${result.notesSent}")
-                }
-                .onFailure { exception ->
-                    _syncError.value = exception.message
-                    AppLogger.e(TAG, "Sync failed", exception)
-                    CriticalLog.logSyncError("sync", exception.message ?: "Unknown error")
-                }
-
-            // Get debug info about audio files
-            updateDebugInfo()
-
-            // Check for any remaining unsynced changes
-            refreshProof()
-
-            _isSyncing.value = false
-        }
-    }
+    /** Sync with the last peer: notes only. */
+    fun sync() = operate("sync")
 
     fun updateDebugInfo() {
         viewModelScope.launch {
@@ -437,7 +436,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _debugInfo.value = "Performing full sync..."
             AppLogger.i(TAG, "Starting full resync")
 
-            repository.initialSync()
+            repository.initialSync(lastPeer.value?.peerId)
                 .onSuccess { result ->
                     _syncResult.value = result
                     AppLogger.i(TAG, "Full resync completed: received=${result.notesReceived}, sent=${result.notesSent}")

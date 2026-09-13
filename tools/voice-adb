@@ -23,13 +23,17 @@ Usage: voice-adb <command> [arguments]
 Device and sync
   ping                               is the app reachable; prints device name and id
   status                             device, server, note count, unresolved conflicts, pending changes
-  set-sync <url> <peer-id> [name]    set Server URL, Server Peer ID (and optionally the device name)
+  peers                              one PEER line per peer: id, name, url, last used, last operation
+  add-peer <peer-id> <url> [name]    a peer typed by hand: its device id and where it listens
+  forget-peer <peer-id>              forget a peer; its card does not bring it back
+  rename-peer <peer-id> <name>       a local name for a peer
   set-device-name <name>
-  sync                               same as tapping Sync (database only)
+  sync [peer-id]                     notes only, with the last peer unless one is given
   upload                             same as tapping Upload (recordings to the bucket)
-  exchange                           sync, then send and fetch recordings
-  deliver                            sync, then send recordings
-  check <peer-id>                    the connection check: one line per thing that can be wrong
+  exchange [peer-id]                 sync, then send and fetch recordings (the one button)
+  deliver [peer-id]                  sync, then send recordings
+  send [peer-id] / fetch [peer-id]   recordings only, no sync
+  check [peer-id]                    the connection check: one line per thing that can be wrong
   proof                              the sync screen's line: what is on this device only
   listen-on / listen-off             the listener switch on the sync screen
   initial-sync                       same as tapping Full Re-sync
@@ -138,13 +142,18 @@ case "$cmd" in
     help|-h|--help) usage ;;
     ping) send PING ;;
     status) send STATUS ;;
-    set-sync) send SET_SYNC --es url "$1" --es peer "$2" ${3:+--es name "$3"} ;;
+    peers) send PEERS ;;
+    add-peer) send ADD_PEER --es peer "$1" --es url "$2" ${3:+--es name "$3"} ;;
+    forget-peer) send FORGET_PEER --es peer "$1" ;;
+    rename-peer) send RENAME_PEER --es peer "$1" --es name "$2" ;;
     set-device-name) send SET_DEVICE_NAME --es name "$1" ;;
-    sync) send SYNC ;;
+    sync) send SYNC ${1:+--es peer "$1"} ;;
     upload) send UPLOAD ;;
-    exchange) send EXCHANGE ;;
-    deliver) send DELIVER ;;
-    check) send CHECK --es peer "$1" ;;
+    exchange) send EXCHANGE ${1:+--es peer "$1"} ;;
+    deliver) send DELIVER ${1:+--es peer "$1"} ;;
+    send) send SEND ${1:+--es peer "$1"} ;;
+    fetch) send FETCH ${1:+--es peer "$1"} ;;
+    check) send CHECK ${1:+--es peer "$1"} ;;
     proof) send PROOF ;;
     listen-on) send LISTEN_ON ;;
     listen-off) send LISTEN_OFF ;;

@@ -39,6 +39,18 @@ data class SyncResult(
     val clockSkewSeconds: Long = 0
 )
 
+/** A peer of this phone (Stage 5): the card's name or the local one, the remembered address, and the last operation. */
+data class Peer(
+    val peerId: String,
+    val name: String,
+    val url: String,
+    val certificateFingerprint: String,
+    val lastReachedAt: Long?,
+    val lastOperation: String,
+    /** The one the visible button names */
+    val isLast: Boolean
+)
+
 /** What is on this phone only (Stage 10). */
 data class NotDuplicated(val notes: Long, val recordings: Long) {
     /** The one line of the sync screen. */

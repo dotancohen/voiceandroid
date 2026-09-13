@@ -130,22 +130,6 @@ class SettingsFileTest {
     }
 
     @Test
-    fun `the sync settings keys are not used by anything else`() {
-        // SettingsViewModel writes these two into the same file directly.
-        val used = FakePreferences()
-        UiPreferences(used).apply {
-            notesListLines = 3
-            timeFormat = TimeFormat.CUSTOM
-        }
-        RecorderPreferences(used, null).recordingFormat = RecorderPreferences.FORMAT_WAV16
-        TranscriptionPreferences(used).language = "he"
-        PlaybackPreferences(used).speed = 2f
-        for (key in listOf("server_url", "server_peer_id")) {
-            assertTrue("$key is written by a settings class as well", key !in used.all.keys)
-        }
-    }
-
-    @Test
     fun `a settings file from an older version still opens`() {
         // Only the keys it knows are read; the rest are left where they are.
         val old = FakePreferences()
