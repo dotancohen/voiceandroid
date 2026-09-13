@@ -86,6 +86,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     val pendingAudioPath: StateFlow<String?> = _pendingAudioPath.asStateFlow()
 
     init {
+        viewModelScope.launch { com.dotancohen.voiceandroid.data.OperationState.running.collect { _isSyncing.value = it } }
+        viewModelScope.launch { com.dotancohen.voiceandroid.data.OperationState.result.collect { _syncResult.value = it; if (it != null) { updateDebugInfo(); refreshProof() } } }
+        viewModelScope.launch { com.dotancohen.voiceandroid.data.OperationState.error.collect { _syncError.value = it } }
         loadSettings()
         refreshProof()
         loadMaxSyncFileSize()
@@ -344,41 +347,30 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
      * "fetch") with a peer: the one named, else the last used, else the only one.
      */
     fun operate(operation: String, peerId: String? = null) {
-        if (_isSyncing.value) return
-        viewModelScope.launch {
-            _isSyncing.value = true
-            _syncResult.value = null
-            _syncError.value = null
-            _lastOperation.value = operation
-            AppLogger.i(TAG, "Starting $operation")
-            var outcome = repository.operate(operation, peerId)
-            // The remembered address first; when the peer is not reached
-            // there, the network is asked where it is (Stage 7)
-            val silence = outcome.getOrNull()?.let { !it.success && com.dotancohen.voiceandroid.data.PeerDiscovery.looksUnreachable(it.errorMessage) } ?: com.dotancohen.voiceandroid.data.PeerDiscovery.looksUnreachable(outcome.exceptionOrNull()?.message)
-            val peer = _peers.value.firstOrNull { it.peerId == peerId } ?: lastPeer.value
-            if (silence && peer != null) {
-                val accountId = repository.getAccountId().getOrNull() ?: ""
-                val found = runCatching { com.dotancohen.voiceandroid.data.PeerDiscovery(getApplication()).find(accountId, peer.peerId) }.getOrNull()
-                if (found != null && found.url.trimEnd('/') != peer.url.trimEnd('/')) {
-                    AppLogger.i(TAG, "${peer.name} answered from ${found.url}; remembering it")
-                    repository.addPeer(peer.peerId, peer.name, found.url)
-                    outcome = repository.operate(operation, peer.peerId)
-                }
-            }
-            outcome
-                .onSuccess { result ->
-                    _syncResult.value = result
-                    AppLogger.i(TAG, "$operation completed: received=${result.notesReceived}, sent=${result.notesSent}, files sent=${result.filesSent}, fetched=${result.filesFetched}")
-                }
-                .onFailure { exception ->
-                    _syncError.value = exception.message
-                    AppLogger.e(TAG, "$operation failed", exception)
-                    CriticalLog.logSyncError(operation, exception.message ?: "Unknown error")
-                }
-            updateDebugInfo()
-            refreshProof()
-            _isSyncing.value = false
-        }
+        if (com.dotancohen.voiceandroid.data.OperationState.running.value) return
+        _lastOperation.value = operation
+        // Every operation runs in the foreground service (Stage 4), with a
+        // progress notification and a Cancel action; its state is mirrored here
+        com.dotancohen.voiceandroid.data.OperationService.start(getApplication(), operation, peerId)
+    }
+
+    /** Cancel the operation under way: it stops at its next page, file or chunk. */
+    fun cancelOperation() {
+        com.dotancohen.voiceandroid.data.OperationService.cancel(getApplication())
+    }
+
+    /** One sentence of progress while an operation runs, or null. */
+    val progressSentence: StateFlow<String?> = com.dotancohen.voiceandroid.data.OperationState.progress
+
+    /** Hours of silence after which the listener stops itself; 0 means never (Stage 6). */
+    private val _idleStopHours = MutableStateFlow(0)
+    val idleStopHours: StateFlow<Int> = _idleStopHours.asStateFlow()
+
+    fun loadIdleStop() { _idleStopHours.value = repository.listenerIdleStopHours() }
+
+    fun setIdleStopHours(hours: Int) {
+        repository.setListenerIdleStopHours(hours)
+        _idleStopHours.value = hours
     }
 
     /** Exchange with the last peer: sync, then send and fetch recordings. */

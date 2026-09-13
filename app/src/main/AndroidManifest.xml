@@ -107,6 +107,16 @@
             android:exported="false"
             android:stopWithTask="false"
             android:foregroundServiceType="dataSync" />
+
+        <!-- Every sync operation runs here (Stage 4), with a progress
+             notification and a Cancel action, so a long transfer survives
+             the screen going off. The notification is the operation's own
+             progress and disappears when it ends. -->
+        <service
+            android:name=".data.OperationService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="dataSync" />
     </application>
 
 </manifest>

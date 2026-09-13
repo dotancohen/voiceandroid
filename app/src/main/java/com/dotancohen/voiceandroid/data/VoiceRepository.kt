@@ -313,10 +313,15 @@ class VoiceRepository(private val context: Context) {
      * One operation with the configured peer, by the terms table: "sync",
      * "deliver" (sync then send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
-    suspend fun operate(operation: String, peerId: String? = null): Result<SyncResult> = withContext(Dispatchers.IO) {
+    suspend fun operate(operation: String, peerId: String? = null, onProgress: ((String) -> Unit)? = null): Result<SyncResult> = withContext(Dispatchers.IO) {
         try {
             AppLogger.i(TAG, "Starting $operation" + (peerId?.let { " with ${it.take(8)}" } ?: ""))
-            val result = ensureInitialized().operate(operation, peerId)
+            val progress = onProgress?.let { report ->
+                object : uniffi.voicecore.OperationProgress {
+                    override fun report(stage: String, done: Long, total: Long, bytes: ULong, sentence: String) { report(sentence) }
+                }
+            }
+            val result = ensureInitialized().operate(operation, peerId, progress)
             AppLogger.i(TAG, "$operation completed: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}, files sent=${result.filesSent}, fetched=${result.filesFetched}")
             Result.success(SyncResult(
                 success = result.success,
@@ -486,6 +491,17 @@ class VoiceRepository(private val context: Context) {
     }
 
     fun listenerRunning(): Boolean = try { client?.listenerRunning() ?: false } catch (e: Exception) { false }
+
+    /** Cancel the operation under way: it stops at its next page, file or chunk (Stage 4). */
+    fun cancelOperation() { try { client?.cancelOperation() } catch (e: Exception) { AppLogger.w(TAG, "Could not cancel: ${e.message}") } }
+
+    /** Seconds since the listener last served a request or started, or null when it has not run (Stage 6). */
+    fun listenerIdleSeconds(): Long? = try { client?.listenerIdleSeconds()?.toLong() } catch (e: Exception) { null }
+
+    /** Hours of silence after which the listener stops itself; 0 means never. */
+    fun listenerIdleStopHours(): Int = try { client?.listenerIdleStopHours()?.toInt() ?: 0 } catch (e: Exception) { 0 }
+
+    fun setListenerIdleStopHours(hours: Int) { try { ensureInitialized().setListenerIdleStopHours(hours.toUInt()) } catch (e: Exception) { AppLogger.w(TAG, "Could not set the idle stop: ${e.message}") } }
 
     /** This phone's certificate fingerprint, what a peer pins. */
     suspend fun certificateFingerprint(): Result<String> = withContext(Dispatchers.IO) {

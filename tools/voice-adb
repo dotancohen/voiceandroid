@@ -35,6 +35,7 @@ Device and sync
   send [peer-id] / fetch [peer-id]   recordings only, no sync
   check [peer-id]                    the connection check: one line per thing that can be wrong
   proof                              the sync screen's line: what is on this device only
+  cancel                             stop the operation under way at its next page, file or chunk
   listen-on / listen-off             the listener switch on the sync screen
   initial-sync                       same as tapping Full Re-sync
   airplane on|off                    airplane mode (no app involved)
@@ -155,6 +156,7 @@ case "$cmd" in
     fetch) send FETCH ${1:+--es peer "$1"} ;;
     check) send CHECK ${1:+--es peer "$1"} ;;
     proof) send PROOF ;;
+    cancel) send CANCEL ;;
     listen-on) send LISTEN_ON ;;
     listen-off) send LISTEN_OFF ;;
     initial-sync) send INITIAL_SYNC ;;

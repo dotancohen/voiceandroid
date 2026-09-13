@@ -57,6 +57,8 @@ fun SyncSettingsScreen(
     val lastPeer by viewModel.lastPeer.collectAsState()
     val peerMessage by viewModel.peerMessage.collectAsState()
     val lastOperation by viewModel.lastOperation.collectAsState()
+    val progressSentence by viewModel.progressSentence.collectAsState()
+    val idleStopHours by viewModel.idleStopHours.collectAsState()
     val deviceId by viewModel.deviceId.collectAsState()
     val deviceName by viewModel.deviceName.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
@@ -298,6 +300,18 @@ fun SyncSettingsScreen(
                         }
                         Switch(checked = listening, onCheckedChange = { viewModel.setListening(it) })
                     }
+                    // When the listener stops itself (Stage 6): never by default
+                    LaunchedEffect(Unit) { viewModel.loadIdleStop() }
+                    var idleOpen by remember { mutableStateOf(false) }
+                    val idleChoices = listOf(0 to "keep listening", 1 to "stop after 1 hour of silence", 4 to "stop after 4 hours of silence", 8 to "stop after 8 hours of silence")
+                    TextButton(onClick = { idleOpen = true }, modifier = Modifier.semantics { contentDescription = "When the listener stops itself" }) {
+                        Text(idleChoices.firstOrNull { it.first == idleStopHours }?.second ?: "keep listening")
+                    }
+                    DropdownMenu(expanded = idleOpen, onDismissRequest = { idleOpen = false }) {
+                        idleChoices.forEach { (hours, label) ->
+                            DropdownMenuItem(text = { Text(label) }, onClick = { idleOpen = false; viewModel.setIdleStopHours(hours) })
+                        }
+                    }
                     Text("Account $accountId", style = MaterialTheme.typography.bodySmall)
                     Text("Address ${listenUrls.joinToString(", ").ifEmpty { "unknown (not on a network?)" }}", style = MaterialTheme.typography.bodySmall)
                     Text("Certificate $certificateFingerprint", style = MaterialTheme.typography.bodySmall)
@@ -367,6 +381,12 @@ fun SyncSettingsScreen(
                     }
                     uploadMessage?.let { message ->
                         Text(text = message, color = MaterialTheme.colorScheme.primary)
+                    }
+
+                    // Progress and Cancel while an operation runs (Stage 4)
+                    progressSentence?.let { sentence ->
+                        Text(text = sentence, style = MaterialTheme.typography.bodySmall, modifier = Modifier.semantics { contentDescription = sentence })
+                        OutlinedButton(onClick = { viewModel.cancelOperation() }, modifier = Modifier.fillMaxWidth()) { Text("Cancel") }
                     }
 
                     // Sync result

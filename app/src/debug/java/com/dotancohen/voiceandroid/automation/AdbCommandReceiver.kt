@@ -62,6 +62,7 @@ class AdbCommandReceiver : BroadcastReceiver() {
 
             "SYNC" -> syncResult(repo.operate("sync", intent.arg("peer")).getOrThrow())
             "EXCHANGE" -> syncResult(repo.operate("exchange", intent.arg("peer")).getOrThrow())
+            "CANCEL" -> { repo.cancelOperation(); "cancel requested" }
             "PROOF" -> repo.notDuplicated().getOrThrow().sentence()
             "CHECK" -> repo.checkConnection(intent.arg("peer") ?: repo.listPeers().getOrThrow().let { p -> (p.firstOrNull { it.isLast } ?: p.singleOrNull())?.peerId } ?: throw IllegalArgumentException("no peer; give --es peer")).getOrThrow().joinToString("\n") { (if (it.passed) "ok   " else "FAIL ") + it.name + ": " + it.detail + (if (it.code.isEmpty()) "" else " (" + it.code + ")") }
             "LISTEN_ON" -> { com.dotancohen.voiceandroid.data.SyncListenerService.start(context); "OK listening" }

@@ -59,6 +59,17 @@ class SyncListenerService : Service() {
                     if (accountId.isNotEmpty() && deviceId.isNotEmpty()) {
                         discovery = PeerDiscovery(applicationContext).also { it.announce(PORT, accountId, deviceId, name, fingerprint) }
                     }
+                    // The idle stop (Stage 6): after the chosen hours of silence, and never otherwise
+                    while (true) {
+                        kotlinx.coroutines.delay(60_000)
+                        val hours = repository.listenerIdleStopHours()
+                        val idle = repository.listenerIdleSeconds() ?: continue
+                        if (hours > 0 && idle >= hours * 3600L) {
+                            AppLogger.i(TAG, "Silent for $hours hours; the listener stops itself")
+                            stopSelf()
+                            break
+                        }
+                    }
                 }
                 .onFailure {
                     AppLogger.e(TAG, "The listener could not start", it)

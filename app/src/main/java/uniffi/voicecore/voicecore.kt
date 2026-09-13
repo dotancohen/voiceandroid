@@ -654,6 +654,35 @@ internal open class UniffiForeignFutureStructVoid(
 internal interface UniffiForeignFutureCompleteVoid : com.sun.jna.Callback {
     fun callback(`callbackData`: Long,`result`: UniffiForeignFutureStructVoid.UniffiByValue,)
 }
+internal interface UniffiCallbackInterfaceOperationProgressMethod0 : com.sun.jna.Callback {
+    fun callback(`uniffiHandle`: Long,`stage`: RustBuffer.ByValue,`done`: Long,`total`: Long,`bytes`: Long,`sentence`: RustBuffer.ByValue,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,)
+}
+@Structure.FieldOrder("report", "uniffiFree")
+internal open class UniffiVTableCallbackInterfaceOperationProgress(
+    @JvmField internal var `report`: UniffiCallbackInterfaceOperationProgressMethod0? = null,
+    @JvmField internal var `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+) : Structure() {
+    class UniffiByValue(
+        `report`: UniffiCallbackInterfaceOperationProgressMethod0? = null,
+        `uniffiFree`: UniffiCallbackInterfaceFree? = null,
+    ): UniffiVTableCallbackInterfaceOperationProgress(`report`,`uniffiFree`,), Structure.ByValue
+
+   internal fun uniffiSetValue(other: UniffiVTableCallbackInterfaceOperationProgress) {
+        `report` = other.`report`
+        `uniffiFree` = other.`uniffiFree`
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -964,6 +993,7 @@ internal interface UniffiLib : Library {
             .also { lib: UniffiLib ->
                 uniffiCheckContractApiVersion(lib)
                 uniffiCheckApiChecksums(lib)
+                uniffiCallbackInterfaceOperationProgress.register(lib)
                 }
         }
         
@@ -993,6 +1023,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_audio_file_in_cloud(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_cancel_operation(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_certificate_fingerprint(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_check_connection(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1115,6 +1147,10 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_listen_urls(`ptr`: Pointer,`port`: Short,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_listener_idle_seconds(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_listener_idle_stop_hours(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Int
     fun uniffi_voicecore_fn_method_voiceclient_listener_running(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_mark_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1129,7 +1165,7 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_offer_code(`ptr`: Pointer,`urls`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_operate(`ptr`: Pointer,`operation`: RustBuffer.ByValue,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_operate(`ptr`: Pointer,`operation`: RustBuffer.ByValue,`peerId`: RustBuffer.ByValue,`progress`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_pair_with(`ptr`: Pointer,`setupText`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1168,6 +1204,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_set_device_name(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_file_storage_config(`ptr`: Pointer,`provider`: RustBuffer.ByValue,`config`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_set_listener_idle_stop_hours(`ptr`: Pointer,`hours`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_local_timezone(`ptr`: Pointer,`offsetSeconds`: Int,`zoneName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -1214,6 +1252,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_upload(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_withdraw_code(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_voicecore_fn_init_callback_vtable_operationprogress(`vtable`: UniffiVTableCallbackInterfaceOperationProgress,
     ): Unit
     fun uniffi_voicecore_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1345,6 +1385,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_audio_file_in_cloud(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_cancel_operation(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_certificate_fingerprint(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_check_connection(
@@ -1467,6 +1509,10 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_listen_urls(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_listener_idle_seconds(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_listener_idle_stop_hours(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_listener_running(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_mark_note(
@@ -1521,6 +1567,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_file_storage_config(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_set_listener_idle_stop_hours(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_local_timezone(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_max_sync_file_size_mb(
@@ -1569,6 +1617,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_constructor_voiceclient_new(
     ): Short
+    fun uniffi_voicecore_checksum_method_operationprogress_report(
+    ): Short
     fun ffi_voicecore_uniffi_contract_version(
     ): Int
     
@@ -1608,6 +1658,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_audio_file_in_cloud() != 188.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_cancel_operation() != 1665.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_certificate_fingerprint() != 62287.toShort()) {
@@ -1793,6 +1846,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_listen_urls() != 12900.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_listener_idle_seconds() != 3680.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_listener_idle_stop_hours() != 3365.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_listener_running() != 55177.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1814,7 +1873,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_offer_code() != 29742.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_operate() != 15233.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_operate() != 25501.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_pair_with() != 32024.toShort()) {
@@ -1872,6 +1931,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_file_storage_config() != 29062.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_listener_idle_stop_hours() != 40652.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_local_timezone() != 42189.toShort()) {
@@ -1944,6 +2006,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_constructor_voiceclient_new() != 26098.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_operationprogress_report() != 55445.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
 }
@@ -2402,6 +2467,12 @@ public interface VoiceClientInterface {
     fun `audioFileInCloud`(`audioFileId`: kotlin.String): kotlin.Boolean
     
     /**
+     * Cancel the operation under way (Stage 4): it stops at its next page,
+     * file or chunk; a transfer under way stays resumable.
+     */
+    fun `cancelOperation`()
+    
+    /**
      * The fingerprint of this phone's certificate, making the certificate
      * if there is none yet: what a peer pins, and what the sync screen shows.
      */
@@ -2797,6 +2868,17 @@ public interface VoiceClientInterface {
      */
     fun `listenUrls`(`port`: kotlin.UShort): List<kotlin.String>
     
+    /**
+     * Seconds since the listener last served a request or started, or
+     * None when it has not run; for the idle stop (Stage 6).
+     */
+    fun `listenerIdleSeconds`(): kotlin.ULong?
+    
+    /**
+     * Hours of silence after which the listener stops itself; 0 means never.
+     */
+    fun `listenerIdleStopHours`(): kotlin.UInt
+    
     fun `listenerRunning`(): kotlin.Boolean
     
     /**
@@ -2842,7 +2924,7 @@ public interface VoiceClientInterface {
      * One operation with the configured peer: "sync", "deliver" (sync then
      * send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
-    fun `operate`(`operation`: kotlin.String, `peerId`: kotlin.String?): SyncResultData
+    fun `operate`(`operation`: kotlin.String, `peerId`: kotlin.String?, `progress`: OperationProgress?): SyncResultData
     
     /**
      * Use a setup text (Stage 9): a code shown by a device that holds the
@@ -2982,6 +3064,8 @@ public interface VoiceClientInterface {
      * * `config` - Optional JSON string with provider-specific configuration
      */
     fun `setFileStorageConfig`(`provider`: kotlin.String, `config`: kotlin.String?)
+    
+    fun `setListenerIdleStopHours`(`hours`: kotlin.UInt)
     
     /**
      * Tell the core which timezone this phone is in, so every timestamp it
@@ -3358,6 +3442,21 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     }
     )
     }
+    
+
+    
+    /**
+     * Cancel the operation under way (Stage 4): it stops at its next page,
+     * file or chunk; a transfer under way stays resumable.
+     */override fun `cancelOperation`()
+        = 
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_cancel_operation(
+        it, _status)
+}
+    }
+    
     
 
     
@@ -4422,6 +4521,37 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     }
     
 
+    
+    /**
+     * Seconds since the listener last served a request or started, or
+     * None when it has not run; for the idle stop (Stage 6).
+     */override fun `listenerIdleSeconds`(): kotlin.ULong? {
+            return FfiConverterOptionalULong.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_listener_idle_seconds(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Hours of silence after which the listener stops itself; 0 means never.
+     */override fun `listenerIdleStopHours`(): kotlin.UInt {
+            return FfiConverterUInt.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_listener_idle_stop_hours(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
     override fun `listenerRunning`(): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     callWithPointer {
@@ -4543,12 +4673,12 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
      * One operation with the configured peer: "sync", "deliver" (sync then
      * send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
-    @Throws(VoiceCoreException::class)override fun `operate`(`operation`: kotlin.String, `peerId`: kotlin.String?): SyncResultData {
+    @Throws(VoiceCoreException::class)override fun `operate`(`operation`: kotlin.String, `peerId`: kotlin.String?, `progress`: OperationProgress?): SyncResultData {
             return FfiConverterTypeSyncResultData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_operate(
-        it, FfiConverterString.lower(`operation`),FfiConverterOptionalString.lower(`peerId`),_status)
+        it, FfiConverterString.lower(`operation`),FfiConverterOptionalString.lower(`peerId`),FfiConverterOptionalTypeOperationProgress.lower(`progress`),_status)
 }
     }
     )
@@ -4889,6 +5019,18 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_file_storage_config(
         it, FfiConverterString.lower(`provider`),FfiConverterOptionalString.lower(`config`),_status)
+}
+    }
+    
+    
+
+    
+    @Throws(VoiceCoreException::class)override fun `setListenerIdleStopHours`(`hours`: kotlin.UInt)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_listener_idle_stop_hours(
+        it, FfiConverterUInt.lower(`hours`),_status)
 }
     }
     
@@ -6795,6 +6937,98 @@ public object FfiConverterTypeVoiceCoreError : FfiConverterRustBuffer<VoiceCoreE
 
 
 
+
+/**
+ * Where an operation's progress goes on the phone (Stage 4): the
+ * foreground service's notification.
+ */
+public interface OperationProgress {
+    
+    fun `report`(`stage`: kotlin.String, `done`: kotlin.Long, `total`: kotlin.Long, `bytes`: kotlin.ULong, `sentence`: kotlin.String)
+    
+    companion object
+}
+
+// Magic number for the Rust proxy to call using the same mechanism as every other method,
+// to free the callback once it's dropped by Rust.
+internal const val IDX_CALLBACK_FREE = 0
+// Callback return codes
+internal const val UNIFFI_CALLBACK_SUCCESS = 0
+internal const val UNIFFI_CALLBACK_ERROR = 1
+internal const val UNIFFI_CALLBACK_UNEXPECTED_ERROR = 2
+
+/**
+ * @suppress
+ */
+public abstract class FfiConverterCallbackInterface<CallbackInterface: Any>: FfiConverter<CallbackInterface, Long> {
+    internal val handleMap = UniffiHandleMap<CallbackInterface>()
+
+    internal fun drop(handle: Long) {
+        handleMap.remove(handle)
+    }
+
+    override fun lift(value: Long): CallbackInterface {
+        return handleMap.get(value)
+    }
+
+    override fun read(buf: ByteBuffer) = lift(buf.getLong())
+
+    override fun lower(value: CallbackInterface) = handleMap.insert(value)
+
+    override fun allocationSize(value: CallbackInterface) = 8UL
+
+    override fun write(value: CallbackInterface, buf: ByteBuffer) {
+        buf.putLong(lower(value))
+    }
+}
+
+// Put the implementation in an object so we don't pollute the top-level namespace
+internal object uniffiCallbackInterfaceOperationProgress {
+    internal object `report`: UniffiCallbackInterfaceOperationProgressMethod0 {
+        override fun callback(`uniffiHandle`: Long,`stage`: RustBuffer.ByValue,`done`: Long,`total`: Long,`bytes`: Long,`sentence`: RustBuffer.ByValue,`uniffiOutReturn`: Pointer,uniffiCallStatus: UniffiRustCallStatus,) {
+            val uniffiObj = FfiConverterTypeOperationProgress.handleMap.get(uniffiHandle)
+            val makeCall = { ->
+                uniffiObj.`report`(
+                    FfiConverterString.lift(`stage`),
+                    FfiConverterLong.lift(`done`),
+                    FfiConverterLong.lift(`total`),
+                    FfiConverterULong.lift(`bytes`),
+                    FfiConverterString.lift(`sentence`),
+                )
+            }
+            val writeReturn = { _: Unit -> Unit }
+            uniffiTraitInterfaceCall(uniffiCallStatus, makeCall, writeReturn)
+        }
+    }
+
+    internal object uniffiFree: UniffiCallbackInterfaceFree {
+        override fun callback(handle: Long) {
+            FfiConverterTypeOperationProgress.handleMap.remove(handle)
+        }
+    }
+
+    internal var vtable = UniffiVTableCallbackInterfaceOperationProgress.UniffiByValue(
+        `report`,
+        uniffiFree,
+    )
+
+    // Registers the foreign callback with the Rust side.
+    // This method is generated for each callback interface.
+    internal fun register(lib: UniffiLib) {
+        lib.uniffi_voicecore_fn_init_callback_vtable_operationprogress(vtable)
+    }
+}
+
+/**
+ * The ffiConverter which transforms the Callbacks in to handles to pass to Rust.
+ *
+ * @suppress
+ */
+public object FfiConverterTypeOperationProgress: FfiConverterCallbackInterface<OperationProgress>()
+
+
+
+
 /**
  * @suppress
  */
@@ -6820,6 +7054,38 @@ public object FfiConverterOptionalInt: FfiConverterRustBuffer<kotlin.Int?> {
         } else {
             buf.put(1)
             FfiConverterInt.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalULong: FfiConverterRustBuffer<kotlin.ULong?> {
+    override fun read(buf: ByteBuffer): kotlin.ULong? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterULong.read(buf)
+    }
+
+    override fun allocationSize(value: kotlin.ULong?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterULong.allocationSize(value)
+        }
+    }
+
+    override fun write(value: kotlin.ULong?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterULong.write(value, buf)
         }
     }
 }
@@ -7012,6 +7278,38 @@ public object FfiConverterOptionalTypeVersionData: FfiConverterRustBuffer<Versio
         } else {
             buf.put(1)
             FfiConverterTypeVersionData.write(value, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterOptionalTypeOperationProgress: FfiConverterRustBuffer<OperationProgress?> {
+    override fun read(buf: ByteBuffer): OperationProgress? {
+        if (buf.get().toInt() == 0) {
+            return null
+        }
+        return FfiConverterTypeOperationProgress.read(buf)
+    }
+
+    override fun allocationSize(value: OperationProgress?): ULong {
+        if (value == null) {
+            return 1UL
+        } else {
+            return 1UL + FfiConverterTypeOperationProgress.allocationSize(value)
+        }
+    }
+
+    override fun write(value: OperationProgress?, buf: ByteBuffer) {
+        if (value == null) {
+            buf.put(0)
+        } else {
+            buf.put(1)
+            FfiConverterTypeOperationProgress.write(value, buf)
         }
     }
 }
