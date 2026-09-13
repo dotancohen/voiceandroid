@@ -10,7 +10,13 @@
 #
 # What is copied:
 #   /data/data/<package>/files              the database, the config, the log
+#   /data/data/<package>/shared_prefs       the settings (recorder, audio folder)
 #   /storage/emulated/0/Android/data/<package>/files   the recordings
+#   /storage/emulated/0/Recordings/Voice    the recordings, since Stage 13
+#
+# The Whisper models (files/whisper-models, over a gigabyte) are left out:
+# they download again from Hugging Face, and copying them over wifi takes
+# long enough for the connection to drop. VOICE_BACKUP_MODELS=1 keeps them.
 #
 # Both are deleted by an uninstall, so both are copied. The app must be a debug
 # build (run-as needs it). Exits non-zero if anything is missing or the archive
@@ -28,6 +34,19 @@ OUT="$WHERE/$PACKAGE-$STAMP"
 say() { printf '%s\n' "$*"; }
 die() { printf 'BACKUP FAILED: %s\n' "$*" >&2; exit 1; }
 
+# Whether a directory exists on the phone: yes or no, and a dropped
+# connection is neither, so it stops the backup instead of being taken for
+# "the folder is not there".
+phone_dir() {
+    local answer
+    answer=$(adb shell "if [ -d '$1' ]; then echo yes; else echo no; fi" 2>/dev/null | tr -d '\r') || die "the phone stopped answering (adb)"
+    case "$answer" in
+        yes) return 0 ;;
+        no) return 1 ;;
+        *) die "the phone stopped answering while checking $1" ;;
+    esac
+}
+
 command -v adb >/dev/null || die "adb is not installed"
 devices=$(adb devices | awk 'NR>1 && $2=="device" {print $1}')
 [ -n "$devices" ] || die "no phone is connected (adb devices is empty)"
@@ -41,8 +60,18 @@ say "Backing up $PACKAGE to $OUT"
 
 # --- the private data: database, config, log -------------------------------
 # Piped through run-as and tar, because adb pull cannot read a private directory.
-say "  private data (database, configuration, log)"
-adb exec-out "run-as $PACKAGE tar -cf - -C /data/data/$PACKAGE files" > "$OUT/private-files.tar" \
+say "  private data (database, configuration, settings, log)"
+EXCLUDE="--exclude=files/whisper-models"
+MODELS_NOTE="left out (they download again)"
+if [ "${VOICE_BACKUP_MODELS:-0}" = "1" ]; then
+    EXCLUDE=""
+    MODELS_NOTE="included"
+fi
+PRIVATE_DIRS=files
+if adb shell "run-as $PACKAGE ls shared_prefs" >/dev/null 2>&1; then
+    PRIVATE_DIRS="files shared_prefs"
+fi
+adb exec-out "run-as $PACKAGE tar -cf - -C /data/data/$PACKAGE $EXCLUDE $PRIVATE_DIRS" > "$OUT/private-files.tar" \
   || die "could not read the private data"
 
 # --- the recordings -------------------------------------------------------
@@ -52,14 +81,14 @@ adb exec-out "run-as $PACKAGE tar -cf - -C /data/data/$PACKAGE files" > "$OUT/pr
 AUDIO="/storage/emulated/0/Android/data/$PACKAGE/files"
 SHARED="/storage/emulated/0/Recordings/Voice"
 say "  recordings"
-if adb shell "[ -d '$AUDIO' ]" ; then
+if phone_dir "$AUDIO" ; then
     adb exec-out "tar -cf - -C $(dirname "$AUDIO") $(basename "$AUDIO")" > "$OUT/external-files.tar" \
       || die "could not read the recordings"
 else
     say "    (no external files directory on the phone)"
     : > "$OUT/external-files.tar"
 fi
-if adb shell "[ -d '$SHARED' ]" ; then
+if phone_dir "$SHARED" ; then
     adb exec-out "tar -cf - -C $(dirname "$SHARED") $(basename "$SHARED")" > "$OUT/shared-recordings.tar" \
       || die "could not read the shared recordings folder"
 else
@@ -69,9 +98,13 @@ fi
 
 # --- prove it ------------------------------------------------------------
 say "Verifying"
-for archive in "$OUT"/private-files.tar "$OUT"/external-files.tar; do
-    tar -tf "$archive" >/dev/null 2>&1 || die "$archive is not a readable archive"
+# An empty file stands for a directory the phone said it does not have;
+# anything else must read to its end.
+for archive in "$OUT"/private-files.tar "$OUT"/external-files.tar "$OUT"/shared-recordings.tar; do
+    [ -s "$archive" ] || continue
+    tar -tf "$archive" >/dev/null 2>&1 || die "$archive is not a readable archive (cut off?)"
 done
+[ -s "$OUT/private-files.tar" ] || die "the private data archive is empty"
 
 DB_ENTRY=$(tar -tf "$OUT/private-files.tar" | grep -c 'files/notes\.db$' || true)
 [ "$DB_ENTRY" -ge 1 ] || die "the database is not in the archive"
@@ -81,7 +114,11 @@ DB_ENTRY=$(tar -tf "$OUT/private-files.tar" | grep -c 'files/notes\.db$' || true
 WAL=$(tar -tf "$OUT/private-files.tar" | grep -c 'files/notes\.db-wal$' || true)
 [ "$WAL" -ge 1 ] || say "    note: no notes.db-wal in the archive (the app may have checkpointed it)"
 
-RECORDINGS=$(cat "$OUT/external-files.tar" "$OUT/shared-recordings.tar" | tar -tf - 2>/dev/null | grep -cE '\.(opus|m4a|wav|mp3|ogg)$' || true)
+RECORDINGS=0
+for archive in "$OUT"/external-files.tar "$OUT"/shared-recordings.tar; do
+    [ -s "$archive" ] || continue
+    RECORDINGS=$(( RECORDINGS + $(tar -tf "$archive" | grep -cE '\.(opus|m4a|wav|mp3|ogg)$' || true) ))
+done
 PRIVATE_BYTES=$(stat -c %s "$OUT/private-files.tar")
 EXTERNAL_BYTES=$(( $(stat -c %s "$OUT/external-files.tar") + $(stat -c %s "$OUT/shared-recordings.tar") ))
 
@@ -90,7 +127,8 @@ Voice backup from the phone
   taken          $(date --iso-8601=seconds)
   package        $PACKAGE
   device         $devices
-  private data   $PRIVATE_BYTES bytes (database, configuration, log)
+  private data   $PRIVATE_BYTES bytes (database, configuration, settings, log)
+  whisper models $MODELS_NOTE
   recordings     $EXTERNAL_BYTES bytes, $RECORDINGS audio file(s)
 
 To restore, with the app installed and stopped:
