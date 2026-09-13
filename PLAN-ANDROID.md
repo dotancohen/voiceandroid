@@ -1,3 +1,9 @@
+# Planning questions for the Android application
+
+> **History, not the current design.** The questions asked in December 2025,
+> before the Android application was built. What was built is described in
+> `README.md`, `USER_MANUAL.md` and `MAINTAINER-GUIDE.md` in this directory.
+
 Questions to Plan This Correctly
 
 1. Platform Scope
