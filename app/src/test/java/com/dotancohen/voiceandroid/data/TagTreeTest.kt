@@ -155,4 +155,23 @@ class TagTreeTest {
         assertEquals(emptyMap<String, Set<String>>(), TagTree.childrenByParent(emptyList()))
         assertEquals(emptySet<String>(), TagTree.possibleParentIds("1", emptyList()))
     }
+
+    /** The four hidden tags the core makes on every device, as the phone reads them. */
+    private val system = tag(TagTree.SYSTEM_TAG_ID, "_system")
+    private val marked = tag("a1b2c3d4000050008000000000000002", "_marked", parentId = TagTree.SYSTEM_TAG_ID)
+    private val nonsynced = tag("a1b2c3d4000050008000000000000003", "_nonsynced", parentId = TagTree.SYSTEM_TAG_ID)
+    private val tooBig = tag("a1b2c3d4000050008000000000000004", "_too-big", parentId = nonsynced.id)
+
+    @Test
+    fun `the hidden tags are left out however deep, and a tag of the user's is shown whatever its name`() {
+        val underTooBig = tag("5", "עוד פנימה", parentId = tooBig.id)
+        val mine = tag("6", "_שלי")
+        val all = listOf(system, marked, work, nonsynced, tooBig, underTooBig, trips, mine)
+        assertEquals(listOf(work, trips, mine), TagTree.withoutSystemTags(all))
+    }
+
+    @Test
+    fun `a note's own tags lose the hidden ones even without their parents in the list`() {
+        assertEquals(listOf(athens), TagTree.withoutSystemTags(listOf(marked, athens, tooBig)))
+    }
 }

@@ -317,7 +317,7 @@ inside `viewModelScope.launch`. A screen reads a flow with `collectAsState()`.
 | `SharedFilterViewModel.kt` | The current search and filter, shared by the list and the Note screen (scoped to the activity) |
 | `FilterViewModel.kt` | Tag filter tree |
 | `TagManagementViewModel.kt`, `TagHierarchyViewModel.kt` | Tags |
-| `SettingsViewModel.kt` | Settings and sync screen, including `maxUploadMb` and `saveMaxUploadMb` |
+| `SettingsViewModel.kt` | Settings and sync screen, including `maxUploadMb`, `saveMaxUploadMb` and `listenAddresses` |
 | `IssuesViewModel.kt` | Issues: `load()` reads the device names, this device's id and the issues, and turns them into sections with `IssuesText` |
 | `ImportAudioViewModel.kt` | Import |
 | `RecorderSettingsViewModel.kt`, `TranscriptionSettingsViewModel.kt` | Settings pages |
@@ -327,7 +327,7 @@ inside `viewModelScope.launch`. A screen reads a flow with `collectAsState()`.
 
 | File | Purpose |
 |---|---|
-| `VoiceRepository.kt` | The only class that calls `VoiceClient`. A process-wide **singleton** (`VoiceRepository.getInstance(context)`). Chooses the audio directory, creates the client, reports the timezone. About 125 methods, grouped by Notes, Tags, Recordings, Transcriptions, conflicts and history, peers and operations, pairing, snapshots, bucket and encryption, and (since 2026-09-14) `fileLocations`, `checkFilesHere`, `removeLocalCopy`, `getMaxUploadMb`, `setMaxUploadMb`, `issues` and `deviceNames` |
+| `VoiceRepository.kt` | The only class that calls `VoiceClient`. A process-wide **singleton** (`VoiceRepository.getInstance(context)`). Chooses the audio directory, creates the client, reports the timezone. About 125 methods, grouped by Notes, Tags, Recordings, Transcriptions, conflicts and history, peers and operations, pairing, snapshots, bucket and encryption, and (since 2026-09-14) `fileLocations`, `checkFilesHere`, `madeHereButMissing`, `removeLocalCopy`, `listenAddresses`, `getMaxUploadMb`, `setMaxUploadMb`, `issues` and `deviceNames` |
 | `Note.kt` | Kotlin data classes that mirror the generated ones: `Note`, `AudioFile`, `NoteAttachment`, `Transcription`, `Tag`, `SyncResult`, `Peer`, `CheckRow` ... |
 | `OperationService.kt` | Foreground service in which every sync operation runs, with progress and Cancel in its notification; `OperationState` publishes progress to the screens |
 | `SyncListenerService.kt` | Foreground service that keeps the phone listening for peers while the switch is on |
@@ -381,12 +381,17 @@ transcribes longer Recordings.
 | `UiPreferences.kt` | Interface size, lines per row, spotlight duration |
 | `NoteSharing.kt` | Sharing a Note or a Recording through the `FileProvider` |
 | `IssuesText.kt` | The words of the Issues screen (sections, sizes, the reason a Recording is not in the bucket) and of the "Where the copies are" lines, in the desktop's words (`IssuesTextTest`) |
+| `AddressText.kt` | The words after "Address" on Sync Settings (LISTEN-4): the address found through the phone's route, alone; or every candidate followed by the sentence that only one of them is correct; or the sentence that no address was found. The same as the desktop's `src/core/addresses_text.py` (`AddressTextTest`) |
 
 ### 5.8 `app/src/debug/.../automation/AdbCommandReceiver.kt`
 
 A **broadcast receiver** that exists only in the debug build. It turns user
 actions into **intents** that a computer can send over ADB, and replies with a
-line starting `OK` or `ERROR`. `tools/voice-adb` sends them:
+line starting `OK` or `ERROR`. The broadcast ends at once and the action runs
+in the receiver's own coroutine scope, so a caller waits for the reply line in
+logcat, never for `am broadcast` to return: Android declares an application not
+responding when a broadcast is still open after 60 seconds, and a fetch or a
+model download takes longer. `tools/voice-adb` sends them:
 
 ```bash
 tools/voice-adb ping
@@ -410,8 +415,8 @@ phone", the upload limit, Issues) have no ADB action yet (section 13.2).
 3. The first call to `VoiceRepository` creates `VoiceClient(filesDir,
    SecretWrap.keystore())`. In Rust (`android.rs`, `VoiceClient::new`):
    - `Config::new` reads or creates `files/config.json`;
-   - `Database::new(files/notes.db)` opens the database and runs every
-     migration (section 8.1);
+   - `Database::new(files/notes.db)` opens the database: it makes the schema
+     in an empty file, and refuses a file of another schema (section 8.1);
    - `ensure_own_device_card` makes the device key and the device card once.
 4. `VoiceRepository.initialize()` sets the device name from the phone model
    when it is still the core's placeholder, reports the timezone, tells the core
@@ -480,27 +485,18 @@ creates it. Only its location differs (`files/notes.db`).
 - **One SQLite file**, `notes.db`. SQLite is a database stored in one
   ordinary file, with no server process.
 - It is opened by `Database::new` in `database.rs`, which sets **WAL** journal
-  mode, sets `busy_timeout` to 10 seconds, and then runs every **migration** in
-  a fixed order:
-
-```
-init_database                        the original tables, indexes and system Tags
-migrate_add_sync_received_at
-migrate_timestamps_to_unix           text dates became Unix seconds
-migrate_add_storage_columns
-migrate_add_file_storage_config_table
-migrate_drop_legacy_conflict_tables  the six old conflicts_* tables
-create_version_tables                field_versions, field_heads ... (versions.rs)
-migrate_create_root_versions
-migrate_add_sync_sequence            seq columns, triggers, most newer tables and columns,
-                                     including file_locations and audio_files.size_bytes
-migrate_add_timezone_columns
-```
-
-- **There is no schema version number.** Each migration checks whether its
-  table or column already exists and skips the step when it exists. A new build
-  therefore opens an old database and adds what is missing. To add a column,
-  add a "check, then `ALTER TABLE`" step to a migration function.
+  mode, sets `busy_timeout` to 10 seconds, and then calls `create_schema`.
+- **One schema, with a number.** In an empty file, `create_schema` makes every
+  table in one transaction (`create_tables`, `create_version_tables`,
+  `create_sequence_triggers`, `create_identity`, `create_system_tags`) and
+  writes `SCHEMA_VERSION` (1) into `PRAGMA user_version`. A file that has tables
+  and another number is not opened: "This database was written by another
+  version of Voice (schema N; this version reads schema 1) and is not opened.
+  Start with an empty data directory." There are no migrations: nothing
+  converts a database written by an earlier build, and a database written
+  before the number existed carries `user_version` 0 and is refused the same
+  way. A new table or column goes into `create_tables`, and a synced column
+  also into its table's list in `create_sequence_triggers`.
 - **Ids** are **UUID7** values stored as 16-byte **BLOB**s. Kotlin receives them
   as 32 lowercase hexadecimal characters with no hyphens. In the version
   tables, `entity_id` is stored as that text instead.
@@ -587,6 +583,7 @@ timestamps. Removing a Tag from a Note sets `deleted_at`.
 | `duration_seconds` | Length, when known |
 | `summary` | Versioned text |
 | `device_id` | The device that created the row |
+| `origin_device_id`, `origin_kind` | The installation that made the Recording, and how: `recorded` by this application's recorder or `imported` from a file that already existed. Written by that installation, synced, set once and never changed by a later row (FILE-25) |
 | `content_sha256` | SHA-256 of the file's bytes; also the bucket object's name |
 | `size_bytes` | The file's size in bytes. Synced, written together with the content hash, never changed once known (FILE-23) |
 | `storage_provider`, `storage_key`, `storage_uploaded_at` | Set after an upload to the bucket; NULL means not uploaded |
@@ -618,10 +615,14 @@ timestamps. Removing a Tag from a Note sets `deleted_at`.
 | `changed_at` | When this was stated, in **milliseconds** |
 | `changed_by` | The device that stated it |
 
-A device states its own copy when it receives, fetches or downloads a file, and
-when a sync, the Issues screen or "Where are the copies?" compares its audio
-folder with what it has stated. An upload states the bucket's row. A sender or
-a fetcher states that the peer holds the file. The newest statement about a
+A device states its own copy when it hashes a file (`storeContentHash`, so a
+recording or an import states this phone's copy at once), when it receives,
+fetches or downloads a file, and when a sync, a handshake it answers as a
+listener, a snapshot restore, the Issues screen or "Where are the copies?"
+compares its audio folder with what it has stated. An upload states the
+bucket's row; a download that finds no object, or an object whose hash is not
+the Recording's, states that the bucket does not hold it. A sender or a fetcher
+states that the peer holds the file. The newest statement about a
 place wins, then the larger device id, then presence, so every device keeps the
 same rows whatever order they arrive in.
 
@@ -633,6 +634,12 @@ same rows whatever order they arrive in.
 | `_system/_marked` | `...0002` | The star on a Note |
 | `_system/_nonsynced` | `...0003` | Parent of Tags for items that are not synced |
 | `_system/_nonsynced/_too-big` | `...0004` | Created with the others. No Kotlin code puts it on a Note; a Recording over the account's upload limit is listed under Issues instead |
+
+No screen shows these Tags. Every list of Tags goes through
+`TagTree.withoutSystemTags` (`data/TagTree.kt`), which leaves out `_system` and
+every Tag under it however deep, and the four fixed ids even when a list lacks
+their parents (a Note's own Tags). A Tag of the user's whose name starts with
+`_` is shown like any other.
 
 ### 8.4 The version history (`versions.rs`)
 
@@ -713,10 +720,11 @@ and `file_location` (PROTO-1).
 | Table | Purpose |
 |---|---|
 | `pairing_offers` | The hash of a pairing code while valid |
-| `audio_file_copies` | The older record of which peer holds which Recording. Nothing writes it now: when `file_locations` is created in an older database, its rows are copied into `file_locations` once |
 | `upload_parts` | Journal of an upload in parts |
 | `pending_file_renames` | A Recording whose file must still be renamed |
-| `purged_objects` | Bucket objects deleted by a purge |
+| `purged_objects` | Bucket objects of purged Recordings, waiting for the purge tag at the next upload run. An object that a Recording which stays also uses is not listed |
+| `file_holds` | A promise this phone gave a peer to keep its copy of a Recording while that peer removes its own, until `until_ms` (FILE-26) |
+| `file_removals` | A removal of this phone's copy that is under way; while it is, a peer's request to keep a copy is refused (FILE-26) |
 
 ### 8.7 Reading the phone's database safely
 
@@ -761,7 +769,8 @@ Never copy a database back onto the phone by hand, and never write to it with SQ
      the `audio_files` and `note_attachments` rows; the core decides `disk_name`;
    - `copyAudioFileToStorage(...)` copies the temporary file to
      `<audio directory>/<disk_name>`, never overwriting, then `storeContentHash`,
-     which also records the size;
+     which also records the size and states that this phone holds the file
+     (FILE-22);
    - the temporary file is deleted.
 
 ### 9.2 Importing existing recordings
@@ -825,6 +834,18 @@ changes nothing (**idempotent**).
 `sync_server.rs` then serves peers over HTTPS with a self-signed certificate
 that peers remember at first connection (**TOFU**).
 
+**Where the phone can be reached** (LISTEN-4): `SettingsViewModel` reads
+`VoiceRepository.listenAddresses(port)` (`VoiceClient.listen_addresses`), which
+returns `detected`, `shown`, `urls` and `sentence`. The candidates are the
+private IPv4 addresses of interfaces that can carry a local network (mobile
+data, tunnels, VPNs and virtual networks are left out); the source address of
+the phone's route is the one found, shown alone and tried first. Sync Settings
+shows `AddressText.words(...)` after "Address", and "Show my code" puts every
+URL of `urls` into the code; the reading device tries each in turn. When a peer
+does not answer at its remembered address, the core tries each address on the
+peer's device card, with the peer's pinned certificate, and remembers the one
+that answers, before `OperationService` searches the network (`PeerDiscovery`).
+
 **Files between installations** (FILE-12, FILE-13): `POST /sync/audio/missing`
 finds what the receiver lacks; `GET` and `POST /sync/audio/:id/file` stream
 bytes, resume, and verify the SHA-256. The receiver and the fetcher record the
@@ -847,8 +868,11 @@ behave the same):
 - An upload (a send to a peer, a part or a small file to the bucket) has no
   read timeout. It ends when no byte of its body has moved for thirty seconds,
   or one minute after the last byte with no answer (`transfer::stall_of_upload`).
-- A transfer is tried three times, waiting one, two and four seconds. A new
-  try asks the peer how many bytes it holds and continues from there. A refusal
+- A transfer (send, fetch, bucket upload, bucket download) is tried three
+  times: the second try straight after the first, the third a minute after the
+  second. After three files failed every try the operation stops and names the
+  files it did not attempt. A new try asks the peer how many bytes it holds and
+  continues from there. A refusal
   (4xx) is not tried again. The bytes that arrived stay in the part file on both
   sides.
 
@@ -858,6 +882,13 @@ One device shows a QR code or a setup text `voice://pair?...` with a
 single-use token valid for ten minutes. The phone reads it with the camera
 (`QrReader`, CameraX and ZXing) or receives it as a tapped link (the
 `voice://pair` intent filter in the manifest, passed on by `PairingRequests`).
+In `QrReader` the camera is bound by a `DisposableEffect` keyed on the camera
+provider and the count of presses of **Another camera**, so a press re-binds
+through Compose; `CameraChoice.at(count)` picks the camera, and its own
+`cameraSelector` is what is bound. The `PreviewView` runs in `COMPATIBLE` mode
+(a TextureView), because a SurfaceView draws below its window and the reader
+is a dialog window, where that picture is black. The reader sits on an opaque
+`Surface`, so Sync Settings does not show through.
 `VoiceRepository.pairWith(setupText)` gives the phone the account id, a device
 key of its own and one peer.
 
@@ -865,12 +896,15 @@ key of its own and one peer.
 
 A copy of `notes.db` goes into `files/snapshots/` before anything from a peer
 is applied, before moving to another account and before a restore; five are
-kept. Advanced settings list and restore them (`SnapshotsViewModel`).
+kept. Advanced settings list and restore them (`SnapshotsViewModel`). After a
+restore, `VoiceClient.restore_snapshot` compares the audio folder with the
+restored rows, which say where the copies were when the snapshot was taken
+(FILE-22).
 
 ### 9.7 Where the copies are, removing this phone's copy, the upload limit, Issues
 
 All four were added on 2026-09-14 and call the core functions of FILE-22,
-FILE-23 and ISSUE-1 in `android.rs`, which use the phone's own audio folder
+FILE-23, FILE-25, FILE-26 and ISSUE-1 in `android.rs`, which use the phone's own audio folder
 and device id.
 
 **"Where are the copies?"** (the ⋮ menu of a file in the Note's player):
@@ -880,14 +914,29 @@ device has stated: a file that is there is stated present, a file that is gone
 is stated absent) → `VoiceRepository.fileLocations(audioId)` →
 `IssuesText.locationLines` → the dialog "Where the copies are". A place is
 shown as "the bucket", "this device", the device's name, or the first 12
-characters of its id.
+characters of its id. `VoiceRepository.madeHereButMissing(audioId)`
+(`made_here_but_missing`) returns `recorded` or `imported` when this phone made
+the Recording, no place is known to hold it, and its file is not in the audio
+folder; the dialog then adds "Recorded on this device, but its file was not
+found in the audio folder after the recording" or the same for an import
+(FILE-25).
 
 **"Remove from this phone"**: a confirmation dialog →
 `NoteDetailViewModel.removeLocalCopy` → `VoiceRepository.removeLocalCopy` →
-`VoiceClient.remove_local_copy`, which deletes the file and states it absent.
-The core refuses when the file is not on this phone, or when no other place
-holds it. The Recording row stays, and the file can be fetched or downloaded
-again.
+`VoiceClient.remove_local_copy` → `SyncClient::remove_local_copy` in
+`sync_client.rs` (FILE-26). The file goes only when another place confirms at
+that moment that it holds the file: the bucket, asked directly (the object
+exists and does not carry the `voice-purged` tag), or a device stated to hold
+it, which answers `POST /sync/audio/:audio_id/keep` with `holds`, `until_ms` and
+`reason`, and promises to keep its own copy for ten minutes (`HOLD_MS`). Then
+the file is deleted and this phone states it absent. The core refuses when the
+file is not on this phone, while this phone has promised a peer to keep that
+copy (`file_holds`), and when no place confirms; the refusal names what each
+place answered. While a removal is under way (`file_removals`) the phone
+refuses a peer's keep request, so two devices that count on each other never
+both remove the file. The view model reloads the Note on success and shows
+"Not removed: <reason>" on a refusal. The Recording row stays, and the file can
+be fetched or downloaded again.
 
 **The upload limit** (the "Upload limit" card on Sync Settings):
 `SettingsViewModel.saveMaxUploadMb` → `VoiceRepository.setMaxUploadMb` → the
@@ -901,7 +950,8 @@ configured. The per-device "largest file to sync" field is gone.
 `IssuesText.sections`. The core compares the audio folder first, then lists,
 from the database as it is: Recordings not in the bucket with the reason for
 each (no bucket, over the upload limit, waiting for the named devices that
-hold the file, or no copy known); Transcriptions whose Recording row is not
+hold the file, or no copy known, with the line of "Where the copies are" added
+when this phone recorded or imported the Recording and its file is gone); Transcriptions whose Recording row is not
 there; Attachments whose Note or Recording row is not there; Recordings that no
 Note holds; Tags whose names contain whitespace. Nothing is stored: an issue
 that was dealt with is gone the next time the list is read. The lines are plain
@@ -969,7 +1019,7 @@ The report is `app/build/reports/tests/testDebugUnitTest/index.html`.
 
 | Lane | Directory | Runs on | Use it for |
 |---|---|---|---|
-| JVM | `app/src/test/` (499 tests in 47 files) | The computer; **Robolectric** supplies Android's classes; the core is built for the computer | Logic; Compose screens (that pressing a control has the effect it appears to have); the core through the phone's own bindings, including storage against a local S3 server |
+| JVM | `app/src/test/` (501 tests in 49 files) | The computer; **Robolectric** supplies Android's classes; the core is built for the computer | Logic; Compose screens (that pressing a control has the effect it appears to have); the core through the phone's own bindings, including storage against a local S3 server |
 | Instrumented | `app/src/androidTest/` (6 tests in `TagTreeItemTest`) | A device, as the `.uitest` application | What needs the phone itself: the phone's native library, a microphone, the real Android framework on a device |
 
 **The core in the JVM lane.** Every JVM test task first runs two Gradle tasks
@@ -991,12 +1041,15 @@ contains `connected` or `install`; neither touches a phone.
 
 Two test classes call the core, by constructing `uniffi.voicecore.VoiceClient`:
 
-- `data/CoreLocationsTest.kt`: where the copies are, removing this phone's
-  copy, the upload limit, and Issues (FILE-22, FILE-23, ISSUE-1).
+- `data/CoreLocationsTest.kt`: where the copies are, this phone's copy stated
+  when the file is hashed and not removed while no other place confirms that it
+  holds the file, the upload limit, and Issues (FILE-22, FILE-23, FILE-26,
+  ISSUE-1).
 - `data/CoreStorageTest.kt`: upload and download through the phone's own client
   against moto's S3, directly and through `FaultyLink` (FILE-14, FILE-19,
   FILE-22): a refused connection, a part cut, a frozen download, a bucket that
-  never answers.
+  never answers; and `a copy the bucket holds is removed from this phone once
+  the bucket is asked` (FILE-26).
 
 The helpers, in `app/src/test/java/com/dotancohen/voiceandroid/network/`:
 
@@ -1191,8 +1244,6 @@ in a test. Confirm each one, with a test that fails, before changing the code.
 
 **Leaf** — A version that no other version was written on top of. Two leaves for one field means two devices changed it independently.
 
-**Migration** — Code that changes an existing database's structure so it matches what the current code expects.
-
 **moto** — A Python program that imitates Amazon S3 on the computer. The storage tests of both applications upload to it and download from it.
 
 **MVVM** — Model, view, view model: screens (views) show state held by view models, which get data from a model layer (here the repository and the core).
@@ -1208,6 +1259,8 @@ in a test. Confirm each one, with a test that fails, before changing the code.
 **Repository** — A class that is the single way the rest of the application reaches data. Here `VoiceRepository`.
 
 **Robolectric** — A library that runs Android framework classes on an ordinary JVM, so screens can be tested without a phone.
+
+**Schema version** — The number a database file carries in `PRAGMA user_version`. The core opens an empty file or a file of its own `SCHEMA_VERSION`, and refuses any other; there are no migrations.
 
 **Singleton** — A class of which the process has exactly one instance.
 

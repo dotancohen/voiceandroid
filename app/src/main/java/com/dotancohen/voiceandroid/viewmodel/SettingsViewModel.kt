@@ -270,8 +270,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _listening = MutableStateFlow(repository.listenerRunning())
     val listening: StateFlow<Boolean> = _listening.asStateFlow()
 
-    private val _listenUrls = MutableStateFlow<List<String>>(emptyList())
-    val listenUrls: StateFlow<List<String>> = _listenUrls.asStateFlow()
+    /** Where this phone can be reached (LISTEN-4), once read. */
+    private val _listenAddresses = MutableStateFlow<uniffi.voicecore.ListenAddressesData?>(null)
+    val listenAddresses: StateFlow<uniffi.voicecore.ListenAddressesData?> = _listenAddresses.asStateFlow()
 
     private val _certificateFingerprint = MutableStateFlow("")
     val certificateFingerprint: StateFlow<String> = _certificateFingerprint.asStateFlow()
@@ -282,7 +283,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     /** The address, the fingerprint and the account, for the sync screen. */
     fun loadThisDevice() {
         viewModelScope.launch {
-            repository.listenUrls(com.dotancohen.voiceandroid.data.SyncListenerService.PORT).onSuccess { _listenUrls.value = it }
+            repository.listenAddresses(com.dotancohen.voiceandroid.data.SyncListenerService.PORT).onSuccess { _listenAddresses.value = it }
             repository.certificateFingerprint().onSuccess { _certificateFingerprint.value = it }
             repository.getAccountId().onSuccess { _accountId.value = it }
             _listening.value = repository.listenerRunning()
@@ -342,8 +343,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     fun showMyCode() {
         viewModelScope.launch {
             if (!repository.listenerRunning()) setListening(true)
-            repository.listenUrls(com.dotancohen.voiceandroid.data.SyncListenerService.PORT).onSuccess { _listenUrls.value = it }
-            repository.offerCode(_listenUrls.value)
+            repository.listenAddresses(com.dotancohen.voiceandroid.data.SyncListenerService.PORT).onSuccess { _listenAddresses.value = it }
+            // Every candidate goes into the code; the reading device tries each in turn (LISTEN-4)
+            repository.offerCode(_listenAddresses.value?.urls.orEmpty())
                 .onSuccess { code ->
                     _myCode.value = code
                     codeTicker?.cancel()
@@ -457,7 +459,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             }
 
             val audioFileDir = repository.getAudioFileDirectory()
-            val syncState = repository.debugSyncState().getOrNull() ?: "N/A"
 
             _debugInfo.value = buildString {
                 appendLine("Debug Info:")
@@ -468,9 +469,6 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
                 if (allAudioFiles.isNotEmpty()) {
                     appendLine("- First audio file: ${allAudioFiles[0].filename} (${allAudioFiles[0].id.take(8)}...)")
                 }
-                appendLine()
-                appendLine("Sync State:")
-                append(syncState)
             }
         }
     }

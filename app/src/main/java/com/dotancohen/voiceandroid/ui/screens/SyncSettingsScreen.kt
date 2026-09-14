@@ -83,7 +83,7 @@ fun SyncSettingsScreen(
     val context = LocalContext.current
     val checkRows by viewModel.checkRows.collectAsState()
     val listening by viewModel.listening.collectAsState()
-    val listenUrls by viewModel.listenUrls.collectAsState()
+    val listenAddresses by viewModel.listenAddresses.collectAsState()
     val certificateFingerprint by viewModel.certificateFingerprint.collectAsState()
     val accountId by viewModel.accountId.collectAsState()
     val uploadMessage by viewModel.uploadMessage.collectAsState()
@@ -113,7 +113,8 @@ fun SyncSettingsScreen(
         if (openReaderRequest) { PairingRequests.openReader.value = false; readerOpen = true }
     }
     if (readerOpen) {
-        Dialog(onDismissRequest = { readerOpen = false }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        // Edge to edge, so the reader receives the system bars' insets and keeps its buttons above them
+        Dialog(onDismissRequest = { readerOpen = false }, properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
             QrReader(
                 onSetupText = { text -> readerOpen = false; viewModel.pairWith(text) },
                 onClose = { readerOpen = false },
@@ -347,7 +348,10 @@ fun SyncSettingsScreen(
                         }
                     }
                     Text("Account $accountId", style = MaterialTheme.typography.bodySmall)
-                    Text("Address ${listenUrls.joinToString(", ").ifEmpty { "unknown (not on a network?)" }}", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        "Address " + (listenAddresses?.let { com.dotancohen.voiceandroid.util.AddressText.words(it.detected, it.shown, it.sentence) } ?: "not read yet"),
+                        style = MaterialTheme.typography.bodySmall
+                    )
                     Text("Certificate $certificateFingerprint", style = MaterialTheme.typography.bodySmall)
 
                     // One visible button, naming the last peer (Stage 5); the arrow

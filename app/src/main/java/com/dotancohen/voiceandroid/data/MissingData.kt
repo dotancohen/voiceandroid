@@ -5,11 +5,10 @@ import java.io.File
 /**
  * Calculating data that was never calculated.
  *
- * Some facts about a recording are not known when it arrives: a file imported
- * before lengths were recorded has none; a recording copied without its
- * filesystem dates has no reliable creation time; a note written before the
- * display caches existed has none. None of that is lost data — it can be read
- * back off the file, or recomputed — but until it is, the application shows
+ * Some facts about a recording are not known when it arrives: a file whose
+ * length could not be read when it was imported has none; a recording copied
+ * without its filesystem dates has no reliable creation time. None of that is
+ * lost data — it can be read back off the file — but until it is, the application shows
  * less than it knows, and the decisions that depend on a length (whether a
  * waveform is drawn without asking, whether the phone transcribes a recording)
  * have nothing to go on.
@@ -72,7 +71,6 @@ object MissingData {
     /** What this operation needs from the phone and from the database. */
     interface Store {
         suspend fun recordings(): List<AudioFile>
-        suspend fun notes(): List<Note>
 
         /** The file behind a recording, or null when it is not on this phone. */
         suspend fun fileFor(recording: AudioFile): File?
@@ -84,13 +82,12 @@ object MissingData {
          * When the recording was made, as Unix seconds, or null when nothing says.
          *
          * [recordedName] is the name the file arrived under, which is where a
-         * recorder's date survives: the stored file is named after its id.
+         * recorder's date survives: the stored file's disk name can differ.
          */
         fun madeAt(file: File, recordedName: String): Long?
 
         suspend fun saveLength(recordingId: String, seconds: Long): Boolean
         suspend fun saveMadeAt(recordingId: String, at: Long): Boolean
-        suspend fun rebuildCaches(noteId: String): Boolean
     }
 
     /**
@@ -113,15 +110,10 @@ object MissingData {
             if (recording.importedAt.offset == null) missingZone++
         }
 
-        // A note missing the list cache is a note whose caches were never
-        // built, and rebuilding builds both of them.
-        val missingCache = store.notes().count { it.deletedAt == null && it.listDisplayCache.isNullOrEmpty() }
-
         return Survey(
             listOf(
                 Gap("duration", "Recordings with no length recorded", missingLength),
                 Gap("file_created_at", "Recordings with no creation date", missingMadeAt),
-                Gap("note_cache", "Notes with no display cache", missingCache),
                 Gap(
                     "absent_file", "Recordings whose file is not on this phone",
                     absentFile, calculable = false,
@@ -142,9 +134,8 @@ object MissingData {
      *
      * @param durations Read the length of recordings that have none.
      * @param fileDates Read the creation date of recordings that have none.
-     * @param caches Rebuild the display caches of notes that have none.
      * @param limit At most this many recordings, for a run that should not take
-     *   all night. Caches are not limited: rebuilding one is milliseconds.
+     *   all night.
      * @param progress Called with a line of text as each item is done, so the
      *   screen can show what is happening.
      */
@@ -152,7 +143,6 @@ object MissingData {
         store: Store,
         durations: Boolean = true,
         fileDates: Boolean = true,
-        caches: Boolean = true,
         limit: Int? = null,
         progress: ((String) -> Unit)? = null,
     ): Report {
@@ -206,22 +196,6 @@ object MissingData {
                 }
 
                 if (didSomething) done++
-            }
-        }
-
-        if (caches) {
-            var rebuilt = 0
-            for (note in store.notes()) {
-                if (note.deletedAt != null || !note.listDisplayCache.isNullOrEmpty()) continue
-                if (store.rebuildCaches(note.id)) {
-                    rebuilt++
-                } else {
-                    failed["note_cache"] = (failed["note_cache"] ?: 0) + 1
-                }
-            }
-            if (rebuilt > 0) {
-                calculated["note_cache"] = rebuilt
-                say("Rebuilt the display cache of $rebuilt note(s)")
             }
         }
 

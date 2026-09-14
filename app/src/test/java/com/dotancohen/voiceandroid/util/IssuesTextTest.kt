@@ -82,5 +82,13 @@ class IssuesTextTest {
         ) { millis -> "t$millis" }
         assertEquals(listOf("the bucket: holds it (since t5000)", "this device: does not hold it (since t6000)"), lines)
         assertEquals(listOf("No place is known to hold it"), IssuesText.locationLines(emptyList(), emptyMap(), here) { "" })
+        assertEquals(
+            listOf("No place is known to hold it", "Imported on this device, but its file was not found in the audio folder after the import"),
+            IssuesText.locationLines(emptyList(), emptyMap(), here, madeHereButMissing = "imported") { "" }
+        )
+        assertEquals(
+            listOf("No place is known to hold it", "Recorded on this device, but its file was not found in the audio folder after the recording"),
+            IssuesText.locationLines(emptyList(), emptyMap(), here, madeHereButMissing = "recorded") { "" }
+        )
     }
 }

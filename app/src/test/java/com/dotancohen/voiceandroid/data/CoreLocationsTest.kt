@@ -13,8 +13,9 @@ import java.io.File
 
 /**
  * The core itself, through the phone's bindings, on this computer: where a
- * recording's copies are, removing this phone's copy, the account's upload
- * limit and the Issues list (FILE-22, FILE-23, ISSUE-1). The same library the
+ * recording's copies are, refusing to remove this phone's copy while nothing
+ * confirms another, the account's upload limit and the Issues list (FILE-22,
+ * FILE-26, FILE-23, ISSUE-1). The same library the
  * phone loads, built for this computer by the hostCoreForTests task.
  */
 class CoreLocationsTest {
@@ -40,27 +41,32 @@ class CoreLocationsTest {
     }
 
     @Test
-    fun `this phone's copy is stated, and removed only when another place holds it`() {
+    fun `this phone's copy is stated when it is hashed, and it is not removed while no other place confirms it`() {
         val (client, _) = client()
         val id = recording(client, "הקלטה בטלפון.ogg", ByteArray(5000) { (it % 251).toByte() })
-        assertEquals(listOf(1u, 0u), client.checkFilesHere())
         val here = client.getDeviceId()
         assertEquals(listOf(here to true), client.fileLocations(id).map { it.place to it.present })
+        assertEquals("hashing already stated it", listOf(0u, 0u), client.checkFilesHere())
 
         try {
             client.removeLocalCopy(id)
             fail("the only copy was removed")
         } catch (e: VoiceCoreException) {
-            assertTrue(e.message ?: "", (e.message ?: "").contains("on this device only"))
+            assertTrue(e.message ?: "", (e.message ?: "").contains("no other place is known to hold it"))
         }
         val path = fileOf(client, id)
         assertTrue(path.isFile)
 
+        // What the rows say is not enough (FILE-26): without a bucket to ask, nothing confirms it
         client.updateAudioFileStorage(id, "s3", "k.ogg")
-        client.removeLocalCopy(id)
-        assertFalse(path.exists())
-        assertEquals(mapOf("cloud" to true, here to false), client.fileLocations(id).associate { it.place to it.present })
-        assertEquals(listOf(0u, 0u), client.checkFilesHere())
+        try {
+            client.removeLocalCopy(id)
+            fail("a copy was removed on the rows' word alone")
+        } catch (e: VoiceCoreException) {
+            assertTrue(e.message ?: "", (e.message ?: "").contains("no bucket is set up on this device"))
+        }
+        assertTrue(path.isFile)
+        assertEquals(mapOf("cloud" to true, here to true), client.fileLocations(id).associate { it.place to it.present })
     }
 
     @Test

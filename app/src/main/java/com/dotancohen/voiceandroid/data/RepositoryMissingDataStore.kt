@@ -18,9 +18,6 @@ class RepositoryMissingDataStore(
     override suspend fun recordings(): List<AudioFile> =
         repository.getAllAudioFiles().getOrDefault(emptyList())
 
-    override suspend fun notes(): List<Note> =
-        repository.getAllNotes().getOrDefault(emptyList())
-
     override suspend fun fileFor(recording: AudioFile): File? {
         val path = repository.getAudioFilePath(recording.id).getOrNull() ?: return null
         val file = File(path)
@@ -57,9 +54,6 @@ class RepositoryMissingDataStore(
 
     override suspend fun saveMadeAt(recordingId: String, at: Long): Boolean =
         repository.updateAudioFileCreatedAt(recordingId, at).getOrDefault(false)
-
-    override suspend fun rebuildCaches(noteId: String): Boolean =
-        repository.rebuildAllCachesForNote(noteId).isSuccess
 
     private companion object {
         const val TAG = "MissingData"

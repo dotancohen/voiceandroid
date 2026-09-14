@@ -129,11 +129,12 @@ fun ImportAudioScreen(
     LaunchedEffect(importState) {
         if (importState is ImportState.Complete) {
             val state = importState as ImportState.Complete
+            val already = if (state.alreadyImportedCount > 0) " ${state.alreadyImportedCount} already imported." else ""
             if (state.failedCount == 0) {
-                snackbarHostState.showSnackbar("Imported ${state.successCount} files successfully")
+                snackbarHostState.showSnackbar("Imported ${state.successCount} files successfully.$already")
             } else {
                 snackbarHostState.showSnackbar(
-                    "Imported ${state.successCount} files. ${state.failedCount} failed (see Critical Log)"
+                    "Imported ${state.successCount} files. ${state.failedCount} failed (see Critical Log).$already"
                 )
             }
         }
@@ -402,6 +403,12 @@ fun ImportAudioScreen(
                                 text = "Successfully imported: ${state.successCount}",
                                 style = MaterialTheme.typography.bodyMedium
                             )
+                            if (state.alreadyImportedCount > 0) {
+                                Text(
+                                    text = "Already imported, skipped: ${state.alreadyImportedCount}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                             if (state.failedCount > 0) {
                                 Text(
                                     text = "Failed: ${state.failedCount}",

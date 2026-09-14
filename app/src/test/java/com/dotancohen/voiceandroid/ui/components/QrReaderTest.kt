@@ -55,6 +55,23 @@ class QrReaderTest {
     }
 
     @Test
+    fun `each press of Another camera opens the next camera, round and round, and says which`() {
+        val facing = { name: String ->
+            when (name) { "front" -> CameraSelector.LENS_FACING_FRONT; "rear" -> CameraSelector.LENS_FACING_BACK; "usb" -> CameraSelector.LENS_FACING_EXTERNAL; else -> null }
+        }
+        val choice = CameraChoice(listOf("front", "usb", "rear"), facing)
+        assertEquals(listOf("rear", "usb", "front", "rear", "usb"), (0..4).map { choice.at(it) })
+        assertEquals("a count below zero still names a camera", "rear", choice.at(-3))
+        assertEquals("Rear camera (1 of 3)", choice.label(0, facing))
+        assertEquals("External camera (2 of 3)", choice.label(1, facing))
+        assertEquals("Front camera (3 of 3)", choice.label(2, facing))
+        assertEquals("Rear camera (1 of 3)", choice.label(3, facing))
+        val one = CameraChoice(listOf("odd"), facing)
+        assertEquals("Camera", one.label(7, facing))
+        assertEquals("No camera", CameraChoice(emptyList<String>(), facing).label(0, facing))
+    }
+
+    @Test
     fun `no camera at all is no choice`() {
         val choice = CameraChoice(emptyList<String>()) { null }
         assertNull(choice.current)

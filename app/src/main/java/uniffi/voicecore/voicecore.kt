@@ -1037,6 +1037,10 @@ internal open class UniffiVTableCallbackInterfaceOperationProgress(
 
 
 
+
+
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1100,8 +1104,6 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_create_transcription(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,`content`: RustBuffer.ByValue,`contentSegments`: RustBuffer.ByValue,`service`: RustBuffer.ByValue,`serviceArguments`: RustBuffer.ByValue,`serviceResponse`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_debug_sync_state(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_delete_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_delete_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1119,6 +1121,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_file_locations(`ptr`: Pointer,`audioId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_filter_notes(`ptr`: Pointer,`tagIds`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_find_imported_audio_file(`ptr`: Pointer,`filename`: RustBuffer.ByValue,`contentSha256`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_forget_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1208,6 +1212,8 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_list_snapshots(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_listen_addresses(`ptr`: Pointer,`port`: Short,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_listen_urls(`ptr`: Pointer,`port`: Short,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_listener_idle_seconds(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
@@ -1216,6 +1222,8 @@ internal interface UniffiLib : Library {
     ): Int
     fun uniffi_voicecore_fn_method_voiceclient_listener_running(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_made_here_but_missing(`ptr`: Pointer,`audioId`: RustBuffer.ByValue,`audioDir`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_mark_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_merge_notes(`ptr`: Pointer,`noteId1`: RustBuffer.ByValue,`noteId2`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1247,7 +1255,7 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_recording_key_import(`ptr`: Pointer,`text`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_remove_local_copy(`ptr`: Pointer,`audioId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_rename_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1492,8 +1500,6 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_create_transcription(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_debug_sync_state(
-    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_delete_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_delete_tag(
@@ -1511,6 +1517,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_file_locations(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_filter_notes(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_find_imported_audio_file(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_forget_peer(
     ): Short
@@ -1600,6 +1608,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_list_snapshots(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_listen_addresses(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_listen_urls(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_listener_idle_seconds(
@@ -1607,6 +1617,8 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_listener_idle_stop_hours(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_listener_running(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_made_here_but_missing(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_mark_note(
     ): Short
@@ -1809,9 +1821,6 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_create_transcription() != 62330.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_debug_sync_state() != 55360.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_delete_note() != 38307.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1837,6 +1846,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_filter_notes() != 10478.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_find_imported_audio_file() != 35493.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_forget_peer() != 59729.toShort()) {
@@ -1971,7 +1983,10 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_list_snapshots() != 7926.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_listen_urls() != 12900.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_listen_addresses() != 25819.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_listen_urls() != 56252.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_listener_idle_seconds() != 3680.toShort()) {
@@ -1981,6 +1996,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_listener_running() != 55177.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_made_here_but_missing() != 40115.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_mark_note() != 26647.toShort()) {
@@ -2010,10 +2028,10 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_peer_summaries() != 50581.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_purge_note() != 15686.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_purge_note() != 41593.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_rebuild_all_caches_for_note() != 46946.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_rebuild_all_caches_for_note() != 18420.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_rebuild_all_note_list_caches() != 42123.toShort()) {
@@ -2028,7 +2046,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_recording_key_import() != 3328.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_local_copy() != 55591.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_local_copy() != 17121.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 22162.toShort()) {
@@ -2106,7 +2124,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_stop_listener() != 10347.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_store_content_hash() != 54844.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_store_content_hash() != 34361.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_sync() != 36539.toShort()) {
@@ -2749,11 +2767,6 @@ public interface VoiceClientInterface {
     fun `createTranscription`(`audioFileId`: kotlin.String, `content`: kotlin.String, `contentSegments`: kotlin.String?, `service`: kotlin.String, `serviceArguments`: kotlin.String?, `serviceResponse`: kotlin.String?): kotlin.String
     
     /**
-     * Debug method to see sync state details
-     */
-    fun `debugSyncState`(): kotlin.String
-    
-    /**
      * Delete a note (soft delete - sets deleted_at timestamp)
      */
     fun `deleteNote`(`noteId`: kotlin.String): kotlin.Boolean
@@ -2815,6 +2828,12 @@ public interface VoiceClientInterface {
      * Returns notes that have ALL the specified tags.
      */
     fun `filterNotes`(`tagIds`: List<kotlin.String>): List<NoteData>
+    
+    /**
+     * The live recording imported under this file name with these bytes, if
+     * any (D31): an import skips a file the account already holds.
+     */
+    fun `findImportedAudioFile`(`filename`: kotlin.String, `contentSha256`: kotlin.String): kotlin.String?
     
     /**
      * Forget a peer on this phone (Stage 5): its card does not bring it
@@ -3091,7 +3110,14 @@ public interface VoiceClientInterface {
     fun `listSnapshots`(): List<SnapshotData>
     
     /**
-     * Where this phone would be reachable at `port`, for the sync screen.
+     * Where this phone would be reachable at `port`, for the sync screen and
+     * a code (LISTEN-4).
+     */
+    fun `listenAddresses`(`port`: kotlin.UShort): ListenAddressesData
+    
+    /**
+     * Where this phone would be reachable at `port`, in the order another
+     * device tries the addresses.
      */
     fun `listenUrls`(`port`: kotlin.UShort): List<kotlin.String>
     
@@ -3107,6 +3133,13 @@ public interface VoiceClientInterface {
     fun `listenerIdleStopHours`(): kotlin.UInt
     
     fun `listenerRunning`(): kotlin.Boolean
+    
+    /**
+     * "recorded" or "imported" when this phone made the recording, no place is
+     * known to hold it, and its file is not in the audio folder; None otherwise
+     * (the "Where are the copies?" line, FILE-25).
+     */
+    fun `madeHereButMissing`(`audioId`: kotlin.String, `audioDir`: kotlin.String): kotlin.String?
     
     /**
      * Mark a note (add the _system/_marked tag)
@@ -3169,17 +3202,16 @@ public interface VoiceClientInterface {
     /**
      * Empty one note out of the trash for good.
      *
-     * Returns the ids of the recordings that went with it, so the app can
-     * delete the files from the phone. The removal travels to the other
-     * devices and cannot be undone.
+     * Returns the recordings that went with it, each with the name its file
+     * has here, so the app deletes exactly those files (FILE-15). The removal
+     * travels to the other devices and cannot be undone.
      */
-    fun `purgeNote`(`noteId`: kotlin.String): List<kotlin.String>
+    fun `purgeNote`(`noteId`: kotlin.String): List<PurgedRecordingData>
     
     /**
      * Rebuild every display cache of one note: the note pane's and the list's.
      *
-     * Used when calculating missing data, for a note written before the caches
-     * existed.
+     * Used when calculating missing data, for a note whose caches are empty.
      */
     fun `rebuildAllCachesForNote`(`noteId`: kotlin.String)
     
@@ -3212,9 +3244,11 @@ public interface VoiceClientInterface {
     
     /**
      * Remove this phone's copy of a recording to save space; the recording
-     * stays. Refused when no other place holds the file (FILE-22).
+     * stays. The copy goes only when the bucket, or a device that holds the
+     * file, confirms now that it does (FILE-26). Returns the sentence naming
+     * the place that confirmed; a refusal says what each place answered.
      */
-    fun `removeLocalCopy`(`audioId`: kotlin.String)
+    fun `removeLocalCopy`(`audioId`: kotlin.String): kotlin.String
     
     /**
      * Remove a tag from a note
@@ -3379,7 +3413,8 @@ public interface VoiceClientInterface {
     
     /**
      * Compute and store a recording's content hash (Stage 13) from its file
-     * in the audio directory, after the file is copied there. Returns the hash.
+     * in the audio directory, after the file is copied there; this phone
+     * states that it holds the file (FILE-22). Returns the hash.
      */
     fun `storeContentHash`(`audioFileId`: kotlin.String): kotlin.String
     
@@ -3922,22 +3957,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Debug method to see sync state details
-     */
-    @Throws(VoiceCoreException::class)override fun `debugSyncState`(): kotlin.String {
-            return FfiConverterString.lift(
-    callWithPointer {
-    uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_debug_sync_state(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    
-    /**
      * Delete a note (soft delete - sets deleted_at timestamp)
      */
     @Throws(VoiceCoreException::class)override fun `deleteNote`(`noteId`: kotlin.String): kotlin.Boolean {
@@ -4092,6 +4111,23 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_filter_notes(
         it, FfiConverterSequenceString.lower(`tagIds`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * The live recording imported under this file name with these bytes, if
+     * any (D31): an import skips a file the account already holds.
+     */
+    @Throws(VoiceCoreException::class)override fun `findImportedAudioFile`(`filename`: kotlin.String, `contentSha256`: kotlin.String): kotlin.String? {
+            return FfiConverterOptionalString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_find_imported_audio_file(
+        it, FfiConverterString.lower(`filename`),FfiConverterString.lower(`contentSha256`),_status)
 }
     }
     )
@@ -4855,7 +4891,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Where this phone would be reachable at `port`, for the sync screen.
+     * Where this phone would be reachable at `port`, for the sync screen and
+     * a code (LISTEN-4).
+     */override fun `listenAddresses`(`port`: kotlin.UShort): ListenAddressesData {
+            return FfiConverterTypeListenAddressesData.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_listen_addresses(
+        it, FfiConverterUShort.lower(`port`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Where this phone would be reachable at `port`, in the order another
+     * device tries the addresses.
      */override fun `listenUrls`(`port`: kotlin.UShort): List<kotlin.String> {
             return FfiConverterSequenceString.lift(
     callWithPointer {
@@ -4905,6 +4958,24 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_listener_running(
         it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * "recorded" or "imported" when this phone made the recording, no place is
+     * known to hold it, and its file is not in the audio folder; None otherwise
+     * (the "Where are the copies?" line, FILE-25).
+     */
+    @Throws(VoiceCoreException::class)override fun `madeHereButMissing`(`audioId`: kotlin.String, `audioDir`: kotlin.String): kotlin.String? {
+            return FfiConverterOptionalString.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_made_here_but_missing(
+        it, FfiConverterString.lower(`audioId`),FfiConverterString.lower(`audioDir`),_status)
 }
     }
     )
@@ -5071,12 +5142,12 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     /**
      * Empty one note out of the trash for good.
      *
-     * Returns the ids of the recordings that went with it, so the app can
-     * delete the files from the phone. The removal travels to the other
-     * devices and cannot be undone.
+     * Returns the recordings that went with it, each with the name its file
+     * has here, so the app deletes exactly those files (FILE-15). The removal
+     * travels to the other devices and cannot be undone.
      */
-    @Throws(VoiceCoreException::class)override fun `purgeNote`(`noteId`: kotlin.String): List<kotlin.String> {
-            return FfiConverterSequenceString.lift(
+    @Throws(VoiceCoreException::class)override fun `purgeNote`(`noteId`: kotlin.String): List<PurgedRecordingData> {
+            return FfiConverterSequenceTypePurgedRecordingData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_purge_note(
@@ -5091,8 +5162,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     /**
      * Rebuild every display cache of one note: the note pane's and the list's.
      *
-     * Used when calculating missing data, for a note written before the caches
-     * existed.
+     * Used when calculating missing data, for a note whose caches are empty.
      */
     @Throws(VoiceCoreException::class)override fun `rebuildAllCachesForNote`(`noteId`: kotlin.String)
         = 
@@ -5177,17 +5247,20 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     
     /**
      * Remove this phone's copy of a recording to save space; the recording
-     * stays. Refused when no other place holds the file (FILE-22).
+     * stays. The copy goes only when the bucket, or a device that holds the
+     * file, confirms now that it does (FILE-26). Returns the sentence naming
+     * the place that confirmed; a refusal says what each place answered.
      */
-    @Throws(VoiceCoreException::class)override fun `removeLocalCopy`(`audioId`: kotlin.String)
-        = 
+    @Throws(VoiceCoreException::class)override fun `removeLocalCopy`(`audioId`: kotlin.String): kotlin.String {
+            return FfiConverterString.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_remove_local_copy(
         it, FfiConverterString.lower(`audioId`),_status)
 }
     }
-    
+    )
+    }
     
 
     
@@ -5613,7 +5686,8 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     
     /**
      * Compute and store a recording's content hash (Stage 13) from its file
-     * in the audio directory, after the file is copied there. Returns the hash.
+     * in the audio directory, after the file is copied there; this phone
+     * states that it holds the file (FILE-22). Returns the hash.
      */
     @Throws(VoiceCoreException::class)override fun `storeContentHash`(`audioFileId`: kotlin.String): kotlin.String {
             return FfiConverterString.lift(
@@ -5957,9 +6031,6 @@ public object FfiConverterTypeVoiceClient: FfiConverter<VoiceClient, Pointer> {
 
 
 
-/**
- * An audio file from the database
- */
 data class AudioFileData (
     var `id`: kotlin.String, 
     var `importedAt`: Stamp, 
@@ -5997,7 +6068,13 @@ data class AudioFileData (
     /**
      * The SHA-256 of the file's bytes, lowercase hex, once computed (Stage 13)
      */
-    var `contentSha256`: kotlin.String?
+    var `contentSha256`: kotlin.String?, 
+    /**
+     * The installation that made the recording, and how: "recorded" or
+     * "imported" (FILE-25)
+     */
+    var `originDeviceId`: kotlin.String, 
+    var `originKind`: kotlin.String
 ) {
     
     companion object
@@ -6023,6 +6100,8 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
             FfiConverterOptionalTypeStamp.read(buf),
             FfiConverterString.read(buf),
             FfiConverterOptionalString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
         )
     }
 
@@ -6040,7 +6119,9 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
             FfiConverterOptionalString.allocationSize(value.`storageKey`) +
             FfiConverterOptionalTypeStamp.allocationSize(value.`storageUploadedAt`) +
             FfiConverterString.allocationSize(value.`diskName`) +
-            FfiConverterOptionalString.allocationSize(value.`contentSha256`)
+            FfiConverterOptionalString.allocationSize(value.`contentSha256`) +
+            FfiConverterString.allocationSize(value.`originDeviceId`) +
+            FfiConverterString.allocationSize(value.`originKind`)
     )
 
     override fun write(value: AudioFileData, buf: ByteBuffer) {
@@ -6058,6 +6139,8 @@ public object FfiConverterTypeAudioFileData: FfiConverterRustBuffer<AudioFileDat
             FfiConverterOptionalTypeStamp.write(value.`storageUploadedAt`, buf)
             FfiConverterString.write(value.`diskName`, buf)
             FfiConverterOptionalString.write(value.`contentSha256`, buf)
+            FfiConverterString.write(value.`originDeviceId`, buf)
+            FfiConverterString.write(value.`originKind`, buf)
     }
 }
 
@@ -6595,6 +6678,51 @@ public object FfiConverterTypeJoinedData: FfiConverterRustBuffer<JoinedData> {
 
 
 /**
+ * Where this phone's listener can be reached (LISTEN-4): the address found
+ * through the phone's route (`detected`), or every candidate with the
+ * sentence saying that only one is correct; `urls` is what a code carries.
+ */
+data class ListenAddressesData (
+    var `detected`: kotlin.Boolean, 
+    var `shown`: List<kotlin.String>, 
+    var `urls`: List<kotlin.String>, 
+    var `sentence`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeListenAddressesData: FfiConverterRustBuffer<ListenAddressesData> {
+    override fun read(buf: ByteBuffer): ListenAddressesData {
+        return ListenAddressesData(
+            FfiConverterBoolean.read(buf),
+            FfiConverterSequenceString.read(buf),
+            FfiConverterSequenceString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: ListenAddressesData) = (
+            FfiConverterBoolean.allocationSize(value.`detected`) +
+            FfiConverterSequenceString.allocationSize(value.`shown`) +
+            FfiConverterSequenceString.allocationSize(value.`urls`) +
+            FfiConverterString.allocationSize(value.`sentence`)
+    )
+
+    override fun write(value: ListenAddressesData, buf: ByteBuffer) {
+            FfiConverterBoolean.write(value.`detected`, buf)
+            FfiConverterSequenceString.write(value.`shown`, buf)
+            FfiConverterSequenceString.write(value.`urls`, buf)
+            FfiConverterString.write(value.`sentence`, buf)
+    }
+}
+
+
+
+/**
  * What a move to another account gives back (Stage 1)
  */
 data class MovedData (
@@ -6997,6 +7125,42 @@ public object FfiConverterTypePeerSummaryData: FfiConverterRustBuffer<PeerSummar
             FfiConverterString.write(value.`peerName`, buf)
             FfiConverterOptionalLong.write(value.`lastReachedAt`, buf)
             FfiConverterString.write(value.`lastOperation`, buf)
+    }
+}
+
+
+
+/**
+ * An audio file from the database
+ * A recording removed for good with its note, and the name its file has here.
+ */
+data class PurgedRecordingData (
+    var `id`: kotlin.String, 
+    var `diskName`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypePurgedRecordingData: FfiConverterRustBuffer<PurgedRecordingData> {
+    override fun read(buf: ByteBuffer): PurgedRecordingData {
+        return PurgedRecordingData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: PurgedRecordingData) = (
+            FfiConverterString.allocationSize(value.`id`) +
+            FfiConverterString.allocationSize(value.`diskName`)
+    )
+
+    override fun write(value: PurgedRecordingData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`id`, buf)
+            FfiConverterString.write(value.`diskName`, buf)
     }
 }
 
@@ -8740,6 +8904,34 @@ public object FfiConverterSequenceTypePeerSummaryData: FfiConverterRustBuffer<Li
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypePeerSummaryData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypePurgedRecordingData: FfiConverterRustBuffer<List<PurgedRecordingData>> {
+    override fun read(buf: ByteBuffer): List<PurgedRecordingData> {
+        val len = buf.getInt()
+        return List<PurgedRecordingData>(len) {
+            FfiConverterTypePurgedRecordingData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<PurgedRecordingData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypePurgedRecordingData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<PurgedRecordingData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypePurgedRecordingData.write(it, buf)
         }
     }
 }

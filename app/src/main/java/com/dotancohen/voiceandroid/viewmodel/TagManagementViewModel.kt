@@ -95,7 +95,9 @@ class TagManagementViewModel(application: Application) : AndroidViewModel(applic
             try {
                 // Load all tags
                 repository.getAllTags()
-                    .onSuccess { tags ->
+                    .onSuccess { all ->
+                        // The hidden tags of internal features are never offered
+                        val tags = com.dotancohen.voiceandroid.data.TagTree.withoutSystemTags(all)
                         val tagsWithPaths = computeTagPaths(tags)
                         _allTags.value = tagsWithPaths
                         updateFilteredTags()

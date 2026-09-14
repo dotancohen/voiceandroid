@@ -99,6 +99,16 @@ class CoreStorageTest {
     }
 
     @Test
+    fun `a copy the bucket holds is removed from this phone once the bucket is asked`() {
+        val client = phone()
+        val (id, file) = recording(client, "להסרה מהטלפון.m4a", Random(2).nextBytes(50_000))
+        assertEquals(1, client.upload().uploaded)
+        assertEquals("Removed ${file.name} from this device; the bucket holds it", client.removeLocalCopy(id))
+        assertFalse(file.exists())
+        assertEquals(mapOf("cloud" to true, client.getDeviceId() to false), client.fileLocations(id).associate { it.place to it.present })
+    }
+
+    @Test
     fun `a recording larger than a part goes up in parts and comes back whole`() {
         val client = phone()
         val content = Random(2).nextBytes(20 * MIB)
@@ -110,15 +120,16 @@ class CoreStorageTest {
     }
 
     @Test
-    fun `an unreachable bucket fails the upload quickly and the next run uploads`() {
+    fun `an unreachable bucket fails the upload after three tries and the next run uploads`() {
         FaultyLink(s3.port).use { link ->
             val client = phone(link.url)
             recording(client, "בלי רשת.ogg", Random(3).nextBytes(30_000))
             link.refuse()
-            val (result, took) = within(60) { client.upload() }
+            val (result, took) = within(150) { client.upload() }
             result as uniffi.voicecore.UploadResultData
             assertEquals(0 to 1, result.uploaded to result.failed)
-            assertTrue("a refused connection is known at once; it took $took s", took < 15)
+            // A refused connection is known at once: the second try comes straight after the first, the third a minute later (FILE-14)
+            assertTrue("two tries at once and a third after a minute; it took $took s", took > 55 && took < 90)
             link.passThrough()
             assertEquals(1, client.upload().uploaded)
         }
@@ -152,8 +163,9 @@ class CoreStorageTest {
             assertEquals(1, client.upload().uploaded)
             file.delete()
             link.freezeAfter(bytesDown = 1L * MIB)
-            val (result, took) = within(240) { client.downloadAudioFile(id) }
-            assertTrue("a frozen link must end the download within a read timeout; it took $took s", took < 120)
+            val (result, took) = within(300) { client.downloadAudioFile(id) }
+            // Three tries, each ended by the read timeout, the third a minute after the second (FILE-14)
+            assertTrue("a frozen link must end each try within the read timeout; it took $took s", took < 210)
             val failed = result !is uniffi.voicecore.DownloadResultData || result.downloaded == 0
             assertTrue("the download did not arrive: $result", failed)
             assertFalse("a file that did not arrive whole is not in its place", file.exists())
@@ -169,10 +181,11 @@ class CoreStorageTest {
             val client = phone(link.url)
             recording(client, "דלי שותק.ogg", Random(6).nextBytes(20_000))
             link.stall()
-            val (result, took) = within(240) { client.upload() }
+            val (result, took) = within(480) { client.upload() }
             result as uniffi.voicecore.UploadResultData
             assertEquals(0 to 1, result.uploaded to result.failed)
-            assertTrue("the existence check's thirty seconds and the answer's minute; it took $took s", took < 120)
+            // The existence check's thirty seconds, then three tries of a minute's wait for an answer, the third a minute after the second (FILE-14)
+            assertTrue("the existence check's thirty seconds and three tries of the answer's minute; it took $took s", took < 420)
         }
     }
 }

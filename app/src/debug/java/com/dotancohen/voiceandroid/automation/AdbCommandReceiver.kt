@@ -15,6 +15,7 @@ import com.dotancohen.voiceandroid.transcription.WhisperModels
 import com.dotancohen.voiceandroid.util.format
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -37,18 +38,19 @@ class AdbCommandReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action?.removePrefix(ACTION_PREFIX) ?: return
-        val pending = goAsync()
         val app = context.applicationContext
         val repo = VoiceRepository.getInstance(app)
-        CoroutineScope(Dispatchers.IO).launch {
+        // The broadcast is not held open (no goAsync): Android declares the app
+        // not responding when a broadcast is unfinished after 60 seconds, and a
+        // fetch or a model download takes longer. The work runs in a scope of its
+        // own, and its OK or ERROR line reaches logcat when it ends.
+        scope.launch {
             try {
                 repo.initialize().getOrThrow()
                 val result = handle(app, repo, action, intent)
                 Log.i(TAG, "$action OK $result")
             } catch (e: Exception) {
                 Log.i(TAG, "$action ERROR ${e.message}")
-            } finally {
-                pending.finish()
             }
         }
     }
@@ -70,7 +72,7 @@ class AdbCommandReceiver : BroadcastReceiver() {
             "DELIVER" -> syncResult(repo.operate("deliver", intent.arg("peer")).getOrThrow())
             "SEND" -> syncResult(repo.operate("send", intent.arg("peer")).getOrThrow())
             "FETCH" -> syncResult(repo.operate("fetch", intent.arg("peer")).getOrThrow())
-            "SHOW_CODE" -> repo.offerCode(repo.listenUrls(com.dotancohen.voiceandroid.data.SyncListenerService.PORT).getOrThrow()).getOrThrow().let { "CODE $it" }
+            "SHOW_CODE" -> repo.offerCode(repo.listenAddresses(com.dotancohen.voiceandroid.data.SyncListenerService.PORT).getOrThrow().urls).getOrThrow().let { "CODE $it" }
             "USE_CODE" -> repo.pairWith(intent.need("text")).getOrThrow().let { "JOINED account=${it.accountId} peer=${it.peerId} name=${it.peerName} granted=${it.granted}" }
             "PEERS" -> repo.listPeers().getOrThrow().joinToString("\n") { "PEER id=${it.peerId} name=${it.name} url=${it.url} last=${it.isLast} last_operation=${it.lastOperation}" }.ifEmpty { "no peers" }
             "ADD_PEER" -> { repo.addPeer(intent.need("peer"), intent.arg("name") ?: intent.need("peer").take(8), intent.need("url")).getOrThrow(); "added ${intent.need("peer")}" }
@@ -102,7 +104,14 @@ class AdbCommandReceiver : BroadcastReceiver() {
                 "id=${note.id}"
             }
             "LIST_NOTES" -> {
-                val notes = repo.getAllNotes().getOrThrow()
+                // --es file <name>: only the notes holding a recording of that file
+                // name. A full listing of thousands of notes is a burst of long log
+                // lines, and logcat's ring buffer can lose the first of them.
+                val file = intent.arg("file")
+                var notes = repo.getAllNotes().getOrThrow()
+                if (file != null) {
+                    notes = notes.filter { n -> repo.getAudioFilesForNote(n.id).getOrNull().orEmpty().any { it.deletedAt == null && it.filename == file } }
+                }
                 for (n in notes) {
                     Log.i(TAG, "NOTE " + noteJson(repo, n).toString())
                 }
@@ -391,7 +400,6 @@ class AdbCommandReceiver : BroadcastReceiver() {
                     store,
                     durations = intent.arg("durations") != "false",
                     fileDates = intent.arg("dates") != "false",
-                    caches = intent.arg("caches") != "false",
                     limit = intent.arg("limit")?.toIntOrNull(),
                 )
                 Log.i(TAG, "CALCULATED " + JSONObject(report.calculated as Map<*, *>).toString())
@@ -445,7 +453,7 @@ class AdbCommandReceiver : BroadcastReceiver() {
             if (af.deletedAt != null) continue
             val local = repo.audioFileExistsLocally(af.id).getOrNull() ?: false
             val inCloud = repo.audioFileInCloud(af.id).getOrNull() ?: false
-            media.put(JSONObject().put("audio_id", af.id).put("filename", af.filename)
+            media.put(JSONObject().put("audio_id", af.id).put("filename", af.filename).put("disk_name", af.diskName)
                 .put("state", if (local) "local" else if (inCloud) "in_cloud_not_downloaded" else "not_uploaded_yet"))
         }
         return JSONObject()
@@ -494,8 +502,15 @@ class AdbCommandReceiver : BroadcastReceiver() {
         if (!folder.isDirectory) throw IllegalArgumentException("${folder.path} is not a folder (is storage permission granted?)")
         val files = folder.listFiles { f -> f.isFile && f.extension.lowercase() in AUDIO_EXTENSIONS }?.sortedBy { it.name } ?: emptyList()
         var imported = 0
+        var alreadyImported = 0
         val names = JSONArray()
         for (f in files) {
+            // A file the account already holds, by its name and its bytes, is skipped (D31)
+            val hash = f.inputStream().use { com.dotancohen.voiceandroid.util.ContentHash.sha256(it) }
+            if (repo.findImportedAudioFile(f.name, hash).getOrNull() != null) {
+                alreadyImported++
+                continue
+            }
             val duration = try {
                 val r = MediaMetadataRetriever(); r.setDataSource(f.path)
                 val ms = r.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLongOrNull(); r.release(); ms?.let { it / 1000 }
@@ -506,10 +521,13 @@ class AdbCommandReceiver : BroadcastReceiver() {
             imported++
         }
         Log.i(TAG, "IMPORTED $names")
-        return "folder=${folder.path} imported=$imported"
+        return "folder=${folder.path} imported=$imported already_imported=$alreadyImported"
     }
 
     companion object {
+        /** Outlives each broadcast; one failed action does not cancel the others. */
+        private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
         const val TAG = "VoiceAdb"
         const val ACTION_PREFIX = "com.dotancohen.voiceandroid.action."
         private val AUDIO_EXTENSIONS = setOf("mp3", "m4a", "wav", "ogg", "opus", "aac", "flac", "3gp", "amr")

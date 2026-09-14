@@ -104,7 +104,9 @@ class TagHierarchyViewModel(application: Application) : AndroidViewModel(applica
             _error.value = null
 
             repository.getAllTags()
-                .onSuccess { tags ->
+                .onSuccess { all ->
+                    // The hidden tags of internal features are never shown or moved
+                    val tags = com.dotancohen.voiceandroid.data.TagTree.withoutSystemTags(all)
                     rawTags = tags
                     loadTagColours()
                     val tagsWithPaths = computeTagHierarchy(tags)

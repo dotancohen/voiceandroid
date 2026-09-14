@@ -14,9 +14,9 @@ import java.util.TimeZone
 /**
  * Calculating data that was never calculated.
  *
- * A recording imported before lengths were recorded has none; a note written
- * before the display caches existed has none. Neither is lost data — it can be
- * read off the file or recomputed. What this must never do is guess: a
+ * A recording whose length could not be read when it was imported has none, and
+ * one copied without its dates has no creation date. Neither is lost data — it
+ * can be read off the file. What this must never do is guess: a
  * recording's timezone cannot be derived from the file, and writing this
  * phone's offset would state something false about where the user was.
  *
@@ -28,7 +28,6 @@ class MissingDataTest {
     /** A store that remembers what it was asked to write, and reads no real files. */
     private class FakeStore(
         var recordings: MutableList<AudioFile> = mutableListOf(),
-        var notes: MutableList<Note> = mutableListOf(),
         /** Ids of recordings whose file is not on this phone. */
         val elsewhere: MutableSet<String> = mutableSetOf(),
         /** What the file says, by recording id; absent means unreadable. */
@@ -37,14 +36,11 @@ class MissingDataTest {
     ) : MissingData.Store {
         val savedLengths = mutableMapOf<String, Long>()
         val savedDates = mutableMapOf<String, Long>()
-        val rebuilt = mutableListOf<String>()
-        var rebuildFails = false
 
         /** Which recording a File stands for, since no file is really opened. */
         private val byFile = mutableMapOf<String, String>()
 
         override suspend fun recordings(): List<AudioFile> = recordings
-        override suspend fun notes(): List<Note> = notes
 
         override suspend fun fileFor(recording: AudioFile): File? {
             if (recording.id in elsewhere) return null
@@ -73,15 +69,6 @@ class MissingDataTest {
             }.toMutableList()
             return true
         }
-
-        override suspend fun rebuildCaches(noteId: String): Boolean {
-            if (rebuildFails) return false
-            rebuilt.add(noteId)
-            notes = notes.map {
-                if (it.id == noteId) it.copy(listDisplayCache = """{"content_preview":"x"}""") else it
-            }.toMutableList()
-            return true
-        }
     }
 
     private fun recording(
@@ -101,23 +88,11 @@ class MissingDataTest {
         deletedAt = deletedAt,
     )
 
-    private fun note(id: String, cache: String? = """{"content_preview":"פגישה"}""", deletedAt: Stamp? = null) =
-        Note(
-            id = id,
-            content = "פגישה עם הצוות",
-            createdAt = Stamp(at = 1_757_419_500, offset = 10800, zone = "Asia/Jerusalem"),
-            deletedAt = deletedAt,
-            listDisplayCache = cache,
-        )
-
     // ---------------------------------------------------------------- survey
 
     @Test
     fun `a complete database is nothing missing`() = runBlocking {
-        val store = FakeStore(
-            recordings = mutableListOf(recording("a1", duration = 90, madeAt = 1_757_000_000)),
-            notes = mutableListOf(note("n1")),
-        )
+        val store = FakeStore(recordings = mutableListOf(recording("a1", duration = 90, madeAt = 1_757_000_000)))
         val survey = MissingData.survey(store)
         assertEquals(0, survey.totalCalculable)
         assertFalse(survey.anythingMissing)
@@ -139,22 +114,11 @@ class MissingDataTest {
     }
 
     @Test
-    fun `a note with no cache is counted`() = runBlocking {
-        val store = FakeStore(notes = mutableListOf(note("n1", cache = null), note("n2")))
-        val gaps = MissingData.survey(store).gaps.associate { it.key to it.count }
-        assertEquals(1, gaps["note_cache"])
-    }
-
-    @Test
-    fun `a deleted recording and a deleted note are not counted`() = runBlocking {
+    fun `a deleted recording is not counted`() = runBlocking {
         val gone = Stamp(at = 1_757_419_600, offset = null, zone = null)
-        val store = FakeStore(
-            recordings = mutableListOf(recording("a1", deletedAt = gone)),
-            notes = mutableListOf(note("n1", cache = null, deletedAt = gone)),
-        )
+        val store = FakeStore(recordings = mutableListOf(recording("a1", deletedAt = gone)))
         val gaps = MissingData.survey(store).gaps.associate { it.key to it.count }
         assertEquals(0, gaps["duration"])
-        assertEquals(0, gaps["note_cache"])
     }
 
     @Test
@@ -177,13 +141,10 @@ class MissingDataTest {
 
     @Test
     fun `the summary reads as lines a person can read`() = runBlocking {
-        val store = FakeStore(
-            recordings = mutableListOf(recording("a1")),
-            notes = mutableListOf(note("n1", cache = null)),
-        )
+        val store = FakeStore(recordings = mutableListOf(recording("a1")))
         val summary = MissingData.survey(store).summary()
         assertTrue(summary.contains("Recordings with no length recorded"))
-        assertTrue(summary.contains("Notes with no display cache"))
+        assertFalse("display caches are not a gap: every note is written with them", summary.contains("display cache"))
     }
 
     // --------------------------------------------------------- calculating
@@ -193,7 +154,7 @@ class MissingDataTest {
         val store = FakeStore(recordings = mutableListOf(recording("a1", madeAt = 1_757_000_000)))
         store.lengths["a1"] = 137
 
-        val report = MissingData.calculate(store, caches = false)
+        val report = MissingData.calculate(store)
 
         assertEquals(1, report.calculated["duration"])
         assertEquals(137L, store.savedLengths["a1"])
@@ -206,7 +167,7 @@ class MissingDataTest {
         )
         store.lengths["a1"] = 137
 
-        val report = MissingData.calculate(store, caches = false)
+        val report = MissingData.calculate(store)
 
         assertEquals(0, report.totalCalculated)
         assertNull(store.savedLengths["a1"])
@@ -217,7 +178,7 @@ class MissingDataTest {
         val store = FakeStore(recordings = mutableListOf(recording("a1", madeAt = 1_757_000_000)))
         // Nothing in lengths: the header said nothing, or the file is truncated
 
-        val report = MissingData.calculate(store, caches = false)
+        val report = MissingData.calculate(store)
 
         assertEquals(1, report.failed["duration"])
         assertEquals(0, report.totalCalculated)
@@ -229,30 +190,9 @@ class MissingDataTest {
         val store = FakeStore(recordings = mutableListOf(recording("a1")))
         store.elsewhere.add("a1")
 
-        val report = MissingData.calculate(store, caches = false)
+        val report = MissingData.calculate(store)
 
         assertEquals(1, report.failed["absent_file"])
-        assertEquals(0, report.totalCalculated)
-    }
-
-    @Test
-    fun `a missing cache is rebuilt`() = runBlocking {
-        val store = FakeStore(notes = mutableListOf(note("n1", cache = null), note("n2")))
-
-        val report = MissingData.calculate(store, durations = false, fileDates = false)
-
-        assertEquals(1, report.calculated["note_cache"])
-        assertEquals(listOf("n1"), store.rebuilt)
-    }
-
-    @Test
-    fun `a cache that will not rebuild is reported`() = runBlocking {
-        val store = FakeStore(notes = mutableListOf(note("n1", cache = null)))
-        store.rebuildFails = true
-
-        val report = MissingData.calculate(store, durations = false, fileDates = false)
-
-        assertEquals(1, report.failed["note_cache"])
         assertEquals(0, report.totalCalculated)
     }
 
@@ -263,21 +203,18 @@ class MissingDataTest {
         )
         (1..4).forEach { store.lengths["a$it"] = 60L * it }
 
-        val report = MissingData.calculate(store, caches = false, limit = 2)
+        val report = MissingData.calculate(store, limit = 2)
 
         assertEquals(2, report.calculated["duration"])
     }
 
     @Test
     fun `each repair can be left out`() = runBlocking {
-        val store = FakeStore(
-            recordings = mutableListOf(recording("a1")),
-            notes = mutableListOf(note("n1", cache = null)),
-        )
+        val store = FakeStore(recordings = mutableListOf(recording("a1")))
         store.lengths["a1"] = 42
 
         val report = MissingData.calculate(
-            store, durations = false, fileDates = false, caches = false
+            store, durations = false, fileDates = false
         )
 
         assertEquals(0, report.totalCalculated)
@@ -289,17 +226,14 @@ class MissingDataTest {
         store.lengths["a1"] = 42
         val lines = mutableListOf<String>()
 
-        MissingData.calculate(store, caches = false) { lines.add(it) }
+        MissingData.calculate(store) { lines.add(it) }
 
         assertTrue(lines.any { it.contains("הקלטה.opus") })
     }
 
     @Test
     fun `running it twice changes nothing the second time`() = runBlocking {
-        val store = FakeStore(
-            recordings = mutableListOf(recording("a1")),
-            notes = mutableListOf(note("n1", cache = null)),
-        )
+        val store = FakeStore(recordings = mutableListOf(recording("a1")))
         store.lengths["a1"] = 42
         store.modified["a1"] = 1_757_000_000
 

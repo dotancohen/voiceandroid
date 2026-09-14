@@ -46,7 +46,8 @@ Notes (a <note> is an id, an id prefix, or the exact first line of the note)
   create-note <text>                 prints id=<note id>
   edit-note <note> <text>            replaces the whole content
   delete-note <note>
-  list-notes                         one NOTE {...} JSON line per note: id, first_line, tags, conflicts, media state
+  list-notes [file]                  one NOTE {...} JSON line per note: id, first_line, tags, conflicts, media (audio_id,
+                                     filename, disk_name, state); with a file name, only the notes holding a recording of it
   show-note <note>                   the same JSON plus the full content and the number of history versions
   history <note>                     one VERSION {...} line per version
   restore-version <note> <version-id-prefix>
@@ -90,9 +91,9 @@ Transcription queue
   queue-next <recording>             transcribe that recording next (id prefix or part of its name)
   queue-remove <recording>           take that recording out of the queue
 
-Missing data (lengths, dates and caches that were never calculated)
+Missing data (recording lengths and dates that were never calculated)
   missing-data                       one GAP {...} line per kind of missing data, changing nothing
-  calculate-missing-data [durations=false] [dates=false] [caches=false] [limit=<n>]
+  calculate-missing-data [durations=false] [dates=false] [limit=<n>]
                                      calculate what can be calculated; prints CALCULATED and FAILED lines
 
 Screens (open the app on a screen, for steps that must be done by hand)
@@ -173,7 +174,7 @@ case "$cmd" in
     create-note) send CREATE_NOTE --es text "$1" ;;
     edit-note) send EDIT_NOTE --es note "$1" --es text "$2" ;;
     delete-note) send DELETE_NOTE --es note "$1" ;;
-    list-notes) send LIST_NOTES ;;
+    list-notes) send LIST_NOTES ${1:+--es file "$1"} ;;
     show-note) send SHOW_NOTE --es note "$1" ;;
     history) send HISTORY --es note "$1" ;;
     restore-version) send RESTORE_VERSION --es note "$1" --es version "$2" ;;

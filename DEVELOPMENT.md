@@ -308,7 +308,7 @@ its own.
 
 | Lane | Directory | Runs on | Tests |
 |---|---|---|---|
-| JVM | `app/src/test/` | This computer | 499 `@Test` in 47 files |
+| JVM | `app/src/test/` | This computer | 501 `@Test` in 49 files |
 | Instrumented | `app/src/androidTest/` | A device or emulator, as the separate application `com.dotancohen.voiceandroid.uitest` | 6 `@Test` in one file, `TagTreeItemTest.kt` |
 
 The Rust core has its own tests: `cd submodules/voicecore && cargo test`.
@@ -361,7 +361,7 @@ Paths are under `app/src/test/java/com/dotancohen/voiceandroid/`.
 
 | Area | What is checked | Files |
 |---|---|---|
-| The core on this computer | This phone's copy of a recording stated and removed only when another place holds it, a file deleted by hand, the account's upload limit and the reasons Issues gives (FILE-22, FILE-23, ISSUE-1); uploads and downloads against a moto S3 server, uploads in parts, and a bucket that is unreachable, cut off, frozen or silent behind the fault proxy (FILE-14, FILE-19, FILE-22) | `data/CoreLocationsTest`, `data/CoreStorageTest`, helpers `network/LocalS3.kt`, `network/FaultyLink.kt` |
+| The core on this computer | This phone's copy of a recording stated when the file is hashed, and not removed while no other place confirms that it holds the file; a file deleted by hand; the account's upload limit and the reasons Issues gives (FILE-22, FILE-23, FILE-26, ISSUE-1); uploads and downloads against a moto S3 server, uploads in parts, a copy the bucket holds removed from this phone once the bucket is asked, and a bucket that is unreachable, cut off, frozen or silent behind the fault proxy (FILE-14, FILE-19, FILE-22, FILE-26) | `data/CoreLocationsTest`, `data/CoreStorageTest`, helpers `network/LocalS3.kt`, `network/FaultyLink.kt` |
 | Settings | Defaults, ranges, mark sizes, interface size and toolbar switch, and the four preference classes sharing `voice_settings` | `util/UiSettingsTest`, `util/UiPreferencesTest`, `util/SettingsFileTest` |
 | Date and time | The twelve preset formats and the custom choice, the chosen format, the `-N` days-ago token, a broken pattern falling back, splitting date from time, which clock a stamp is drawn on, lengths and positions as clock readings | `util/TimeFormat*Test`, `util/StampsTest`, `util/DurationsTest` |
 | Tags | Paths, depths, descendants, collapsing, sorting, and a parent chain that loops — which two phones syncing can produce; the calculated and chosen colour | `data/TagTreeTest`, `viewmodel/TagPathsTest`, `viewmodel/FilterTagTreeTest`, `data/TagColoursTest` |
@@ -372,7 +372,8 @@ Paths are under `app/src/test/java/com/dotancohen/voiceandroid/`.
 | Audio conversion | Conversion to 16 kHz mono 16-bit, the resampler, clipping, and which files need no conversion | `transcription/AudioConversionTest`, `transcription/AudioToWavTest` |
 | Transcription | The language and model catalogues, part-downloaded model files, model, language and beam settings, the ten-minute limit, the queue's order and "transcribe next", the line each queued job shows, cost, rate and wait estimates, which placeholder rows are removed after a transcription, the performance numbers, finished versus pending | `transcription/*Test`, `data/TranscriptionPerformanceTest`, `data/TranscriptionStateTest` |
 | Transcription flags | The five flags, their wording and the `state` word list, and the contract file shared with the desktop | `data/TranscriptionFlagsTest`, `data/TranscriptionFlagWordsTest`, `data/TranscriptionFlagsContractTest` |
-| Missing data and Issues | Counting and calculating missing data; the wording of Issues and of where the copies are (ISSUE-1, FILE-22), the same as the desktop's | `data/MissingDataTest`, `util/IssuesTextTest` |
+| Missing data and Issues | Counting and calculating missing data; the wording of Issues and of where the copies are, including a recording this phone recorded or imported whose file is not in the audio folder (ISSUE-1, FILE-22, FILE-25), the same as the desktop's | `data/MissingDataTest`, `util/IssuesTextTest` |
+| This phone's address | The words after **Address** on Sync Settings: the address found, alone; the candidates, with the sentence that only one of them is correct; no address found (LISTEN-4), the same as the desktop's | `util/AddressTextTest` |
 | Cloud storage state | A recording counts as in the bucket only with both provider and key | `data/AudioFileCloudTest` |
 | Pairing and secrets | A setup text read back from a camera frame, the order cameras are tried in, no camera (UI-12); a secret wrapped and unwrapped (AUTH-9) | `ui/components/QrReaderTest`, `util/SecretWrapTest` |
 | Sharing | What a Note offers to share and what is sent | `util/NoteSharingTest` |
@@ -486,7 +487,7 @@ VoiceAndroid/
 │       │   │   ├── data/                 repository, data classes, sync services
 │       │   │   ├── transcription/        Whisper on the phone: models, WAV conversion, queue, service
 │       │   │   ├── ui/                   Compose: screens/, components/, theme/, VoiceApp.kt
-│       │   │   ├── util/                 time formats, preferences, logs, sharing, Issues wording
+│       │   │   ├── util/                 time formats, preferences, logs, sharing, Issues and address wording
 │       │   │   ├── viewmodel/            view models
 │       │   │   ├── MainActivity.kt
 │       │   │   └── VoiceApplication.kt

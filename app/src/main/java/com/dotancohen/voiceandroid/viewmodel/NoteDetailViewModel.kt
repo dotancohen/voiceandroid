@@ -108,6 +108,14 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
     private val _transcribeMessage = MutableStateFlow<String?>(null)
     val transcribeMessage: StateFlow<String?> = _transcribeMessage.asStateFlow()
 
+    /** The sentence of a copy removed from this phone, naming the place that holds it (FILE-26). */
+    private val _copyMessage = MutableStateFlow<String?>(null)
+    val copyMessage: StateFlow<String?> = _copyMessage.asStateFlow()
+
+    fun clearCopyMessage() {
+        _copyMessage.value = null
+    }
+
     /**
      * The notes to either side of this one, for the Previous and Next
      * buttons: their ids, or null at the ends of the list.
@@ -293,9 +301,10 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
             repository.checkFilesHere()
             val names = repository.deviceNames().getOrNull().orEmpty()
             val here = repository.getDeviceId().getOrNull().orEmpty()
+            val madeHereButMissing = repository.madeHereButMissing(audioFile.id).getOrNull()
             repository.fileLocations(audioFile.id)
                 .onSuccess { locations ->
-                    _locationLines.value = IssuesText.locationLines(locations, names, here) { millis ->
+                    _locationLines.value = IssuesText.locationLines(locations, names, here, madeHereButMissing) { millis ->
                         java.text.DateFormat.getDateTimeInstance().format(java.util.Date(millis))
                     }
                 }
@@ -307,12 +316,15 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
         _locationLines.value = null
     }
 
-    /** Remove this phone's copy of a recording; refused when no other place holds it (FILE-22). */
+    /** Remove this phone's copy of a recording once another place confirms it holds the file (FILE-26). */
     fun removeLocalCopy(audioFile: AudioFile) {
         val noteId = _note.value?.id ?: return
         viewModelScope.launch {
             repository.removeLocalCopy(audioFile.id)
-                .onSuccess { loadNote(noteId) }
+                .onSuccess { sentence ->
+                    _copyMessage.value = sentence
+                    loadNote(noteId)
+                }
                 .onFailure { e -> _error.value = "Not removed: ${e.message}" }
         }
     }
@@ -481,9 +493,8 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
                         // text: the same two things the notes list shows.
                         repository.getTagsForNote(noteId)
                             .onSuccess { tags ->
-                                _tags.value = tags
+                                _tags.value = com.dotancohen.voiceandroid.data.TagTree.withoutSystemTags(tags)
                                     .map { it.name }
-                                    .filter { !it.startsWith("_") }
                             }
                             .onFailure { e -> AppLogger.w(TAG, "Failed to load tags: ${e.message}") }
                         _isMarked.value = repository.isNoteMarked(noteId).getOrNull() ?: false

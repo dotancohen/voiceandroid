@@ -137,7 +137,6 @@ class FilterViewModel(application: Application) : AndroidViewModel(application) 
     val expandedTagIds: StateFlow<Set<String>> = _expandedTagIds.asStateFlow()
 
     // System tag ID for filtering
-    private var systemTagId: String? = null
 
     init {
         loadTags()
@@ -151,19 +150,10 @@ class FilterViewModel(application: Application) : AndroidViewModel(application) 
             _isLoading.value = true
             _error.value = null
 
-            // Get the system tag ID for filtering
-            systemTagId = repository.getSystemTagIdHex().getOrNull()
-
             repository.getAllTags()
                 .onSuccess { tags ->
-                    // Filter out _system tag and its children
-                    val filteredTags = if (systemTagId != null) {
-                        tags.filter { tag ->
-                            tag.id != systemTagId && tag.parentId != systemTagId
-                        }
-                    } else {
-                        tags
-                    }
+                    // Without _system and every tag under it, however deep
+                    val filteredTags = com.dotancohen.voiceandroid.data.TagTree.withoutSystemTags(tags)
 
                     _allTags.value = filteredTags
                     _tagTree.value = buildTagTree(filteredTags)

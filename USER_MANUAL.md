@@ -111,8 +111,9 @@ the button is in the card **Sync Actions**. The phone then:
 
 - turns on **Listen for peers** if it is off, because the reading device
   connects to this phone;
-- makes a setup text that starts with `voice://pair?` and holds this phone's
-  addresses;
+- makes a setup text that starts with `voice://pair?` and holds every address
+  this phone may be reached at; the reading device tries each of them in turn
+  and remembers the one that answers;
 - shows the setup text as a QR code and as text, under "Treat this like a
   password: whoever reads it joins your account. Hidden in \<n> s.", with the
   buttons **Copy** and **Share**.
@@ -125,9 +126,12 @@ phone's code must be on the same network.
 **On the new device**, press **Read a code**. The camera opens over the whole
 screen; the first time, the phone asks for permission to use it.
 
-- Every camera is tried in turn, rear first and front last. When a camera
-  fails to open, or gives no picture for three seconds, the next one is tried.
-  **Another camera** moves to the next one by hand.
+- Every camera is tried in turn, rear first and front last. The line under the
+  picture names the camera that is open, for example *Rear camera (1 of 3).
+  Point it at the code shown by the other device.* When a camera fails to open,
+  or gives no picture for three seconds, the next one is tried. **Another
+  camera** moves to the next one by hand, and the line names it.
+- The field and the buttons sit above Android's navigation buttons.
 - Without a camera, or without the permission, paste the setup text into
   **Or paste the setup text** and press **Use it**. **Use it** is available
   only when the text starts with `voice://pair?`.
@@ -238,8 +242,16 @@ that was part of the way across keeps the part that arrived, and the next send
 or fetch of that file continues from there. A transfer broken by the network
 also continues from where it stopped.
 
-When the peer gives no answer at its remembered address, the phone searches the
-local network for it for three seconds. If the peer answers from another
+A file is tried three times: the second try straight after the first, the third a
+minute after the second. A file that failed every try is reported, and the
+operation goes on with the next file; after three files failed every try, the
+operation stops and says how many it did not attempt. Start it again when the
+connection works. Upload and download follow the same rule.
+
+When the peer gives no answer at its remembered address, the phone tries each
+address the peer's device card names, checking the peer's certificate, and
+remembers the address that answers. When none answers, the phone searches the
+local network for the peer for three seconds. If the peer answers from another
 address, the phone stores that address and runs the operation once more.
 
 Before every sync the phone takes a [snapshot](#snapshots) of its Notes
@@ -279,8 +291,18 @@ Silence is counted from the last request the phone served, or from when it
 started listening. The phone checks once a minute.
 
 Under the switch are three lines to type into another device: **Account**
-(the account's id), **Address** (where this phone listens, or "unknown (not on a
-network?)") and **Certificate** (the fingerprint of this phone's certificate).
+(the account's id), **Address** (where another device on the same network
+reaches this phone) and **Certificate** (the fingerprint of this phone's
+certificate).
+
+**Address** shows the address the phone found through its route to the
+network. When the phone cannot tell which of its addresses that is, the line
+lists every candidate, followed by "Only one of these addresses is correct;
+this device could not tell which. Another device tries each of them in turn."
+With no address on a local network it reads "No address on a local network was
+found. Is this device on a network?", and before the addresses are read, "not
+read yet". Addresses of mobile data, VPNs, tunnels and virtual networks are
+left out.
 
 ### Check connection
 
@@ -415,20 +437,47 @@ stated as gone. Then one line per place:
 
 A place is "the bucket", "this device", another device's name, or the first
 twelve characters of its id. With nothing known: "No place is known to hold
-it". These statements travel by sync, so every device of the account shows the
-same places.
+it". When no place is known to hold it, this phone made the Recording, and its
+file is not in the audio folder, a second line says how the phone made it:
+"Recorded on this device, but its file was not found in the audio folder after
+the recording", or "Imported on this device, but its file was not found in the
+audio folder after the import". These statements travel by sync, so every
+device of the account shows the same places.
 
 ### Remove from this phone
 
 The second item of the same **⋮** menu, **Remove from this phone**, asks:
 "Remove \<file name> from this phone? The recording stays, and it can be fetched
-again from wherever else it is kept." **Remove** deletes this phone's copy of
-the file and states that this phone no longer holds it. The Recording, its
-Transcriptions and its place in the Note stay.
+again from wherever else it is kept." **Remove** asks another place, at that
+moment, whether it holds the file, and deletes this phone's copy only when one
+place confirms that it does:
 
-The phone refuses when the file is not on this phone, and when this phone is
-the only place known to hold it: "\<file name> is on this device only; it can be
-removed from here once the bucket or another device holds it".
+- **the bucket**, asked directly: it holds the object, and the object is not
+  waiting to be deleted after a purge;
+- **a device of the account that is stated to hold the file**: it answers over
+  the network, and promises to keep its own copy for ten minutes while this
+  phone removes its copy.
+
+The phone then states that it no longer holds the file, and the Note is shown
+again. The Recording, its Transcriptions and its place in the Note stay.
+
+A refusal begins "Not removed:" and names the reason:
+
+- "\<file name> is not on this device";
+- "\<file name> was not removed: no other place confirmed that it holds the file
+  now (\<what each place answered>)", where an answer is, for example, "no other
+  place is known to hold it", "the bucket does not hold it", "no bucket is set
+  up on this device", "\<device> does not keep it: \<reason>" or "\<device> could
+  not be reached: \<reason>";
+- "\<file name> was not removed: this device promised \<device> to keep its copy
+  until \<time>, while \<device> removes its own".
+
+While this phone is removing its copy, it refuses another device's request to
+keep its own ("this device is removing its own copy"). Two devices that each
+count on the other therefore never both remove the file.
+
+When the bucket does not hold the file, the device that holds it must be
+reachable at that moment: on the same network, and listening.
 
 ### Encryption of recordings in the bucket
 
@@ -497,7 +546,10 @@ of a snapshot.
   **Restore** button.
 - **Restore** asks "Restore \<name>?": "The notes database is replaced with this
   snapshot. The current state is kept as the newest snapshot, so this can be
-  undone." **Restore** replaces the database; **Cancel** leaves it.
+  undone." **Restore** replaces the database; **Cancel** leaves it. After a
+  restore the phone compares its audio folder with what the restored database
+  says, so [where the copies are](#where-are-the-copies) is true of the folder
+  as it is now.
 
 ## The Issues screen
 
@@ -511,7 +563,7 @@ A section with nothing in it is left out:
 
 | Section | Each line |
 |---|---|
-| Recordings not in cloud storage (\<n>) | "\<file name> (\<size>): \<reason>", the reason being "no bucket is set up for the account", "larger than the account's upload limit of \<size>", "waiting for \<places> to upload it", or "no device and no bucket is known to hold it" |
+| Recordings not in cloud storage (\<n>) | "\<file name> (\<size>): \<reason>", the reason being "no bucket is set up for the account", "larger than the account's upload limit of \<size>", "waiting for \<places> to upload it", or "no device and no bucket is known to hold it"; when this phone made the Recording and its file is not in the audio folder, the last is followed by "; recorded on this device, but its file was not found in the audio folder after the recording", or the same for an import |
 | Transcriptions whose recording is not there (\<n>) | "Transcription \<id> of recording \<id>: \<start of its text>" |
 | Attachments whose note or recording is not there (\<n>) | "Attachment \<id>: its note \<id> and its recording \<id> is not there", naming only what is missing |
 | Recordings no note holds (\<n>) | "\<file name> (\<id>)" |
@@ -719,7 +771,9 @@ same line at its top.
 **Delete permanently** is the one thing in the application that destroys a Note.
 It asks "Remove this Note for good?", and **Delete for good** then removes the
 Note, its history, its Tag links, and the Recordings and Transcriptions that
-belong to that Note alone, here and on every device this phone syncs with. It
+belong to that Note alone, here and on every device this phone syncs with, and
+deletes those Recordings' files from this phone's audio folder, each found by
+the name its row stores. It
 cannot be undone, and a device that has not synced yet cannot bring the Note
 back: the removal is written down and travels, and anything that arrives about
 a removed Note is dropped. A Recording that another Note still holds is kept.
@@ -954,6 +1008,11 @@ folder is used only while all files access is granted and the folder exists.
 A file this application records is named by when it started and the end of its
 id, for example `2026_09_21_14_30_59-abcdefgh.ogg`. An imported file keeps its
 own name. A file already in the folder is never overwritten.
+
+Importing a folder skips a file the account already holds: a recording that is not
+deleted, with the same file name and the same bytes. The result says how many
+were imported and how many were already imported; the same bytes under another
+name are imported as a recording of their own.
 
 ## Long recordings
 

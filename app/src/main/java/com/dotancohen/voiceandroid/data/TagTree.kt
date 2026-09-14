@@ -80,5 +80,31 @@ object TagTree {
     fun isHiddenByCollapse(tag: Tag, tagById: Map<String, Tag>, collapsedIds: Set<String>): Boolean =
         ancestorsOf(tag, tagById).any { it.id in collapsedIds }
 
+    /** The id of the hidden `_system` tag, the same on every device (the core's `SYSTEM_TAG_UUID`). */
+    const val SYSTEM_TAG_ID = "a1b2c3d4000050008000000000000001"
+
+    /**
+     * The hidden tags the core makes on every device, by their fixed ids:
+     * `_system`, `_system/_marked`, `_system/_nonsynced` and
+     * `_system/_nonsynced/_too-big` (the core's `*_TAG_UUID`).
+     */
+    val BUILT_IN_HIDDEN_IDS: Set<String> = setOf(
+        SYSTEM_TAG_ID,
+        "a1b2c3d4000050008000000000000002",
+        "a1b2c3d4000050008000000000000003",
+        "a1b2c3d4000050008000000000000004",
+    )
+
+    /**
+     * The tags a person sees: without `_system` and every tag under it, however
+     * deep, and without the core's built-in hidden tags even when their parents
+     * are not in the list (a note's own tags). A tag of the user's whose name
+     * starts with "_" is shown like any other.
+     */
+    fun withoutSystemTags(tags: List<Tag>): List<Tag> {
+        val hidden = descendantIds(SYSTEM_TAG_ID, childrenByParent(tags)) + BUILT_IN_HIDDEN_IDS
+        return tags.filterNot { it.id in hidden }
+    }
+
     const val PATH_SEPARATOR = " > "
 }

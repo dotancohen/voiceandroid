@@ -601,8 +601,7 @@ class NotesViewModel(application: Application) : AndroidViewModel(application) {
     fun loadTagOptions() {
         val noteIds = _selectedNoteIds.value.toList()
         viewModelScope.launch {
-            val tags = repository.getAllTags().getOrNull().orEmpty()
-                .filter { !it.name.startsWith("_") }
+            val tags = com.dotancohen.voiceandroid.data.TagTree.withoutSystemTags(repository.getAllTags().getOrNull().orEmpty())
             val counts = mutableMapOf<String, Int>()
             for (noteId in noteIds) {
                 for (tag in repository.getTagsForNote(noteId).getOrNull().orEmpty()) {

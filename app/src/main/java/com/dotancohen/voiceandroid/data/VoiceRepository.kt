@@ -128,14 +128,6 @@ class VoiceRepository(private val context: Context) {
             ensureInitialized().setAudiofileDirectory(audioFileDir)
             AppLogger.i(TAG, "Audio file directory set to: $audioFileDir")
 
-            // Rebuild list caches to ensure duration/tags/marked are populated
-            try {
-                val count = ensureInitialized().rebuildAllNoteListCaches()
-                AppLogger.i(TAG, "Rebuilt list caches for $count notes")
-            } catch (e: Exception) {
-                AppLogger.w(TAG, "Failed to rebuild list caches: ${e.message}")
-            }
-
             Result.success(Unit)
         } catch (e: VoiceCoreException) {
             AppLogger.e(TAG, "Failed to initialize VoiceClient", e)
@@ -164,14 +156,6 @@ class VoiceRepository(private val context: Context) {
             // Configure audiofile directory for the new client
             it.setAudiofileDirectory(audioFileDir)
             AppLogger.i(TAG, "VoiceClient created, dataDir=$dataDir, audioFileDir=$audioFileDir")
-
-            // Rebuild list caches to ensure duration/tags/marked are populated
-            try {
-                val count = it.rebuildAllNoteListCaches()
-                AppLogger.i(TAG, "Rebuilt list caches for $count notes")
-            } catch (e: Exception) {
-                AppLogger.w(TAG, "Failed to rebuild list caches: ${e.message}")
-            }
         }
     }
 
@@ -541,10 +525,10 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** Where this phone would be reachable at `port`. */
-    suspend fun listenUrls(port: Int): Result<List<String>> = withContext(Dispatchers.IO) {
+    /** Where this phone would be reachable at `port` (LISTEN-4): the address found, or the candidates. */
+    suspend fun listenAddresses(port: Int): Result<uniffi.voicecore.ListenAddressesData> = withContext(Dispatchers.IO) {
         try {
-            Result.success(ensureInitialized().listenUrls(port.toUShort()))
+            Result.success(ensureInitialized().listenAddresses(port.toUShort()))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -852,6 +836,34 @@ class VoiceRepository(private val context: Context) {
     }
 
     /** Compare this phone's audio folder with what it has stated about its copies (FILE-22). */
+    /**
+     * "imported" or "recorded" when this phone made the recording, no place is
+     * known to hold it, and its file is not in the audio folder; null otherwise (FILE-25).
+     */
+    suspend fun madeHereButMissing(audioId: String): Result<String?> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().madeHereButMissing(audioId, audioFileDir))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * The recording the account already holds under this file name with these
+     * bytes, or null (D31): an import skips it.
+     */
+    suspend fun findImportedAudioFile(filename: String, contentSha256: String): Result<String?> = withContext(Dispatchers.IO) {
+        try {
+            Result.success(ensureInitialized().findImportedAudioFile(filename, contentSha256))
+        } catch (e: VoiceCoreException) {
+            Result.failure(Exception(e.message))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun checkFilesHere(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             ensureInitialized().checkFilesHere()
@@ -865,12 +877,13 @@ class VoiceRepository(private val context: Context) {
 
     /**
      * Remove this phone's copy of a recording to save space; the recording
-     * stays. Refused when no other place holds the file (FILE-22).
+     * stays. The copy goes only when the bucket, or a device that holds the
+     * file, confirms now that it does (FILE-26). Returns the sentence naming
+     * that place; a refusal says what each place answered.
      */
-    suspend fun removeLocalCopy(audioId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun removeLocalCopy(audioId: String): Result<String> = withContext(Dispatchers.IO) {
         try {
-            ensureInitialized().removeLocalCopy(audioId)
-            Result.success(Unit)
+            Result.success(ensureInitialized().removeLocalCopy(audioId))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -938,20 +951,6 @@ class VoiceRepository(private val context: Context) {
     suspend fun peerSummaries(): Result<List<PeerSummary>> = withContext(Dispatchers.IO) {
         try {
             Result.success(ensureInitialized().peerSummaries().map { PeerSummary(it.peerId, it.peerName, it.lastReachedAt, it.lastOperation) })
-        } catch (e: VoiceCoreException) {
-            Result.failure(Exception(e.message))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Debug: get sync state details.
-     */
-    suspend fun debugSyncState(): Result<String> = withContext(Dispatchers.IO) {
-        try {
-            val voiceClient = ensureInitialized()
-            Result.success(voiceClient.debugSyncState())
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -1243,12 +1242,14 @@ class VoiceRepository(private val context: Context) {
     suspend fun purgeNote(noteId: String): Result<Int> = withContext(Dispatchers.IO) {
         try {
             val voiceClient = ensureInitialized()
-            val audioIds = voiceClient.purgeNote(noteId)
+            val purged = voiceClient.purgeNote(noteId)
             var filesRemoved = 0
-            for (audioId in audioIds) {
-                File(audioFileDir)
-                    .listFiles { f -> f.name.substringBeforeLast('.') == audioId }
-                    ?.forEach { file -> if (file.delete()) filesRemoved++ }
+            // Each recording's file by the name its row stored (FILE-15), never by its id
+            for (recording in purged) {
+                val name = recording.diskName
+                if (name.isEmpty() || File(name).name != name) continue
+                val file = File(audioFileDir, name)
+                if (file.isFile && file.delete()) filesRemoved++
             }
             AppLogger.i(TAG, "Removed note ${noteId.take(8)} for good with $filesRemoved file(s)")
             Result.success(filesRemoved)
@@ -1784,7 +1785,7 @@ class VoiceRepository(private val context: Context) {
      *
      * @param context Application context for content resolver
      * @param sourceUri The URI of the source audio file
-     * @param audioFileId The ID of the audio file record (used as the destination filename)
+     * @param audioFileId The ID of the audio file record; the destination is its stored disk name
      * @param extension The file extension (e.g., "mp3", "m4a")
      * @return Result indicating success or failure
      */
@@ -1953,21 +1954,6 @@ class VoiceRepository(private val context: Context) {
         try {
             val voiceClient = ensureInitialized()
             Result.success(voiceClient.updateAudioFileCreatedAt(audioFileId, fileCreatedAt))
-        } catch (e: VoiceCoreException) {
-            Result.failure(Exception(e.message))
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    /**
-     * Rebuild every display cache of one note: the note pane's and the list's.
-     */
-    suspend fun rebuildAllCachesForNote(noteId: String): Result<Unit> = withContext(Dispatchers.IO) {
-        try {
-            val voiceClient = ensureInitialized()
-            voiceClient.rebuildAllCachesForNote(noteId)
-            Result.success(Unit)
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {

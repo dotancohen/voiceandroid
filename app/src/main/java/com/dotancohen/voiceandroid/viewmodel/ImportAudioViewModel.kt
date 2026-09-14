@@ -14,6 +14,7 @@ import com.dotancohen.voiceandroid.data.Tag
 import com.dotancohen.voiceandroid.data.TagTree
 import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.util.AppLogger
+import com.dotancohen.voiceandroid.util.ContentHash
 import com.dotancohen.voiceandroid.util.CriticalLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,7 +53,9 @@ sealed class ImportState {
     data class Complete(
         val successCount: Int,
         val failedCount: Int,
-        val errors: List<String>
+        val errors: List<String>,
+        /** Files the account already held, by name and bytes, and did not import again (D31) */
+        val alreadyImportedCount: Int = 0
     ) : ImportState()
     data class Error(val message: String) : ImportState()
 }
@@ -105,18 +108,9 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
     // Internal data
     private var rawTags: List<Tag> = emptyList()
     private var childrenByParentId: Map<String, Set<String>> = emptyMap()
-    private var systemTagIdHex: String? = null
 
     init {
         loadTags()
-        loadSystemTagId()
-    }
-
-    private fun loadSystemTagId() {
-        viewModelScope.launch {
-            repository.getSystemTagIdHex()
-                .onSuccess { systemTagIdHex = it }
-        }
     }
 
     /**
@@ -129,10 +123,9 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
 
             repository.getAllTags()
                 .onSuccess { tags ->
-                    // Filter out system tags
-                    val userTags = tags.filter { tag ->
-                        systemTagIdHex == null || !tag.id.startsWith(systemTagIdHex!!)
-                    }
+                    // Without _system and every tag under it; the ids are fixed, so
+                    // nothing has to be loaded first
+                    val userTags = com.dotancohen.voiceandroid.data.TagTree.withoutSystemTags(tags)
                     rawTags = userTags
                     val tagsWithPaths = computeTagHierarchy(userTags)
                     _allTags.value = tagsWithPaths
@@ -298,6 +291,7 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
                 val total = audioFiles.size
                 var successCount = 0
                 var failedCount = 0
+                var alreadyImportedCount = 0
                 val errors = mutableListOf<String>()
 
                 for ((index, docFile) in audioFiles.withIndex()) {
@@ -305,13 +299,14 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
                     _importState.value = ImportState.InProgress(index + 1, total, filename)
 
                     try {
-                        val result = importSingleFile(docFile, selectedTags)
-                        if (result) {
-                            successCount++
-                        } else {
-                            failedCount++
-                            errors.add(filename)
-                            CriticalLog.logImportFailure(filename, "Import returned false")
+                        when (importSingleFile(docFile, selectedTags)) {
+                            ImportOutcome.IMPORTED -> successCount++
+                            ImportOutcome.ALREADY_IMPORTED -> alreadyImportedCount++
+                            ImportOutcome.FAILED -> {
+                                failedCount++
+                                errors.add(filename)
+                                CriticalLog.logImportFailure(filename, "Import returned false")
+                            }
                         }
                     } catch (e: Exception) {
                         failedCount++
@@ -322,18 +317,28 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
                     }
                 }
 
-                _importState.value = ImportState.Complete(successCount, failedCount, errors)
+                _importState.value = ImportState.Complete(successCount, failedCount, errors, alreadyImportedCount)
             }
         }
     }
 
+    /** What happened to one file of the folder. */
+    private enum class ImportOutcome { IMPORTED, ALREADY_IMPORTED, FAILED }
+
     /**
-     * Import a single audio file.
+     * Import a single audio file, unless the account already holds it: a
+     * recording with the same file name and the same bytes (D31).
      */
-    private suspend fun importSingleFile(docFile: DocumentFile, tagIds: List<String>): Boolean {
-        val filename = docFile.name ?: return false
-        val extension = filename.substringAfterLast('.', "").lowercase()
+    private suspend fun importSingleFile(docFile: DocumentFile, tagIds: List<String>): ImportOutcome {
+        val filename = docFile.name ?: return ImportOutcome.FAILED
         val uri = docFile.uri
+
+        val hash = context.contentResolver.openInputStream(uri)?.use { ContentHash.sha256(it) }
+            ?: return ImportOutcome.FAILED
+        if (repository.findImportedAudioFile(filename, hash).getOrElse { throw it } != null) {
+            AppLogger.i(TAG, "Already imported: $filename")
+            return ImportOutcome.ALREADY_IMPORTED
+        }
 
         // Get file metadata
         val fileCreatedAt = docFile.lastModified().let { if (it > 0) it / 1000 else null }
@@ -353,7 +358,7 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
         }
 
         AppLogger.i(TAG, "Imported: $filename -> note=${importResult.noteId.take(8)}")
-        return true
+        return ImportOutcome.IMPORTED
     }
 
     /**

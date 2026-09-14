@@ -259,6 +259,15 @@ fun NoteDetailScreen(
         }
     }
 
+    // Where a removed copy still is (FILE-26)
+    val copyMessage by viewModel.copyMessage.collectAsState()
+    LaunchedEffect(copyMessage) {
+        copyMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearCopyMessage()
+        }
+    }
+
     // Show snackbar for on-device transcription events
     LaunchedEffect(transcribeMessage) {
         transcribeMessage?.let { message ->
