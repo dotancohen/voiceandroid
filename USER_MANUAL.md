@@ -344,8 +344,12 @@ notification and no badge.
 
 ### This device
 
-The card **Device** holds **Device Name**, which starts as the phone's model
-as Android reports it, and **Device ID**, this phone's id in the account.
+The card **Device** holds **Device Name** and **Device ID**, this phone's id in
+the account. **Device Name** starts as the first of: the phone's name in
+Android's **Settings → About phone** ("Galaxy A12", or the name given there);
+the phone's Bluetooth name; its maker and model ("Samsung SM-A125F"); and when
+Android says none of these, an animal with the ends of the phone's addresses,
+such as "Wombat 81:4c 7.21".
 **Generate New Device ID** writes a new random id into the field; nothing
 changes until **Save Settings**, under the card, is pressed. **Save Settings**
 stores the name and the id.
@@ -757,6 +761,27 @@ Transcription leaves out the audio: each is a thing of its own. Text goes as
 text and Recordings go as attachments, which is what a mail application turns
 into a message with files on it. A Recording whose file is not on this phone is
 not offered — its Transcription still is, since the words are here.
+
+### Sharing into Voice
+
+**Voice** appears in other applications' share menus for text and for audio
+files.
+
+- **Text** (a message, a web page's address, a mail) becomes a new Note holding
+  that text, and the Note opens. When the other application also gives a
+  subject, such as a page's title, the subject is the Note's first line and
+  the text follows after an empty line, unless the text already starts with
+  the subject.
+- **An audio file** becomes a new Note holding that Recording, exactly as a file
+  imported from a folder does (**Import Audio**), and the Note opens. The file
+  keeps the name the other application gave it; when that name has no
+  extension, the extension of the file's type is added, because the extension
+  decides the format. When this account already holds a Recording with the
+  same file name and the same bytes, nothing is added: its Note opens, with the
+  message "… is already in Voice: this is its note".
+- A file in a format Voice does not import is not added, and a message says so.
+
+Images cannot be shared into Voice yet.
 
 ## The trash bin
 

@@ -2,7 +2,6 @@ package com.dotancohen.voiceandroid.viewmodel
 
 import android.app.Application
 import android.content.Context
-import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -14,7 +13,6 @@ import com.dotancohen.voiceandroid.data.Tag
 import com.dotancohen.voiceandroid.data.TagTree
 import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.util.AppLogger
-import com.dotancohen.voiceandroid.util.ContentHash
 import com.dotancohen.voiceandroid.util.CriticalLog
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -325,55 +323,22 @@ class ImportAudioViewModel(application: Application) : AndroidViewModel(applicat
     /** What happened to one file of the folder. */
     private enum class ImportOutcome { IMPORTED, ALREADY_IMPORTED, FAILED }
 
+    private val audioImport = com.dotancohen.voiceandroid.data.AudioImport(context, repository)
+
     /**
      * Import a single audio file, unless the account already holds it: a
      * recording with the same file name and the same bytes (D31).
      */
     private suspend fun importSingleFile(docFile: DocumentFile, tagIds: List<String>): ImportOutcome {
         val filename = docFile.name ?: return ImportOutcome.FAILED
-        val uri = docFile.uri
-
-        val hash = context.contentResolver.openInputStream(uri)?.use { ContentHash.sha256(it) }
-            ?: return ImportOutcome.FAILED
-        if (repository.findImportedAudioFile(filename, hash).getOrElse { throw it } != null) {
-            AppLogger.i(TAG, "Already imported: $filename")
-            return ImportOutcome.ALREADY_IMPORTED
-        }
-
-        // Get file metadata
         val fileCreatedAt = docFile.lastModified().let { if (it > 0) it / 1000 else null }
-        val durationSeconds = getAudioDuration(uri)
-
-        // Create database records
-        val importResult = repository.importAudioFile(filename, fileCreatedAt, durationSeconds)
-            .getOrElse { throw it }
-
-        // Copy file to audio storage
-        repository.copyAudioFileToStorage(context, uri, importResult.audioFileId)
-            .getOrElse { throw it }
-
-        // Add tags to the note
-        for (tagId in tagIds) {
-            repository.addTagToNote(importResult.noteId, tagId)
-        }
-
-        AppLogger.i(TAG, "Imported: $filename -> note=${importResult.noteId.take(8)}")
-        return ImportOutcome.IMPORTED
-    }
-
-    /**
-     * Get audio duration using MediaMetadataRetriever.
-     */
-    private fun getAudioDuration(uri: Uri): Long? {
-        return try {
-            val retriever = MediaMetadataRetriever()
-            retriever.setDataSource(context, uri)
-            val durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
-            retriever.release()
-            durationMs?.toLongOrNull()?.let { it / 1000 }
-        } catch (e: Exception) {
-            AppLogger.w(TAG, "Could not get duration for $uri: ${e.message}")
-            null
+        return when (val outcome = audioImport.importFile(docFile.uri, filename, fileCreatedAt, tagIds)) {
+            is com.dotancohen.voiceandroid.data.AudioImportOutcome.Imported -> ImportOutcome.IMPORTED
+            is com.dotancohen.voiceandroid.data.AudioImportOutcome.AlreadyImported -> ImportOutcome.ALREADY_IMPORTED
+            is com.dotancohen.voiceandroid.data.AudioImportOutcome.Refused -> {
+                AppLogger.w(TAG, outcome.reason)
+                ImportOutcome.FAILED
+            }
         }
     }
 

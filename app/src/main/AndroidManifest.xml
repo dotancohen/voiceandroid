@@ -78,6 +78,17 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="voice" android:host="pair" />
             </intent-filter>
+            <!-- Another application's share menu: text becomes a new note, an audio file a new note holding it -->
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="audio/*" />
+            </intent-filter>
         </activity>
 
         <!-- Holds the microphone while the user is elsewhere. It keeps

@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
@@ -14,9 +15,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
+import com.dotancohen.voiceandroid.data.SharedContent
+import com.dotancohen.voiceandroid.data.SharedImport
+import com.dotancohen.voiceandroid.data.VoiceRepository
 import com.dotancohen.voiceandroid.transcription.OnDeviceTranscriber
 import com.dotancohen.voiceandroid.ui.VoiceApp
 import com.dotancohen.voiceandroid.ui.theme.VoiceTheme
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     /** A navigation route requested from outside (see automation.AdbCommandReceiver). */
@@ -38,6 +44,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         pendingRoute.value = intent?.getStringExtra(EXTRA_ROUTE)
         takeSetupLink(intent)
+        // A recreated activity (the phone turned) carries the same intent: it was taken already
+        if (savedInstanceState == null) takeSharedContent(intent)
         askForNotificationPermission()
 
         setContent {
@@ -75,6 +83,25 @@ class MainActivity : ComponentActivity() {
         setIntent(intent)
         pendingRoute.value = intent.getStringExtra(EXTRA_ROUTE)
         takeSetupLink(intent)
+        takeSharedContent(intent)
+    }
+
+    /**
+     * Text or an audio file shared with Voice from another application's share
+     * menu: a new note is made and opened, or a sentence says why nothing was added.
+     */
+    private fun takeSharedContent(intent: Intent?) {
+        val content = SharedContent.from(intent) ?: return
+        lifecycleScope.launch {
+            when (val result = SharedImport(applicationContext, VoiceRepository.getInstance(application)).take(content)) {
+                is SharedImport.Result.OpenNote -> {
+                    pendingRoute.value = com.dotancohen.voiceandroid.ui.Screen.NoteDetail.createRoute(result.noteId)
+                    result.sentence?.let { Toast.makeText(this@MainActivity, it, Toast.LENGTH_LONG).show() }
+                }
+                is SharedImport.Result.NothingAdded ->
+                    Toast.makeText(this@MainActivity, result.sentence, Toast.LENGTH_LONG).show()
+            }
+        }
     }
 
     /** A `voice://pair?…` link tapped in another app (Stage 9): the sync screen uses it. */

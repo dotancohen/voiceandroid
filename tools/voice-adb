@@ -96,6 +96,12 @@ Missing data (recording lengths and dates that were never calculated)
   calculate-missing-data [durations=false] [dates=false] [limit=<n>]
                                      calculate what can be calculated; prints CALCULATED and FAILED lines
 
+Sharing (as another app's share menu does; the app opens the new note)
+  share-text <text> [subject]        text shared with Voice becomes a new note
+  share-file <path-on-phone> <mime>  an audio file shared with Voice becomes a new note holding it,
+                                     e.g. share-file /sdcard/VoiceTestStorage/הקלטה.ogg audio/ogg;
+                                     needs all-files access, since the app reads the path itself
+
 Screens (open the app on a screen, for steps that must be done by hand)
   open notes|settings|sync|tags|import|recorder|recording|transcription|advanced|missing-data
   open-note <note>
@@ -215,6 +221,14 @@ case "$cmd" in
         args=()
         for kv in "$@"; do args+=(--es "${kv%%=*}" "${kv#*=}"); done
         TIMEOUT=${VOICE_ADB_TIMEOUT:-3600} send CALCULATE_MISSING_DATA "${args[@]}" ;;
+    share-text)
+        adb shell am start -a android.intent.action.SEND -t text/plain -n "$PKG/.MainActivity" \
+            --es android.intent.extra.TEXT "$(quote_for_phone "$1")" ${2:+--es android.intent.extra.SUBJECT "$(quote_for_phone "$2")"} >/dev/null
+        echo "OK shared the text; the app opens the new note" ;;
+    share-file)
+        adb shell am start -a android.intent.action.SEND -t "$2" -n "$PKG/.MainActivity" --grant-read-uri-permission \
+            --eu android.intent.extra.STREAM "$(quote_for_phone "file://$1")" >/dev/null
+        echo "OK shared the file; the app opens the new note, or shows why nothing was added" ;;
     open) send OPEN_SCREEN --es screen "$1" ;;
     open-note) send OPEN_NOTE --es note "$1" ;;
     log) adb logcat -d -s VoiceAdb:I | sed -n 's/.*VoiceAdb: //p' | tail -40 ;;

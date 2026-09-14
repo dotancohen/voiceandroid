@@ -138,14 +138,22 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** The model name as Android reports it, for a fresh phone's card. */
+    /** A fresh phone's name (UI-11): the name in Settings → About phone, else the Bluetooth name, else maker and model, else an animal. */
     private fun defaultDeviceName(): String {
-        val model = android.os.Build.MODEL?.trim().orEmpty()
-        val maker = android.os.Build.MANUFACTURER?.trim().orEmpty()
-        return when {
-            model.isEmpty() -> "Phone"
-            maker.isEmpty() || model.startsWith(maker, ignoreCase = true) -> model
-            else -> "$maker $model"
+        val resolver = context.contentResolver
+        val settingsName = try {
+            android.provider.Settings.Global.getString(resolver, android.provider.Settings.Global.DEVICE_NAME)
+        } catch (e: Exception) {
+            null
+        }
+        // Not every Android version lets an application read it; then it is simply absent
+        val bluetoothName = try {
+            android.provider.Settings.Secure.getString(resolver, "bluetooth_name")
+        } catch (e: Exception) {
+            null
+        }
+        return com.dotancohen.voiceandroid.util.DeviceNames.defaultName(settingsName, bluetoothName, android.os.Build.MANUFACTURER, android.os.Build.MODEL) {
+            uniffi.voicecore.fallbackDeviceName()
         }
     }
 

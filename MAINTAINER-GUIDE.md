@@ -265,7 +265,7 @@ All paths below are under `app/src/main/java/com/dotancohen/voiceandroid/`.
 | File | Purpose |
 |---|---|
 | `VoiceApplication.kt` | Runs once per process start: starts the two logs, loads `libvoicecore.so`, reports timezone changes to the core |
-| `MainActivity.kt` | The one **activity**. Asks for the notification permission, sets the Compose content `VoiceApp`, accepts a navigation route from outside (ADB) and `voice://pair` links, and restarts the transcription service when the application comes to the screen |
+| `MainActivity.kt` | The one **activity**. Asks for the notification permission, sets the Compose content `VoiceApp`, accepts a navigation route from outside (ADB), `voice://pair` links and shares from other applications' share menus (`SharedContent`, `SharedImport`; taken once, not again when the activity is recreated), and restarts the transcription service when the application comes to the screen |
 
 ### 5.2 `ui/` — navigation and drawing
 
@@ -333,6 +333,9 @@ inside `viewModelScope.launch`. A screen reads a flow with `collectAsState()`.
 | `SyncListenerService.kt` | Foreground service that keeps the phone listening for peers while the switch is on |
 | `PeerDiscovery.kt` | Finding peers on the local network |
 | `PairingRequests.kt` | A `voice://pair` link or a request to open the code reader, passed from the activity to the sync screen |
+| `AudioImport.kt` | Importing one audio file into a new Note, shared by the folder import and the share menu: the format check, the "already imported" check (D31), the duration, `importAudioFile`, `copyAudioFileToStorage`, the Tags |
+| `SharedContent.kt` | What an `ACTION_SEND` intent carries: `Text` or `Audio`, or nothing Voice takes; `noteText` (subject and text) and `fileName` (the extension of the MIME type added to a name without one) are pure (`SharedContentTest`, Robolectric) |
+| `SharedImport.kt` | Turns `SharedContent` into a Note: `createNote` for text, `AudioImport` for audio; opens the existing Note of a file already imported |
 | `MissingData.kt`, `RepositoryMissingDataStore.kt` | The missing-data survey; the `Store` interface lets tests supply rows without a database |
 | `TranscriptionFlags.kt` | The five flags and their wording; must agree with the desktop |
 | `TagTree.kt` | Tag paths and depths, safe against a parent chain that loops |
@@ -381,6 +384,7 @@ transcribes longer Recordings.
 | `UiPreferences.kt` | Interface size, lines per row, spotlight duration |
 | `NoteSharing.kt` | Sharing a Note or a Recording through the `FileProvider` |
 | `IssuesText.kt` | The words of the Issues screen (sections, sizes, the reason a Recording is not in the bucket) and of the "Where the copies are" lines, in the desktop's words (`IssuesTextTest`) |
+| `DeviceNames.kt` | A fresh phone's name (UI-11): the name in Settings → About phone, the Bluetooth name, maker and model, else the core's `fallbackDeviceName()` animal (`DeviceNamesTest`) |
 | `AddressText.kt` | The words after "Address" on Sync Settings (LISTEN-4): the address found through the phone's route, alone; or every candidate followed by the sentence that only one of them is correct; or the sentence that no address was found. The same as the desktop's `src/core/addresses_text.py` (`AddressTextTest`) |
 
 ### 5.8 `app/src/debug/.../automation/AdbCommandReceiver.kt`
@@ -775,9 +779,11 @@ Never copy a database back onto the phone by hand, and never write to it with SQ
 
 ### 9.2 Importing existing recordings
 
-`ImportAudioViewModel` reads the folder, keeps the files whose extension is in
-the core's list `audioFileFormats()` (FILE-21), calls `importAudioFile` for each
-file (one new Note each) and `copyAudioFileToStorage`.
+`ImportAudioViewModel` reads the folder and keeps the files whose extension is
+in the core's list `audioFileFormats()` (FILE-21). `AudioImport.importFile`
+imports each (one new Note each): the "already imported" check, `importAudioFile`
+and `copyAudioFileToStorage`. A file shared from another application's share
+menu goes through the same `AudioImport` (`SharedImport`, section 5.4).
 
 ### 9.3 Transcribing on the phone
 

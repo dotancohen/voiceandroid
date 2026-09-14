@@ -1041,6 +1041,8 @@ internal open class UniffiVTableCallbackInterfaceOperationProgress(
 
 
 
+
+
 // A JNA Library to expose the extern-C FFI definitions.
 // This is an implementation detail which will be called internally by the public API.
 
@@ -1346,6 +1348,8 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_func_audio_file_formats(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_func_fallback_device_name(uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_func_generate_device_id(uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun ffi_voicecore_rustbuffer_alloc(`size`: Long,uniffi_out_err: UniffiRustCallStatus, 
@@ -1461,6 +1465,8 @@ internal interface UniffiLib : Library {
     fun ffi_voicecore_rust_future_complete_void(`handle`: Long,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_checksum_func_audio_file_formats(
+    ): Short
+    fun uniffi_voicecore_checksum_func_fallback_device_name(
     ): Short
     fun uniffi_voicecore_checksum_func_generate_device_id(
     ): Short
@@ -1762,6 +1768,9 @@ private fun uniffiCheckContractApiVersion(lib: UniffiLib) {
 @Suppress("UNUSED_PARAMETER")
 private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_func_audio_file_formats() != 14686.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_func_fallback_device_name() != 31221.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_func_generate_device_id() != 30760.toShort()) {
@@ -9149,6 +9158,19 @@ public object FfiConverterMapStringString: FfiConverterRustBuffer<Map<kotlin.Str
             return FfiConverterSequenceString.lift(
     uniffiRustCall() { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_func_audio_file_formats(
+        _status)
+}
+    )
+    }
+    
+
+        /**
+         * An animal with the ends of this phone's addresses, "Wombat 81:4c 7.21": the
+         * phone's name when Android's settings name nothing (UI-11).
+         */ fun `fallbackDeviceName`(): kotlin.String {
+            return FfiConverterString.lift(
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_func_fallback_device_name(
         _status)
 }
     )
