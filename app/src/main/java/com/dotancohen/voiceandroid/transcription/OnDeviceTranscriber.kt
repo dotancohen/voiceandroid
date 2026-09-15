@@ -68,7 +68,7 @@ data class TranscriptionJob(
  * would only slow the first one down. Queueing a whole selection of notes is
  * therefore safe. Each job creates a
  * "Pending..." transcription record first and then stores the result, exactly
- * the way the desktop's transcription service does, so peers see the same
+ * the way the desktop's transcription service does, so devices see the same
  * thing whichever device transcribed.
  *
  * The loaded model is kept in memory between jobs and released when the

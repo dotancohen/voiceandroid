@@ -63,14 +63,14 @@ fun SyncSettingsScreen(
     viewModel: SettingsViewModel = viewModel(),
     onBack: () -> Unit
 ) {
-    val peers by viewModel.peers.collectAsState()
-    val lastPeer by viewModel.lastPeer.collectAsState()
-    val peerMessage by viewModel.peerMessage.collectAsState()
+    val devices by viewModel.devices.collectAsState()
+    val lastDevice by viewModel.lastDevice.collectAsState()
+    val deviceMessage by viewModel.deviceMessage.collectAsState()
     val lastOperation by viewModel.lastOperation.collectAsState()
     val progressSentence by viewModel.progressSentence.collectAsState()
     val idleStopHours by viewModel.idleStopHours.collectAsState()
-    val deviceId by viewModel.deviceId.collectAsState()
-    val deviceName by viewModel.deviceName.collectAsState()
+    val thisDeviceId by viewModel.thisDeviceId.collectAsState()
+    val thisDeviceName by viewModel.thisDeviceName.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val isUploading by viewModel.isUploading.collectAsState()
     val joinMessage by viewModel.joinMessage.collectAsState()
@@ -91,11 +91,11 @@ fun SyncSettingsScreen(
     val syncError by viewModel.syncError.collectAsState()
     val debugInfo by viewModel.debugInfo.collectAsState()
     val notDuplicatedLine by viewModel.notDuplicatedLine.collectAsState()
-    val peerSummaries by viewModel.peerSummaries.collectAsState()
+    val deviceSummaries by viewModel.deviceSummaries.collectAsState()
     val maxUploadMb by viewModel.maxUploadMb.collectAsState()
 
-    var editedDeviceId by remember(deviceId) { mutableStateOf(deviceId) }
-    var editedDeviceName by remember(deviceName) { mutableStateOf(deviceName) }
+    var editedThisDeviceId by remember(thisDeviceId) { mutableStateOf(thisDeviceId) }
+    var editedThisDeviceName by remember(thisDeviceName) { mutableStateOf(thisDeviceName) }
     var editedMaxUploadMb by remember(maxUploadMb) { mutableStateOf(maxUploadMb.toString()) }
 
     // Check for unsynced changes and update debug info when this screen becomes visible
@@ -143,22 +143,31 @@ fun SyncSettingsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Proof (Stage 10): what is on this phone only, and when each peer was last reached.
+            // Which device this is, before anything else; the devices it syncs with are
+            // "other devices" under a heading of their own (the desktop's Sync window says the same)
+            val thisDeviceLine = SyncScreenWords.thisDeviceLine(thisDeviceName)
+            Text(
+                text = thisDeviceLine,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.semantics { contentDescription = thisDeviceLine }
+            )
+
+            // Proof (Stage 10): what is on this phone only, and when each device was last reached.
             // This line, here, is the only place it is said: no notification, no badge.
             Text(
                 text = notDuplicatedLine ?: "Counting what is on this device only…",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.semantics { contentDescription = notDuplicatedLine ?: "Counting what is on this device only" }
             )
-            peerSummaries.forEach { peer ->
-                val reached = peer.lastReachedAt?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it * 1000)) } ?: "never"
+            deviceSummaries.forEach { device ->
+                val reached = device.lastReachedAt?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it * 1000)) } ?: "never"
                 Text(
-                    text = "${peer.peerName.ifEmpty { peer.peerId.take(8) }}: last reached $reached" + (if (peer.lastOperation.isEmpty()) "" else ", last operation ${peer.lastOperation}"),
+                    text = "${device.deviceName.ifEmpty { device.deviceId.take(8) }}: last reached $reached" + (if (device.lastOperation.isEmpty()) "" else ", last operation ${device.lastOperation}"),
                     style = MaterialTheme.typography.bodySmall
                 )
             }
 
-            // The peers (Stage 5): from the cards, with a local name, an address and the last operation
+            // The devices (Stage 5): from the cards, with a local name, an address and the last operation
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -167,47 +176,47 @@ fun SyncSettingsScreen(
                     modifier = Modifier.padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text(text = "Peers", style = MaterialTheme.typography.titleMedium)
-                    if (peers.isEmpty()) {
-                        Text("No peer yet: read a code shown by another device below, or add one by its address.", style = MaterialTheme.typography.bodySmall)
+                    Text(text = SyncScreenWords.OTHER_DEVICES_HEADING, style = MaterialTheme.typography.titleMedium)
+                    if (devices.isEmpty()) {
+                        Text("No device yet: read a code shown by another device below, or add one by its address.", style = MaterialTheme.typography.bodySmall)
                     }
-                    peers.forEach { peer ->
-                        var renaming by remember(peer.peerId) { mutableStateOf(false) }
-                        var newName by remember(peer.peerId) { mutableStateOf(peer.name) }
-                        val reached = peer.lastReachedAt?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it * 1000)) } ?: "never"
-                        Column(modifier = Modifier.semantics { contentDescription = "Peer ${peer.name}" }) {
-                            Text(peer.name + (if (peer.isLast) "  (last used)" else ""), style = MaterialTheme.typography.bodyMedium)
-                            Text("${peer.peerId.take(8)}  ${peer.url.ifEmpty { "no address yet" }}", style = MaterialTheme.typography.bodySmall)
-                            Text("Last reached $reached" + (if (peer.lastOperation.isEmpty()) "" else ", last operation ${peer.lastOperation}"), style = MaterialTheme.typography.bodySmall)
+                    devices.forEach { device ->
+                        var renaming by remember(device.deviceId) { mutableStateOf(false) }
+                        var newName by remember(device.deviceId) { mutableStateOf(device.name) }
+                        val reached = device.lastReachedAt?.let { java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.SHORT, java.text.DateFormat.SHORT).format(java.util.Date(it * 1000)) } ?: "never"
+                        Column(modifier = Modifier.semantics { contentDescription = SyncScreenWords.otherDeviceDescription(device.name) }) {
+                            Text(device.name + (if (device.isLast) "  (last used)" else ""), style = MaterialTheme.typography.bodyMedium)
+                            Text("${device.deviceId.take(8)}  ${device.url.ifEmpty { "no address yet" }}", style = MaterialTheme.typography.bodySmall)
+                            Text("Last reached $reached" + (if (device.lastOperation.isEmpty()) "" else ", last operation ${device.lastOperation}"), style = MaterialTheme.typography.bodySmall)
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 TextButton(onClick = { renaming = !renaming }) { Text("Rename") }
-                                TextButton(onClick = { viewModel.forgetPeer(peer.peerId) }, modifier = Modifier.semantics { contentDescription = "Forget ${peer.name}" }) { Text("Forget") }
+                                TextButton(onClick = { viewModel.forgetDevice(device.deviceId) }, modifier = Modifier.semantics { contentDescription = "Forget ${device.name}" }) { Text("Forget") }
                             }
                             if (renaming) {
                                 OutlinedTextField(value = newName, onValueChange = { newName = it }, label = { Text("Name on this phone") }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                                TextButton(onClick = { viewModel.renamePeer(peer.peerId, newName); renaming = false }, enabled = newName.isNotBlank()) { Text("Save name") }
+                                TextButton(onClick = { viewModel.renameDevice(device.deviceId, newName); renaming = false }, enabled = newName.isNotBlank()) { Text("Save name") }
                             }
                         }
                     }
-                    peerMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
+                    deviceMessage?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary) }
 
-                    // A peer typed by hand (Stage 7, the third way)
+                    // A device typed by hand (Stage 7, the third way)
                     var addId by remember { mutableStateOf("") }
                     var addName by remember { mutableStateOf("") }
                     var addUrl by remember { mutableStateOf("") }
-                    Text("Add a peer by its address", style = MaterialTheme.typography.titleSmall)
+                    Text("Add a device by its address", style = MaterialTheme.typography.titleSmall)
                     OutlinedTextField(value = addId, onValueChange = { addId = it }, label = { Text("Its device id (32 hex characters)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedTextField(value = addUrl, onValueChange = { addUrl = it }, label = { Text("Where it listens") }, placeholder = { Text("https://192.168.1.10:8384") }, singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
                     OutlinedTextField(value = addName, onValueChange = { addName = it }, label = { Text("A name for it") }, singleLine = true, modifier = Modifier.fillMaxWidth())
                     OutlinedButton(
-                        onClick = { viewModel.addPeer(addId.trim(), addName.trim(), addUrl.trim()); addId = ""; addName = ""; addUrl = "" },
+                        onClick = { viewModel.addDevice(addId.trim(), addName.trim(), addUrl.trim()); addId = ""; addName = ""; addUrl = "" },
                         enabled = addId.trim().length == 32 && addUrl.isNotBlank(),
                         modifier = Modifier.fillMaxWidth()
-                    ) { Text("Add peer") }
+                    ) { Text("Add device") }
                 }
             }
 
-            // Device Configuration
+            // This device: its own name and id
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -217,31 +226,31 @@ fun SyncSettingsScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "Device",
+                        text = SyncScreenWords.THIS_DEVICE_HEADING,
                         style = MaterialTheme.typography.titleMedium
                     )
 
                     OutlinedTextField(
-                        value = editedDeviceName,
-                        onValueChange = { editedDeviceName = it },
-                        label = { Text("Device Name") },
+                        value = editedThisDeviceName,
+                        onValueChange = { editedThisDeviceName = it },
+                        label = { Text(SyncScreenWords.THIS_DEVICE_NAME_LABEL) },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
 
                     OutlinedTextField(
-                        value = editedDeviceId,
-                        onValueChange = { editedDeviceId = it },
-                        label = { Text("Device ID") },
+                        value = editedThisDeviceId,
+                        onValueChange = { editedThisDeviceId = it },
+                        label = { Text(SyncScreenWords.THIS_DEVICE_ID_LABEL) },
                         placeholder = { Text("32 hex characters (or generate new)") },
                         modifier = Modifier.fillMaxWidth(),
                         singleLine = true
                     )
 
                     TextButton(
-                        onClick = { editedDeviceId = viewModel.generateNewDeviceId() }
+                        onClick = { editedThisDeviceId = viewModel.generateNewThisDeviceId() }
                     ) {
-                        Text("Generate New Device ID")
+                        Text(SyncScreenWords.NEW_THIS_DEVICE_ID_BUTTON)
                     }
                 }
             }
@@ -250,8 +259,8 @@ fun SyncSettingsScreen(
             Button(
                 onClick = {
                     viewModel.saveSettings(
-                        deviceId = editedDeviceId,
-                        deviceName = editedDeviceName
+                        thisDeviceId = editedThisDeviceId,
+                        thisDeviceName = editedThisDeviceName
                     )
                 },
                 modifier = Modifier.fillMaxWidth()
@@ -320,14 +329,14 @@ fun SyncSettingsScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
-                    // This device: the listener switch, the address a peer would type, the certificate
+                    // This device: the listener switch, the address a device would type, the certificate
                     LaunchedEffect(Unit) { viewModel.loadThisDevice() }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-                            Text("Listen for peers", style = MaterialTheme.typography.bodyMedium)
+                            Text("Listen for devices", style = MaterialTheme.typography.bodyMedium)
                             Text(
                                 if (listening) "Other devices can reach this phone" else "Off; nothing can reach this phone",
                                 style = MaterialTheme.typography.bodySmall
@@ -354,35 +363,35 @@ fun SyncSettingsScreen(
                     )
                     Text("Certificate $certificateFingerprint", style = MaterialTheme.typography.bodySmall)
 
-                    // One visible button, naming the last peer (Stage 5); the arrow
-                    // beside it chooses another peer or another operation
+                    // One visible button, naming the last device (Stage 5); the arrow
+                    // beside it chooses another device or another operation
                     var chooserOpen by remember { mutableStateOf(false) }
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         OutlinedButton(
                             onClick = { viewModel.exchange() },
-                            enabled = !isSyncing && lastPeer != null,
-                            modifier = Modifier.weight(1f).semantics { contentDescription = lastPeer?.let { "Exchange with ${it.name}" } ?: "No peer to exchange with yet" }
+                            enabled = !isSyncing && lastDevice != null,
+                            modifier = Modifier.weight(1f).semantics { contentDescription = lastDevice?.let { "Exchange with ${it.name}" } ?: "No device to exchange with yet" }
                         ) {
                             if (isSyncing) {
                                 CircularProgressIndicator(modifier = Modifier.height(20.dp))
                                 Text("  Working…")
                             } else {
-                                Text(lastPeer?.let { "Exchange with ${it.name}" } ?: (if (peers.isEmpty()) "No peer yet" else "Choose a peer ▸"))
+                                Text(lastDevice?.let { "Exchange with ${it.name}" } ?: (if (devices.isEmpty()) "No device yet" else "Choose a device ▸"))
                             }
                         }
-                        IconButton(onClick = { chooserOpen = true }, enabled = !isSyncing && peers.isNotEmpty(), modifier = Modifier.semantics { contentDescription = "Choose another peer or operation" }) {
+                        IconButton(onClick = { chooserOpen = true }, enabled = !isSyncing && devices.isNotEmpty(), modifier = Modifier.semantics { contentDescription = "Choose another device or operation" }) {
                             Text("▾")
                         }
                         DropdownMenu(expanded = chooserOpen, onDismissRequest = { chooserOpen = false }) {
-                            peers.forEach { peer ->
+                            devices.forEach { device ->
                                 listOf(
-                                    "exchange" to "Exchange with ${peer.name}: sync, then send and fetch recordings",
-                                    "deliver" to "Deliver to ${peer.name}: sync, then send recordings",
-                                    "sync" to "Sync with ${peer.name}: notes only",
-                                    "send" to "Send to ${peer.name}: recordings it lacks, no sync",
-                                    "fetch" to "Fetch from ${peer.name}: recordings this phone lacks, no sync"
+                                    "exchange" to "Exchange with ${device.name}: sync, then send and fetch recordings",
+                                    "deliver" to "Deliver to ${device.name}: sync, then send recordings",
+                                    "sync" to "Sync with ${device.name}: notes only",
+                                    "send" to "Send to ${device.name}: recordings it lacks, no sync",
+                                    "fetch" to "Fetch from ${device.name}: recordings this phone lacks, no sync"
                                 ).forEach { (operation, label) ->
-                                    DropdownMenuItem(text = { Text(label) }, onClick = { chooserOpen = false; viewModel.operate(operation, peer.peerId) })
+                                    DropdownMenuItem(text = { Text(label) }, onClick = { chooserOpen = false; viewModel.operate(operation, device.deviceId) })
                                 }
                             }
                         }
@@ -416,13 +425,13 @@ fun SyncSettingsScreen(
                     joinMessage?.let { message ->
                         Text(text = message, color = MaterialTheme.colorScheme.primary)
                     }
-                    // After pairing: the new peer, with one Exchange button (Stage 9)
+                    // After pairing: the new device, with one Exchange button (Stage 9)
                     justJoined?.let { joined ->
                         Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)) {
                             Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(if (joined.granted) "${joined.peerName} hosts this account now. Deliver sends it what this phone holds." else "Paired with ${joined.peerName}. Exchange brings its notes and recordings here, and yours there.")
+                                Text(if (joined.granted) "${joined.deviceName} hosts this account now. Deliver sends it what this phone holds." else "Paired with ${joined.deviceName}. Exchange brings its notes and recordings here, and yours there.")
                                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    Button(onClick = { viewModel.dismissJoined(); viewModel.operate(if (joined.granted) "deliver" else "exchange", joined.peerId) }, enabled = !isSyncing, modifier = Modifier.weight(1f)) {
+                                    Button(onClick = { viewModel.dismissJoined(); viewModel.operate(if (joined.granted) "deliver" else "exchange", joined.deviceId) }, enabled = !isSyncing, modifier = Modifier.weight(1f)) {
                                         Text(if (joined.granted) "Deliver now" else "Exchange now")
                                     }
                                     OutlinedButton(onClick = { viewModel.dismissJoined() }, modifier = Modifier.weight(1f)) { Text("Later") }
@@ -452,7 +461,7 @@ fun SyncSettingsScreen(
                     // Sync result
                     syncResult?.let { result ->
                         val verb = lastOperation.replaceFirstChar { it.uppercase() }
-                        val peerName = lastPeer?.name ?: "the peer"
+                        val deviceName = lastDevice?.name ?: "the device"
                         if (result.success) {
                             val parts = mutableListOf<String>()
                             if (lastOperation in listOf("sync", "deliver", "exchange")) parts.add("received ${result.notesReceived} changes and sent ${result.notesSent}")
@@ -460,13 +469,13 @@ fun SyncSettingsScreen(
                             if (result.filesFetched > 0) parts.add("fetched ${result.filesFetched} recordings")
                             if (result.bytesMoved > 0) parts.add("${result.bytesMoved / (1024 * 1024)} MB moved")
                             Text(
-                                text = "$verb with $peerName: " + (if (parts.isEmpty()) "nothing to move" else parts.joinToString(", ")) + ".",
+                                text = "$verb with $deviceName: " + (if (parts.isEmpty()) "nothing to move" else parts.joinToString(", ")) + ".",
                                 color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.semantics { contentDescription = "$verb with $peerName done" }
+                                modifier = Modifier.semantics { contentDescription = "$verb with $deviceName done" }
                             )
                         } else {
                             Text(
-                                text = "$verb with $peerName failed: ${result.errorMessage ?: "it did not say why"}",
+                                text = "$verb with $deviceName failed: ${result.errorMessage ?: "it did not say why"}",
                                 color = MaterialTheme.colorScheme.error
                             )
                         }
@@ -484,7 +493,7 @@ fun SyncSettingsScreen(
                     // The connection check: one line per thing that can be wrong, each with its code
                     OutlinedButton(
                         onClick = { viewModel.checkConnection() },
-                        modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Check the connection to the peer" }
+                        modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Check the connection to the device" }
                     ) {
                         Text("Check connection")
                     }
@@ -532,7 +541,7 @@ fun SyncSettingsScreen(
                     )
                     OutlinedButton(
                         onClick = { viewModel.fullResync() },
-                        enabled = !isSyncing && lastPeer != null,
+                        enabled = !isSyncing && lastDevice != null,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Full Re-sync")
@@ -546,7 +555,7 @@ fun SyncSettingsScreen(
                         style = MaterialTheme.typography.titleSmall
                     )
                     Text(
-                        text = "Clears the 'last synced' timestamps, causing the next regular sync to exchange all data with peers. Use this if instances are out of sync and regular sync isn't picking up all changes. Server configuration is preserved.",
+                        text = "Clears the 'last synced' timestamps, causing the next regular sync to exchange all data with devices. Use this if instances are out of sync and regular sync isn't picking up all changes. Server configuration is preserved.",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

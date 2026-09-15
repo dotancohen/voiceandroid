@@ -300,7 +300,7 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
         viewModelScope.launch {
             repository.checkFilesHere()
             val names = repository.deviceNames().getOrNull().orEmpty()
-            val here = repository.getDeviceId().getOrNull().orEmpty()
+            val here = repository.getThisDeviceId().getOrNull().orEmpty()
             val madeHereButMissing = repository.madeHereButMissing(audioFile.id).getOrNull()
             repository.fileLocations(audioFile.id)
                 .onSuccess { locations ->
@@ -742,7 +742,7 @@ class NoteDetailViewModel(application: Application) : AndroidViewModel(applicati
     }
 
     /**
-     * Resolve the text conflict with the given result. Syncs to every peer.
+     * Resolve the text conflict with the given result. Syncs to every device.
      */
     fun resolveConflictWith(content: String) {
         val sides = _conflictSides.value ?: return

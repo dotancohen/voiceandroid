@@ -111,8 +111,8 @@ class VoiceRepository(private val context: Context) {
             }
             // A card should read "Galaxy A14", not the core's placeholder (Stage 5)
             ensureInitialized().let { c ->
-                if (c.getDeviceName() == CORE_DEFAULT_DEVICE_NAME) {
-                    c.setDeviceName(defaultDeviceName())
+                if (c.getThisDeviceName() == CORE_DEFAULT_DEVICE_NAME) {
+                    c.setThisDeviceName(defaultDeviceName())
                     AppLogger.i(TAG, "Device name set to ${defaultDeviceName()}")
                 }
             }
@@ -228,11 +228,11 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** Every peer of this phone (Stage 5). */
-    suspend fun listPeers(): Result<List<Peer>> = withContext(Dispatchers.IO) {
+    /** Every device of this phone (Stage 5). */
+    suspend fun listDevices(): Result<List<SyncDevice>> = withContext(Dispatchers.IO) {
         try {
-            Result.success(ensureInitialized().listPeers().map {
-                Peer(it.peerId, it.name, it.url, it.certificateFingerprint, it.lastReachedAt, it.lastOperation, it.isLast)
+            Result.success(ensureInitialized().listDevices().map {
+                SyncDevice(it.deviceId, it.name, it.url, it.certificateFingerprint, it.lastReachedAt, it.lastOperation, it.isLast)
             })
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
@@ -241,10 +241,10 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** A peer typed by hand (Stage 7, the third way): its device id, a name and where it listens. */
-    suspend fun addPeer(peerId: String, name: String, url: String): Result<Unit> = withContext(Dispatchers.IO) {
+    /** A device typed by hand (Stage 7, the third way): its device id, a name and where it listens. */
+    suspend fun addDevice(deviceId: String, name: String, url: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
-            ensureInitialized().addPeer(peerId.trim(), name, url)
+            ensureInitialized().addDevice(deviceId.trim(), name, url)
             Result.success(Unit)
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
@@ -253,10 +253,10 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** Forget a peer on this phone: its card does not bring it back until it is added again. */
-    suspend fun forgetPeer(peerId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+    /** Forget a device on this phone: its card does not bring it back until it is added again. */
+    suspend fun forgetDevice(deviceId: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            Result.success(ensureInitialized().forgetPeer(peerId))
+            Result.success(ensureInitialized().forgetDevice(deviceId))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -264,10 +264,10 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** A local name for a peer, shown in place of its card's. */
-    suspend fun renamePeer(peerId: String, name: String): Result<Boolean> = withContext(Dispatchers.IO) {
+    /** A local name for a device, shown in place of its card's. */
+    suspend fun renameDevice(deviceId: String, name: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
-            Result.success(ensureInitialized().renamePeer(peerId, name))
+            Result.success(ensureInitialized().renameDevice(deviceId, name))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -276,7 +276,7 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
-     * Sync with the last peer, or the only one: database changes both ways.
+     * Sync with the last device, or the only one: database changes both ways.
      * Files never move here; [upload] sends recordings to the bucket.
      */
     suspend fun sync(): Result<SyncResult> = withContext(Dispatchers.IO) {
@@ -304,18 +304,18 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
-     * One operation with the configured peer, by the terms table: "sync",
+     * One operation with the configured device, by the terms table: "sync",
      * "deliver" (sync then send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
-    suspend fun operate(operation: String, peerId: String? = null, onProgress: ((String) -> Unit)? = null): Result<SyncResult> = withContext(Dispatchers.IO) {
+    suspend fun operate(operation: String, deviceId: String? = null, onProgress: ((String) -> Unit)? = null): Result<SyncResult> = withContext(Dispatchers.IO) {
         try {
-            AppLogger.i(TAG, "Starting $operation" + (peerId?.let { " with ${it.take(8)}" } ?: ""))
+            AppLogger.i(TAG, "Starting $operation" + (deviceId?.let { " with ${it.take(8)}" } ?: ""))
             val progress = onProgress?.let { report ->
                 object : uniffi.voicecore.OperationProgress {
                     override fun report(stage: String, done: Long, total: Long, bytes: ULong, sentence: String) { report(sentence) }
                 }
             }
-            val result = ensureInitialized().operate(operation, peerId, progress)
+            val result = ensureInitialized().operate(operation, deviceId, progress)
             AppLogger.i(TAG, "$operation completed: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}, files sent=${result.filesSent}, fetched=${result.filesFetched}")
             Result.success(SyncResult(
                 success = result.success,
@@ -338,10 +338,10 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** Check the connection to a peer: one row per thing that can be wrong (Stage 12). Nothing is changed. */
-    suspend fun checkConnection(peerId: String): Result<List<CheckRow>> = withContext(Dispatchers.IO) {
+    /** Check the connection to a device: one row per thing that can be wrong (Stage 12). Nothing is changed. */
+    suspend fun checkConnection(deviceId: String): Result<List<CheckRow>> = withContext(Dispatchers.IO) {
         try {
-            Result.success(ensureInitialized().checkConnection(peerId).map { CheckRow(it.name, it.passed, it.detail, it.code) })
+            Result.success(ensureInitialized().checkConnection(deviceId).map { CheckRow(it.name, it.passed, it.detail, it.code) })
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -365,8 +365,8 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
-     * Reset sync timestamps to force re-fetching all data from peers.
-     * Unlike clearSyncState, this preserves peer configuration.
+     * Reset sync timestamps to force re-fetching all data from devices.
+     * Unlike clearSyncState, this preserves device configuration.
      */
     suspend fun resetSyncTimestamps(): Result<Unit> = withContext(Dispatchers.IO) {
         try {
@@ -384,11 +384,11 @@ class VoiceRepository(private val context: Context) {
      * Perform initial sync - fetches full dataset from server.
      * Use this for first-time sync or to re-fetch everything.
      */
-    suspend fun initialSync(peerId: String? = null): Result<SyncResult> = withContext(Dispatchers.IO) {
+    suspend fun initialSync(deviceId: String? = null): Result<SyncResult> = withContext(Dispatchers.IO) {
         try {
             AppLogger.i(TAG, "Starting initial sync (full dataset fetch)")
             val voiceClient = ensureInitialized()
-            val result = voiceClient.initialSync(peerId)
+            val result = voiceClient.initialSync(deviceId)
             AppLogger.i(TAG, "Initial sync completed: success=${result.success}, received=${result.notesReceived}, sent=${result.notesSent}")
             Result.success(SyncResult(
                 success = result.success,
@@ -415,8 +415,8 @@ class VoiceRepository(private val context: Context) {
     suspend fun moveToAccount(setupText: String, typedCurrentId: String): Result<Moved> = withContext(Dispatchers.IO) {
         try {
             val moved = ensureInitialized().moveToAccountByCode(setupText.trim(), typedCurrentId.trim())
-            AppLogger.i(TAG, "Moved ${moved.notesMoved} notes to account ${moved.accountId.take(8)} through ${moved.peerName}")
-            Result.success(Moved(moved.accountId, moved.peerName, moved.notesMoved, moved.tagsMerged))
+            AppLogger.i(TAG, "Moved ${moved.notesMoved} notes to account ${moved.accountId.take(8)} through ${moved.deviceName}")
+            Result.success(Moved(moved.accountId, moved.deviceName, moved.notesMoved, moved.tagsMerged))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -429,11 +429,11 @@ class VoiceRepository(private val context: Context) {
         try {
             val joined = ensureInitialized().pairWith(setupText)
             if (joined.granted) {
-                AppLogger.i(TAG, "${joined.peerName} now hosts account ${joined.accountId.take(8)}")
+                AppLogger.i(TAG, "${joined.deviceName} now hosts account ${joined.accountId.take(8)}")
             } else {
-                AppLogger.i(TAG, "Joined account ${joined.accountId.take(8)} through ${joined.peerName}")
+                AppLogger.i(TAG, "Joined account ${joined.accountId.take(8)} through ${joined.deviceName}")
             }
-            Result.success(Joined(joined.accountId, joined.peerId, joined.peerName, joined.peerUrl, joined.granted))
+            Result.success(Joined(joined.accountId, joined.deviceId, joined.deviceName, joined.deviceUrl, joined.granted))
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -489,7 +489,7 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** Start listening for peers on `port`; returns the URLs peers can use. */
+    /** Start listening for devices on `port`; returns the URLs devices can use. */
     suspend fun startListener(port: Int): Result<List<String>> = withContext(Dispatchers.IO) {
         try {
             Result.success(ensureInitialized().startListener(port.toUShort()))
@@ -522,7 +522,7 @@ class VoiceRepository(private val context: Context) {
 
     fun setListenerIdleStopHours(hours: Int) { try { ensureInitialized().setListenerIdleStopHours(hours.toUInt()) } catch (e: Exception) { AppLogger.w(TAG, "Could not set the idle stop: ${e.message}") } }
 
-    /** This phone's certificate fingerprint, what a peer pins. */
+    /** This phone's certificate fingerprint, what a device pins. */
     suspend fun certificateFingerprint(): Result<String> = withContext(Dispatchers.IO) {
         try {
             Result.success(ensureInitialized().certificateFingerprint())
@@ -589,10 +589,10 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    suspend fun getDeviceId(): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun getThisDeviceId(): Result<String> = withContext(Dispatchers.IO) {
         try {
             val voiceClient = ensureInitialized()
-            Result.success(voiceClient.getDeviceId())
+            Result.success(voiceClient.getThisDeviceId())
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -603,10 +603,10 @@ class VoiceRepository(private val context: Context) {
     /**
      * Set the device ID.
      */
-    suspend fun setDeviceId(deviceId: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun setThisDeviceId(thisDeviceId: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val voiceClient = ensureInitialized()
-            voiceClient.setDeviceId(deviceId)
+            voiceClient.setThisDeviceId(thisDeviceId)
             Result.success(Unit)
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
@@ -618,10 +618,10 @@ class VoiceRepository(private val context: Context) {
     /**
      * Get the current device name.
      */
-    suspend fun getDeviceName(): Result<String> = withContext(Dispatchers.IO) {
+    suspend fun getThisDeviceName(): Result<String> = withContext(Dispatchers.IO) {
         try {
             val voiceClient = ensureInitialized()
-            Result.success(voiceClient.getDeviceName())
+            Result.success(voiceClient.getThisDeviceName())
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -632,10 +632,10 @@ class VoiceRepository(private val context: Context) {
     /**
      * Set the device name.
      */
-    suspend fun setDeviceName(name: String): Result<Unit> = withContext(Dispatchers.IO) {
+    suspend fun setThisDeviceName(name: String): Result<Unit> = withContext(Dispatchers.IO) {
         try {
             val voiceClient = ensureInitialized()
-            voiceClient.setDeviceName(name)
+            voiceClient.setThisDeviceName(name)
             Result.success(Unit)
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
@@ -936,7 +936,7 @@ class VoiceRepository(private val context: Context) {
     /** The name of every device of the account, by id, from their cards. */
     suspend fun deviceNames(): Result<Map<String, String>> = withContext(Dispatchers.IO) {
         try {
-            Result.success(ensureInitialized().listDevices().filter { it.name.isNotBlank() }.associate { it.deviceId to it.name })
+            Result.success(ensureInitialized().listDeviceCards().filter { it.name.isNotBlank() }.associate { it.deviceId to it.name })
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -944,10 +944,10 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** The peers known to hold a copy of a recording (Stage 10). */
+    /** The devices known to hold a copy of a recording (Stage 10). */
     suspend fun copiesOf(audioId: String): Result<List<RecordingCopy>> = withContext(Dispatchers.IO) {
         try {
-            Result.success(ensureInitialized().copiesOf(audioId).map { RecordingCopy(it.peerId, it.at) })
+            Result.success(ensureInitialized().copiesOf(audioId).map { RecordingCopy(it.deviceId, it.at) })
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -955,10 +955,10 @@ class VoiceRepository(private val context: Context) {
         }
     }
 
-    /** Every peer dealt with: when it was last reached and by which operation (Stage 10). */
-    suspend fun peerSummaries(): Result<List<PeerSummary>> = withContext(Dispatchers.IO) {
+    /** Every device dealt with: when it was last reached and by which operation (Stage 10). */
+    suspend fun deviceSummaries(): Result<List<DeviceSummary>> = withContext(Dispatchers.IO) {
         try {
-            Result.success(ensureInitialized().peerSummaries().map { PeerSummary(it.peerId, it.peerName, it.lastReachedAt, it.lastOperation) })
+            Result.success(ensureInitialized().deviceSummaries().map { DeviceSummary(it.deviceId, it.deviceName, it.lastReachedAt, it.lastOperation) })
         } catch (e: VoiceCoreException) {
             Result.failure(Exception(e.message))
         } catch (e: Exception) {
@@ -1630,7 +1630,7 @@ class VoiceRepository(private val context: Context) {
 
     /**
      * Accept the merged values of every conflict on a note as they stand.
-     * The acceptance is a new version and reaches every peer on the next sync.
+     * The acceptance is a new version and reaches every device on the next sync.
      * Returns how many conflicts were accepted.
      */
     suspend fun acceptNoteConflicts(noteId: String): Result<Int> = withContext(Dispatchers.IO) {
@@ -1673,7 +1673,7 @@ class VoiceRepository(private val context: Context) {
     }
 
     /**
-     * Resolve a conflict by writing a new value for its field. Syncs to every peer.
+     * Resolve a conflict by writing a new value for its field. Syncs to every device.
      */
     suspend fun resolveConflictWithContent(conflictId: String, content: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
@@ -2164,13 +2164,13 @@ data class ImportAudioResult(
 )
 
 /** What a successful join gives back. */
-data class Joined(val accountId: String, val peerId: String, val peerName: String, val peerUrl: String, val granted: Boolean)
+data class Joined(val accountId: String, val deviceId: String, val deviceName: String, val deviceUrl: String, val granted: Boolean)
 
 /** Where encryption of recordings stands on this phone (Stage 15) */
 data class EncryptionState(val hasKey: Boolean, val exported: Boolean, val on: Boolean)
 
 /** What a move to another account gave back (Stage 1). */
-data class Moved(val accountId: String, val peerName: String, val notesMoved: Long, val tagsMerged: Long)
+data class Moved(val accountId: String, val deviceName: String, val notesMoved: Long, val tagsMerged: Long)
 
 /**
  * One snapshot of the database, as listed by [VoiceRepository.listSnapshots].

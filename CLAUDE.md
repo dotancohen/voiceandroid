@@ -146,6 +146,12 @@ test plans in `../test-plans/` can script it.
 
 **Interface rules:**
 
+- **Always left to right, even on a right-to-left phone** (the owner's decision
+  of 2026-09-15, until the interface is replaced): the manifest says
+  `android:supportsRtl="false"`, so no screen or dialog is mirrored and an
+  English sentence keeps its full stop at the right. Text the user wrote still
+  takes its paragraph direction from its own characters, so a Hebrew Note is
+  drawn right to left. Do not set a layout direction per screen.
 - **Never use floating action buttons.** They hover over content and hide what
   is under them (the last item in a list, an open menu). Action buttons go in
   the top app bar's `actions` slot (`../TECHNICAL-DECISIONS.md` 5.3).

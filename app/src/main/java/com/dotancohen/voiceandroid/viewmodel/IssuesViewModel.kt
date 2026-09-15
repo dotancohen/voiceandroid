@@ -32,7 +32,7 @@ class IssuesViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             _isLoading.value = true
             val names = repository.deviceNames().getOrNull().orEmpty()
-            val here = repository.getDeviceId().getOrNull().orEmpty()
+            val here = repository.getThisDeviceId().getOrNull().orEmpty()
             repository.issues()
                 .onSuccess { issues -> _sections.value = IssuesText.sections(issues, names, here) }
                 .onFailure { e ->

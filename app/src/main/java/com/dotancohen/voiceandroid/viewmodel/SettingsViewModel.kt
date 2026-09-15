@@ -21,24 +21,24 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val repository = VoiceRepository.getInstance(application)
     private val prefs = application.getSharedPreferences("voice_settings", Context.MODE_PRIVATE)
 
-    /** The peers of this phone (Stage 5), from the core; nothing is kept in preferences. */
-    private val _peers = MutableStateFlow<List<com.dotancohen.voiceandroid.data.Peer>>(emptyList())
-    val peers: StateFlow<List<com.dotancohen.voiceandroid.data.Peer>> = _peers.asStateFlow()
+    /** The devices of this phone (Stage 5), from the core; nothing is kept in preferences. */
+    private val _devices = MutableStateFlow<List<com.dotancohen.voiceandroid.data.SyncDevice>>(emptyList())
+    val devices: StateFlow<List<com.dotancohen.voiceandroid.data.SyncDevice>> = _devices.asStateFlow()
 
-    /** The peer the one visible button names: the last used, else the only one. */
-    val lastPeer: StateFlow<com.dotancohen.voiceandroid.data.Peer?> = _peers
+    /** The device the one visible button names: the last used, else the only one. */
+    val lastDevice: StateFlow<com.dotancohen.voiceandroid.data.SyncDevice?> = _devices
         .map { list -> list.firstOrNull { it.isLast } ?: list.singleOrNull() }
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
-    /** A sentence after adding, renaming or forgetting a peer, or null. */
-    private val _peerMessage = MutableStateFlow<String?>(null)
-    val peerMessage: StateFlow<String?> = _peerMessage.asStateFlow()
+    /** A sentence after adding, renaming or forgetting a device, or null. */
+    private val _deviceMessage = MutableStateFlow<String?>(null)
+    val deviceMessage: StateFlow<String?> = _deviceMessage.asStateFlow()
 
-    private val _deviceId = MutableStateFlow("")
-    val deviceId: StateFlow<String> = _deviceId.asStateFlow()
+    private val _thisDeviceId = MutableStateFlow("")
+    val thisDeviceId: StateFlow<String> = _thisDeviceId.asStateFlow()
 
-    private val _deviceName = MutableStateFlow("")
-    val deviceName: StateFlow<String> = _deviceName.asStateFlow()
+    private val _thisDeviceName = MutableStateFlow("")
+    val thisDeviceName: StateFlow<String> = _thisDeviceName.asStateFlow()
 
     private val _audiofileDirectory = MutableStateFlow("")
     val audiofileDirectory: StateFlow<String> = _audiofileDirectory.asStateFlow()
@@ -76,9 +76,9 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _notDuplicatedLine = MutableStateFlow<String?>(null)
     val notDuplicatedLine: StateFlow<String?> = _notDuplicatedLine.asStateFlow()
 
-    /** Every peer dealt with: when it was last reached and by what (Stage 10). */
-    private val _peerSummaries = MutableStateFlow<List<com.dotancohen.voiceandroid.data.PeerSummary>>(emptyList())
-    val peerSummaries: StateFlow<List<com.dotancohen.voiceandroid.data.PeerSummary>> = _peerSummaries.asStateFlow()
+    /** Every device dealt with: when it was last reached and by what (Stage 10). */
+    private val _deviceSummaries = MutableStateFlow<List<com.dotancohen.voiceandroid.data.DeviceSummary>>(emptyList())
+    val deviceSummaries: StateFlow<List<com.dotancohen.voiceandroid.data.DeviceSummary>> = _deviceSummaries.asStateFlow()
 
     // Pending audio path awaiting permission grant (persisted to survive activity recreation)
     private val _pendingAudioPath = MutableStateFlow<String?>(
@@ -95,14 +95,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         loadMaxUploadMb()
     }
 
-    /** The proof line and the peer summaries (Stage 10): read on the screen's opening and after every operation. */
+    /** The proof line and the device summaries (Stage 10): read on the screen's opening and after every operation. */
     fun refreshProof() {
         viewModelScope.launch {
             repository.notDuplicated()
                 .onSuccess { _notDuplicatedLine.value = it.sentence() }
                 .onFailure { _notDuplicatedLine.value = null }
-            repository.peerSummaries().onSuccess { _peerSummaries.value = it }
-            repository.listPeers().onSuccess { _peers.value = it }
+            repository.deviceSummaries().onSuccess { _deviceSummaries.value = it }
+            repository.listDevices().onSuccess { _devices.value = it }
         }
     }
 
@@ -136,17 +136,17 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     private fun loadSettings() {
         viewModelScope.launch {
-            repository.getDeviceId().onSuccess { id ->
-                _deviceId.value = id.ifEmpty {
+            repository.getThisDeviceId().onSuccess { id ->
+                _thisDeviceId.value = id.ifEmpty {
                     // Generate new device ID if none exists
                     val newId = repository.generateDeviceId()
-                    repository.setDeviceId(newId)
+                    repository.setThisDeviceId(newId)
                     newId
                 }
             }
 
-            repository.getDeviceName().onSuccess { name ->
-                _deviceName.value = name
+            repository.getThisDeviceName().onSuccess { name ->
+                _thisDeviceName.value = name
             }
 
             // Load audiofile directory
@@ -214,59 +214,59 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    fun saveSettings(deviceId: String, deviceName: String) {
+    fun saveSettings(thisDeviceId: String, thisDeviceName: String) {
         viewModelScope.launch {
-            if (deviceId != _deviceId.value) {
-                repository.setDeviceId(deviceId).onSuccess {
-                    _deviceId.value = deviceId
+            if (thisDeviceId != _thisDeviceId.value) {
+                repository.setThisDeviceId(thisDeviceId).onSuccess {
+                    _thisDeviceId.value = thisDeviceId
                 }
             }
 
-            if (deviceName != _deviceName.value) {
-                repository.setDeviceName(deviceName).onSuccess {
-                    _deviceName.value = deviceName
+            if (thisDeviceName != _thisDeviceName.value) {
+                repository.setThisDeviceName(thisDeviceName).onSuccess {
+                    _thisDeviceName.value = thisDeviceName
                 }
             }
         }
     }
 
-    /** The peers, read again from the core. */
-    fun refreshPeers() {
+    /** The devices, read again from the core. */
+    fun refreshDevices() {
         viewModelScope.launch {
-            repository.listPeers().onSuccess { _peers.value = it }
+            repository.listDevices().onSuccess { _devices.value = it }
         }
     }
 
-    /** A peer typed by hand (Stage 7): its device id, a name and where it listens. */
-    fun addPeer(peerId: String, name: String, url: String) {
+    /** A device typed by hand (Stage 7): its device id, a name and where it listens. */
+    fun addDevice(deviceId: String, name: String, url: String) {
         viewModelScope.launch {
-            repository.addPeer(peerId, name.ifBlank { peerId.take(8) }, url)
-                .onSuccess { _peerMessage.value = "Added ${name.ifBlank { peerId.take(8) }}."; refreshPeers() }
-                .onFailure { _peerMessage.value = "Not added: ${it.message}" }
+            repository.addDevice(deviceId, name.ifBlank { deviceId.take(8) }, url)
+                .onSuccess { _deviceMessage.value = "Added ${name.ifBlank { deviceId.take(8) }}."; refreshDevices() }
+                .onFailure { _deviceMessage.value = "Not added: ${it.message}" }
         }
     }
 
-    fun forgetPeer(peerId: String) {
+    fun forgetDevice(deviceId: String) {
         viewModelScope.launch {
-            repository.forgetPeer(peerId)
-                .onSuccess { _peerMessage.value = "Forgotten. Its card will not bring it back; add it again or pair again to undo."; refreshPeers() }
-                .onFailure { _peerMessage.value = "Not forgotten: ${it.message}" }
+            repository.forgetDevice(deviceId)
+                .onSuccess { _deviceMessage.value = "Forgotten. Its card will not bring it back; add it again or pair again to undo."; refreshDevices() }
+                .onFailure { _deviceMessage.value = "Not forgotten: ${it.message}" }
         }
     }
 
-    fun renamePeer(peerId: String, name: String) {
+    fun renameDevice(deviceId: String, name: String) {
         viewModelScope.launch {
-            repository.renamePeer(peerId, name)
-                .onSuccess { refreshPeers() }
-                .onFailure { _peerMessage.value = "Not renamed: ${it.message}" }
+            repository.renameDevice(deviceId, name)
+                .onSuccess { refreshDevices() }
+                .onFailure { _deviceMessage.value = "Not renamed: ${it.message}" }
         }
     }
 
-    fun generateNewDeviceId(): String {
+    fun generateNewThisDeviceId(): String {
         return repository.generateDeviceId()
     }
 
-    /** Whether this phone listens for peers, and where; refreshed from the core. */
+    /** Whether this phone listens for devices, and where; refreshed from the core. */
     private val _listening = MutableStateFlow(repository.listenerRunning())
     val listening: StateFlow<Boolean> = _listening.asStateFlow()
 
@@ -305,7 +305,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _joinMessage = MutableStateFlow<String?>(null)
     val joinMessage: StateFlow<String?> = _joinMessage.asStateFlow()
 
-    /** The peer just paired with (Stage 9): the next screen is it, with one Exchange button. */
+    /** The device just paired with (Stage 9): the next screen is it, with one Exchange button. */
     private val _justJoined = MutableStateFlow<com.dotancohen.voiceandroid.data.Joined?>(null)
     val justJoined: StateFlow<com.dotancohen.voiceandroid.data.Joined?> = _justJoined.asStateFlow()
 
@@ -318,11 +318,11 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             repository.pairWith(setupText.trim())
                 .onSuccess { joined ->
                     _joinMessage.value = if (joined.granted) {
-                        "${joined.peerName} now hosts this account. Press Deliver to send it your notes and recordings."
+                        "${joined.deviceName} now hosts this account. Press Deliver to send it your notes and recordings."
                     } else {
-                        "Joined account ${joined.accountId.take(8)} through ${joined.peerName}."
+                        "Joined account ${joined.accountId.take(8)} through ${joined.deviceName}."
                     }
-                    refreshPeers()
+                    refreshDevices()
                     _justJoined.value = joined
                 }
                 .onFailure { _joinMessage.value = "Could not join: ${it.message}" }
@@ -372,16 +372,16 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     private val _checkRows = MutableStateFlow<List<com.dotancohen.voiceandroid.data.CheckRow>?>(null)
     val checkRows: StateFlow<List<com.dotancohen.voiceandroid.data.CheckRow>?> = _checkRows.asStateFlow()
 
-    /** Check the connection to a peer, the last one unless named: nothing is changed. */
-    fun checkConnection(peerId: String? = null) {
-        val peerId = peerId ?: lastPeer.value?.peerId
-        if (peerId.isNullOrBlank()) {
-            _checkRows.value = listOf(com.dotancohen.voiceandroid.data.CheckRow("Peer", false, "No peer yet: read a code shown by another device, or add one by its address", ""))
+    /** Check the connection to a device, the last one unless named: nothing is changed. */
+    fun checkConnection(deviceId: String? = null) {
+        val deviceId = deviceId ?: lastDevice.value?.deviceId
+        if (deviceId.isNullOrBlank()) {
+            _checkRows.value = listOf(com.dotancohen.voiceandroid.data.CheckRow("Device", false, "No device yet: read a code shown by another device, or add one by its address", ""))
             return
         }
         viewModelScope.launch {
             _checkRows.value = null
-            repository.checkConnection(peerId)
+            repository.checkConnection(deviceId)
                 .onSuccess { _checkRows.value = it }
                 .onFailure { _checkRows.value = listOf(com.dotancohen.voiceandroid.data.CheckRow("Check", false, it.message ?: "The check could not run", "")) }
         }
@@ -393,14 +393,14 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
 
     /**
      * One operation of the terms table ("sync", "deliver", "exchange", "send",
-     * "fetch") with a peer: the one named, else the last used, else the only one.
+     * "fetch") with a device: the one named, else the last used, else the only one.
      */
-    fun operate(operation: String, peerId: String? = null) {
+    fun operate(operation: String, deviceId: String? = null) {
         if (com.dotancohen.voiceandroid.data.OperationState.running.value) return
         _lastOperation.value = operation
         // Every operation runs in the foreground service (Stage 4), with a
         // progress notification and a Cancel action; its state is mirrored here
-        com.dotancohen.voiceandroid.data.OperationService.start(getApplication(), operation, peerId)
+        com.dotancohen.voiceandroid.data.OperationService.start(getApplication(), operation, deviceId)
     }
 
     /** Cancel the operation under way: it stops at its next page, file or chunk. */
@@ -422,7 +422,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         _idleStopHours.value = hours
     }
 
-    /** Exchange with the last peer: sync, then send and fetch recordings. */
+    /** Exchange with the last device: sync, then send and fetch recordings. */
     fun exchange() = operate("exchange")
 
     /** Upload every recording the bucket does not hold yet. */
@@ -445,7 +445,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
         }
     }
 
-    /** Sync with the last peer: notes only. */
+    /** Sync with the last device: notes only. */
     fun sync() = operate("sync")
 
     fun updateDebugInfo() {
@@ -487,7 +487,7 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
             _debugInfo.value = "Performing full sync..."
             AppLogger.i(TAG, "Starting full resync")
 
-            repository.initialSync(lastPeer.value?.peerId)
+            repository.initialSync(lastDevice.value?.deviceId)
                 .onSuccess { result ->
                     _syncResult.value = result
                     AppLogger.i(TAG, "Full resync completed: received=${result.notesReceived}, sent=${result.notesSent}")
@@ -509,8 +509,8 @@ class SettingsViewModel(application: Application) : AndroidViewModel(application
     }
 
     /**
-     * Reset sync timestamps to force re-fetching all data from peers.
-     * This preserves peer configuration but clears last_sync_at timestamps.
+     * Reset sync timestamps to force re-fetching all data from devices.
+     * This preserves device configuration but clears last_sync_at timestamps.
      */
     fun resetSyncTimestamps() {
         viewModelScope.launch {

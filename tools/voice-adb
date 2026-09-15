@@ -25,17 +25,17 @@ Device and sync
   status                             device, server, note count, unresolved conflicts, pending changes
   show-code                          this phone's setup text (CODE voice://pair?...); the listener must run
   use-code <setup-text>              pair with the device that showed the setup text
-  peers                              one PEER line per peer: id, name, url, last used, last operation
-  add-peer <peer-id> <url> [name]    a peer typed by hand: its device id and where it listens
-  forget-peer <peer-id>              forget a peer; its card does not bring it back
-  rename-peer <peer-id> <name>       a local name for a peer
+  devices                              one DEVICE line per device: id, name, url, last used, last operation
+  add-device <device-id> <url> [name]    a device typed by hand: its device id and where it listens
+  forget-device <device-id>              forget a device; its card does not bring it back
+  rename-device <device-id> <name>       a local name for a device
   set-device-name <name>
-  sync [peer-id]                     notes only, with the last peer unless one is given
+  sync [device-id]                     notes only, with the last device unless one is given
   upload                             same as tapping Upload (recordings to the bucket)
-  exchange [peer-id]                 sync, then send and fetch recordings (the one button)
-  deliver [peer-id]                  sync, then send recordings
-  send [peer-id] / fetch [peer-id]   recordings only, no sync
-  check [peer-id]                    the connection check: one line per thing that can be wrong
+  exchange [device-id]                 sync, then send and fetch recordings (the one button)
+  deliver [device-id]                  sync, then send recordings
+  send [device-id] / fetch [device-id]   recordings only, no sync
+  check [device-id]                    the connection check: one line per thing that can be wrong
   proof                              the sync screen's line: what is on this device only
   cancel                             stop the operation under way at its next page, file or chunk
   listen-on / listen-off             the listener switch on the sync screen
@@ -154,18 +154,18 @@ case "$cmd" in
     status) send STATUS ;;
     show-code) send SHOW_CODE ;;
     use-code) send USE_CODE --es text "$1" ;;
-    peers) send PEERS ;;
-    add-peer) send ADD_PEER --es peer "$1" --es url "$2" ${3:+--es name "$3"} ;;
-    forget-peer) send FORGET_PEER --es peer "$1" ;;
-    rename-peer) send RENAME_PEER --es peer "$1" --es name "$2" ;;
+    devices) send DEVICES ;;
+    add-device) send ADD_DEVICE --es device "$1" --es url "$2" ${3:+--es name "$3"} ;;
+    forget-device) send FORGET_DEVICE --es device "$1" ;;
+    rename-device) send RENAME_DEVICE --es device "$1" --es name "$2" ;;
     set-device-name) send SET_DEVICE_NAME --es name "$1" ;;
-    sync) send SYNC ${1:+--es peer "$1"} ;;
+    sync) send SYNC ${1:+--es device "$1"} ;;
     upload) send UPLOAD ;;
-    exchange) send EXCHANGE ${1:+--es peer "$1"} ;;
-    deliver) send DELIVER ${1:+--es peer "$1"} ;;
-    send) send SEND ${1:+--es peer "$1"} ;;
-    fetch) send FETCH ${1:+--es peer "$1"} ;;
-    check) send CHECK ${1:+--es peer "$1"} ;;
+    exchange) send EXCHANGE ${1:+--es device "$1"} ;;
+    deliver) send DELIVER ${1:+--es device "$1"} ;;
+    send) send SEND ${1:+--es device "$1"} ;;
+    fetch) send FETCH ${1:+--es device "$1"} ;;
+    check) send CHECK ${1:+--es device "$1"} ;;
     proof) send PROOF ;;
     cancel) send CANCEL ;;
     listen-on) send LISTEN_ON ;;

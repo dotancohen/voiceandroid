@@ -86,7 +86,7 @@ fun SettingsScreen(
 ) {
     val audiofileDirectory by viewModel.audiofileDirectory.collectAsState()
     val defaultAudiofileDirectory by viewModel.defaultAudiofileDirectory.collectAsState()
-    val lastPeer by viewModel.lastPeer.collectAsState()
+    val lastDevice by viewModel.lastDevice.collectAsState()
     val lastOperation by viewModel.lastOperation.collectAsState()
     val isSyncing by viewModel.isSyncing.collectAsState()
     val syncResult by viewModel.syncResult.collectAsState()
@@ -230,10 +230,10 @@ fun SettingsScreen(
                         style = MaterialTheme.typography.titleMedium
                     )
 
-                    // The one button (Stage 5): the last peer, the operation the manual leads with
+                    // The one button (Stage 5): the last device, the operation the manual leads with
                     OutlinedButton(
                         onClick = { viewModel.exchange() },
-                        enabled = !isSyncing && lastPeer != null,
+                        enabled = !isSyncing && lastDevice != null,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         if (isSyncing) {
@@ -255,7 +255,7 @@ fun SettingsScreen(
                                     imageVector = Icons.Default.Refresh,
                                     contentDescription = null
                                 )
-                                Text(lastPeer?.let { "Exchange with ${it.name}" } ?: "No peer yet")
+                                Text(lastDevice?.let { "Exchange with ${it.name}" } ?: "No device yet")
                             }
                         }
                     }
@@ -263,16 +263,16 @@ fun SettingsScreen(
                     // The result, in one sentence
                     syncResult?.let { result ->
                         val verb = lastOperation.replaceFirstChar { it.uppercase() }
-                        val peerName = lastPeer?.name ?: "the peer"
+                        val deviceName = lastDevice?.name ?: "the device"
                         if (result.success) {
                             Text(
-                                text = "$verb with $peerName: received ${result.notesReceived} changes and sent ${result.notesSent}" +
+                                text = "$verb with $deviceName: received ${result.notesReceived} changes and sent ${result.notesSent}" +
                                     (if (result.filesSent > 0 || result.filesFetched > 0) ", sent ${result.filesSent} and fetched ${result.filesFetched} recordings" else "") + ".",
                                 color = MaterialTheme.colorScheme.primary
                             )
                         } else {
                             Text(
-                                text = "$verb with $peerName failed: ${result.errorMessage ?: "it did not say why"}",
+                                text = "$verb with $deviceName failed: ${result.errorMessage ?: "it did not say why"}",
                                 color = MaterialTheme.colorScheme.error
                             )
                         }

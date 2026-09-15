@@ -1076,7 +1076,7 @@ internal interface UniffiLib : Library {
     ): Int
     fun uniffi_voicecore_fn_method_voiceclient_account_id(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_add_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,`name`: RustBuffer.ByValue,`url`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_add_device(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,`name`: RustBuffer.ByValue,`url`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_add_tag_to_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1088,11 +1088,11 @@ internal interface UniffiLib : Library {
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_certificate_fingerprint(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_check_connection(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_check_connection(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_check_files_here(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_chosen_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_chosen_device(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_clear_audio_file_storage(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1112,6 +1112,8 @@ internal interface UniffiLib : Library {
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_delete_transcription(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
+    fun uniffi_voicecore_fn_method_voiceclient_device_summaries(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_download_audio_file(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_download_audio_files_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1126,7 +1128,7 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_find_imported_audio_file(`ptr`: Pointer,`filename`: RustBuffer.ByValue,`contentSha256`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_forget_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_forget_device(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_get_all_audio_files(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1151,10 +1153,6 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_get_conflicts(`ptr`: Pointer,`includeResolved`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_deleted_notes(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_get_device_id(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_get_device_name(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_field_history(`ptr`: Pointer,`entityType`: RustBuffer.ByValue,`entityId`: RustBuffer.ByValue,`field`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1184,6 +1182,10 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_tags_for_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_this_device_id(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    fun uniffi_voicecore_fn_method_voiceclient_get_this_device_name(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_transcription(`ptr`: Pointer,`transcriptionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_get_transcriptions_for_audio_file(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1196,7 +1198,7 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_import_audio_file_into_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`filename`: RustBuffer.ByValue,`fileCreatedAt`: RustBuffer.ByValue,`durationSeconds`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_initial_sync(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_is_file_storage_enabled(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1208,9 +1210,9 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_join(`ptr`: Pointer,`setupText`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_list_devices(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_list_device_cards(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_list_peers(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_list_devices(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_list_snapshots(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1238,11 +1240,9 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_offer_code(`ptr`: Pointer,`urls`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_operate(`ptr`: Pointer,`operation`: RustBuffer.ByValue,`peerId`: RustBuffer.ByValue,`progress`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_operate(`ptr`: Pointer,`operation`: RustBuffer.ByValue,`deviceId`: RustBuffer.ByValue,`progress`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_pair_with(`ptr`: Pointer,`setupText`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_peer_summaries(`ptr`: Pointer,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_purge_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
@@ -1260,7 +1260,7 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_remove_tag_from_note(`ptr`: Pointer,`noteId`: RustBuffer.ByValue,`tagId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
-    fun uniffi_voicecore_fn_method_voiceclient_rename_peer(`ptr`: Pointer,`peerId`: RustBuffer.ByValue,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    fun uniffi_voicecore_fn_method_voiceclient_rename_device(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_rename_tag(`ptr`: Pointer,`tagId`: RustBuffer.ByValue,`newName`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -1280,10 +1280,6 @@ internal interface UniffiLib : Library {
     ): RustBuffer.ByValue
     fun uniffi_voicecore_fn_method_voiceclient_set_audiofile_directory(`ptr`: Pointer,`path`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
-    fun uniffi_voicecore_fn_method_voiceclient_set_device_id(`ptr`: Pointer,`deviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
-    fun uniffi_voicecore_fn_method_voiceclient_set_device_name(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
-    ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_encryption_on(`ptr`: Pointer,`on`: Byte,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_file_storage_config(`ptr`: Pointer,`provider`: RustBuffer.ByValue,`config`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1299,6 +1295,10 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_fn_method_voiceclient_set_primary_transcription(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,`transcriptionId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     fun uniffi_voicecore_fn_method_voiceclient_set_setting(`ptr`: Pointer,`key`: RustBuffer.ByValue,`value`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_set_this_device_id(`ptr`: Pointer,`thisDeviceId`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    fun uniffi_voicecore_fn_method_voiceclient_set_this_device_name(`ptr`: Pointer,`name`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     fun uniffi_voicecore_fn_method_voiceclient_set_waveform_levels(`ptr`: Pointer,`audioFileId`: RustBuffer.ByValue,`levels`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
@@ -1476,7 +1476,7 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_account_id(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_add_peer(
+    fun uniffi_voicecore_checksum_method_voiceclient_add_device(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note(
     ): Short
@@ -1492,7 +1492,7 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_check_files_here(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_chosen_peer(
+    fun uniffi_voicecore_checksum_method_voiceclient_chosen_device(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_clear_audio_file_storage(
     ): Short
@@ -1512,6 +1512,8 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_delete_transcription(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_device_summaries(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_download_audio_file(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_download_audio_files_for_note(
@@ -1526,7 +1528,7 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_find_imported_audio_file(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_forget_peer(
+    fun uniffi_voicecore_checksum_method_voiceclient_forget_device(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files(
     ): Short
@@ -1551,10 +1553,6 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_get_conflicts(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_deleted_notes(
-    ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_get_device_id(
-    ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_get_device_name(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_field_history(
     ): Short
@@ -1584,6 +1582,10 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_tags_for_note(
     ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_this_device_id(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_get_this_device_name(
+    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_transcription(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_get_transcriptions_for_audio_file(
@@ -1608,9 +1610,9 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_join(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_list_devices(
+    fun uniffi_voicecore_checksum_method_voiceclient_list_device_cards(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_list_peers(
+    fun uniffi_voicecore_checksum_method_voiceclient_list_devices(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_list_snapshots(
     ): Short
@@ -1642,8 +1644,6 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_pair_with(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_peer_summaries(
-    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_purge_note(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_rebuild_all_caches_for_note(
@@ -1660,7 +1660,7 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_rename_peer(
+    fun uniffi_voicecore_checksum_method_voiceclient_rename_device(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_rename_tag(
     ): Short
@@ -1680,10 +1680,6 @@ internal interface UniffiLib : Library {
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_audiofile_directory(
     ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_set_device_id(
-    ): Short
-    fun uniffi_voicecore_checksum_method_voiceclient_set_device_name(
-    ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_encryption_on(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_file_storage_config(
@@ -1699,6 +1695,10 @@ internal interface UniffiLib : Library {
     fun uniffi_voicecore_checksum_method_voiceclient_set_primary_transcription(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_setting(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_set_this_device_id(
+    ): Short
+    fun uniffi_voicecore_checksum_method_voiceclient_set_this_device_name(
     ): Short
     fun uniffi_voicecore_checksum_method_voiceclient_set_waveform_levels(
     ): Short
@@ -1776,7 +1776,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_func_generate_device_id() != 30760.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_accept_conflict() != 63422.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_accept_conflict() != 34352.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_accept_note_conflicts() != 1211.toShort()) {
@@ -1785,7 +1785,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_account_id() != 4136.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_add_peer() != 42074.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_add_device() != 30138.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_add_tag_to_note() != 54360.toShort()) {
@@ -1800,25 +1800,25 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_cancel_operation() != 1665.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_certificate_fingerprint() != 62287.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_certificate_fingerprint() != 26419.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_check_connection() != 2799.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_check_connection() != 30254.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_check_files_here() != 8773.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_chosen_peer() != 8319.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_chosen_device() != 45026.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_audio_file_storage() != 14206.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_sync_state() != 33205.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_clear_sync_state() != 7173.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_copies_of() != 31043.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_copies_of() != 57786.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_create_note() != 37357.toShort()) {
@@ -1837,6 +1837,9 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_delete_transcription() != 28554.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_device_summaries() != 11378.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_download_audio_file() != 3741.toShort()) {
@@ -1860,7 +1863,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_find_imported_audio_file() != 35493.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_forget_peer() != 59729.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_forget_device() != 58289.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_all_audio_files() != 5578.toShort()) {
@@ -1897,12 +1900,6 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_deleted_notes() != 33397.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_device_id() != 41402.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_device_name() != 23646.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_field_history() != 28254.toShort()) {
@@ -1947,6 +1944,12 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_tags_for_note() != 28551.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_this_device_id() != 55686.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_get_this_device_name() != 48804.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_get_transcription() != 63886.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1965,7 +1968,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_import_audio_file_into_note() != 39206.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 23157.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_initial_sync() != 24276.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_is_file_storage_enabled() != 7221.toShort()) {
@@ -1983,10 +1986,10 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_join() != 27673.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_list_devices() != 22261.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_list_device_cards() != 58327.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_list_peers() != 47423.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_list_devices() != 37025.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_list_snapshots() != 7926.toShort()) {
@@ -2016,7 +2019,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_merge_notes() != 17846.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_move_to_account() != 24734.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_move_to_account() != 8653.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_move_to_account_by_code() != 46062.toShort()) {
@@ -2028,13 +2031,10 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_offer_code() != 29742.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_operate() != 25501.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_operate() != 48649.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_pair_with() != 32024.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_peer_summaries() != 50581.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_purge_note() != 41593.toShort()) {
@@ -2061,7 +2061,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_remove_tag_from_note() != 22162.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_rename_peer() != 20883.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_rename_device() != 21726.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_rename_tag() != 40579.toShort()) {
@@ -2070,7 +2070,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_reparent_tag() != 47914.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps() != 4442.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_reset_sync_timestamps() != 53210.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_resolve_conflict_with_content() != 56220.toShort()) {
@@ -2089,12 +2089,6 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_audiofile_directory() != 4853.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_device_id() != 29924.toShort()) {
-        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
-    }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_device_name() != 11140.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_encryption_on() != 33267.toShort()) {
@@ -2121,13 +2115,19 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_setting() != 1953.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_this_device_id() != 4249.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_set_this_device_name() != 63628.toShort()) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_set_waveform_levels() != 62183.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_snapshot() != 5591.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_start_listener() != 35853.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_start_listener() != 53536.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_stop_listener() != 10347.toShort()) {
@@ -2136,7 +2136,7 @@ private fun uniffiCheckApiChecksums(lib: UniffiLib) {
     if (lib.uniffi_voicecore_checksum_method_voiceclient_store_content_hash() != 34361.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
-    if (lib.uniffi_voicecore_checksum_method_voiceclient_sync() != 36539.toShort()) {
+    if (lib.uniffi_voicecore_checksum_method_voiceclient_sync() != 55955.toShort()) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if (lib.uniffi_voicecore_checksum_method_voiceclient_tag_note_too_big() != 57103.toShort()) {
@@ -2649,7 +2649,7 @@ public interface VoiceClientInterface {
     
     /**
      * Accept the merged value of a conflict as it stands. The acceptance is
-     * a new version and reaches every peer on the next sync.
+     * a new version and reaches every device on the next sync.
      */
     fun `acceptConflict`(`conflictId`: kotlin.String): kotlin.Boolean
     
@@ -2665,10 +2665,10 @@ public interface VoiceClientInterface {
     fun `accountId`(): kotlin.String
     
     /**
-     * Add a peer typed by hand (Stage 7, the third way): its device id,
-     * a name and where it listens. Pairing adds peers by itself.
+     * Add a device typed by hand (Stage 7, the third way): its device id,
+     * a name and where it listens. Pairing adds devices by itself.
      */
-    fun `addPeer`(`peerId`: kotlin.String, `name`: kotlin.String, `url`: kotlin.String)
+    fun `addDevice`(`deviceId`: kotlin.String, `name`: kotlin.String, `url`: kotlin.String)
     
     /**
      * Add a tag to a note
@@ -2701,15 +2701,15 @@ public interface VoiceClientInterface {
     
     /**
      * The fingerprint of this phone's certificate, making the certificate
-     * if there is none yet: what a peer pins, and what the sync screen shows.
+     * if there is none yet: what a device pins, and what the sync screen shows.
      */
     fun `certificateFingerprint`(): kotlin.String
     
     /**
-     * Check the connection to a peer (Stage 12): one row per thing that
+     * Check the connection to a device (Stage 12): one row per thing that
      * can be wrong, each with its refusal code. Nothing is changed.
      */
-    fun `checkConnection`(`peerId`: kotlin.String): List<CheckRowData>
+    fun `checkConnection`(`deviceId`: kotlin.String): List<CheckRowData>
     
     /**
      * Compare this phone's audio folder with what it has stated about its
@@ -2719,11 +2719,11 @@ public interface VoiceClientInterface {
     fun `checkFilesHere`(): List<kotlin.UInt>
     
     /**
-     * The peer an operation runs with: the one named, else the one of the
+     * The device an operation runs with: the one named, else the one of the
      * last operation, else the only one. With several and none named, the
      * caller must choose.
      */
-    fun `chosenPeer`(`peerId`: kotlin.String?): kotlin.String
+    fun `chosenDevice`(`deviceId`: kotlin.String?): kotlin.String
     
     /**
      * Clear an audio file's cloud storage information.
@@ -2738,13 +2738,13 @@ public interface VoiceClientInterface {
     /**
      * Clear sync state to force a full re-sync from scratch
      *
-     * This deletes the sync peer record, causing the next sync to start
+     * This deletes the sync device record, causing the next sync to start
      * from the beginning and fetch all data fresh.
      */
     fun `clearSyncState`()
     
     /**
-     * Where the copies of a recording are (Stage 10): the peers known to
+     * Where the copies of a recording are (Stage 10): the devices known to
      * hold it; the bucket is `storage_key` on the row, this phone the file.
      */
     fun `copiesOf`(`audioId`: kotlin.String): List<CopyData>
@@ -2797,6 +2797,11 @@ public interface VoiceClientInterface {
     fun `deleteTranscription`(`transcriptionId`: kotlin.String): kotlin.Boolean
     
     /**
+     * Every device dealt with: when it was last reached and by what.
+     */
+    fun `deviceSummaries`(): List<DeviceSummaryData>
+    
+    /**
      * Download one audio file from cloud storage, on demand.
      *
      * Returns a result with `downloaded = 1` when the file was fetched,
@@ -2845,10 +2850,10 @@ public interface VoiceClientInterface {
     fun `findImportedAudioFile`(`filename`: kotlin.String, `contentSha256`: kotlin.String): kotlin.String?
     
     /**
-     * Forget a peer on this phone (Stage 5): its card does not bring it
+     * Forget a device on this phone (Stage 5): its card does not bring it
      * back until it is added again.
      */
-    fun `forgetPeer`(`peerId`: kotlin.String): kotlin.Boolean
+    fun `forgetDevice`(`deviceId`: kotlin.String): kotlin.Boolean
     
     /**
      * Get all audio files in the database (for debugging)
@@ -2911,16 +2916,6 @@ public interface VoiceClientInterface {
      * The notes in the trash: deleted, still here, newest deletion first.
      */
     fun `getDeletedNotes`(): List<NoteData>
-    
-    /**
-     * Get the device ID
-     */
-    fun `getDeviceId`(): kotlin.String
-    
-    /**
-     * Get the device name
-     */
-    fun `getDeviceName`(): kotlin.String
     
     /**
      * Every version of one field, oldest first (e.g. "note", note_id, "content").
@@ -3013,6 +3008,16 @@ public interface VoiceClientInterface {
     fun `getTagsForNote`(`noteId`: kotlin.String): List<TagData>
     
     /**
+     * Get the device ID
+     */
+    fun `getThisDeviceId`(): kotlin.String
+    
+    /**
+     * Get the device name
+     */
+    fun `getThisDeviceName`(): kotlin.String
+    
+    /**
      * Get a single transcription by ID
      */
     fun `getTranscription`(`transcriptionId`: kotlin.String): TranscriptionData?
@@ -3071,7 +3076,7 @@ public interface VoiceClientInterface {
      * Unlike sync(), this ignores timestamps and fetches all data.
      * Use this for first-time sync or to re-fetch everything.
      */
-    fun `initialSync`(`peerId`: kotlin.String?): SyncResultData
+    fun `initialSync`(`deviceId`: kotlin.String?): SyncResultData
     
     /**
      * Check if file storage is enabled (provider is not "none").
@@ -3104,14 +3109,14 @@ public interface VoiceClientInterface {
     /**
      * Every device of the account, by its card (CARD-1).
      */
-    fun `listDevices`(): List<DeviceCardData>
+    fun `listDeviceCards`(): List<DeviceCardData>
     
     /**
-     * Every peer of this phone (Stage 5): the card's name or the local
+     * Every device of this phone (Stage 5): the card's name or the local
      * one, the remembered address, when it was last reached and by what,
      * and whether it is the one the visible button names.
      */
-    fun `listPeers`(): List<PeerData>
+    fun `listDevices`(): List<SyncDeviceData>
     
     /**
      * Every snapshot beside the database, newest first.
@@ -3166,7 +3171,7 @@ public interface VoiceClientInterface {
     /**
      * Move this database, notes and all, to another account (ACCT-5). The
      * deliberate way to merge accounts; a snapshot is taken first and every
-     * peer is forgotten.
+     * device is forgotten.
      */
     fun `moveToAccount`(`accountId`: kotlin.String)
     
@@ -3190,10 +3195,10 @@ public interface VoiceClientInterface {
     fun `offerCode`(`urls`: List<kotlin.String>): kotlin.String
     
     /**
-     * One operation with the configured peer: "sync", "deliver" (sync then
+     * One operation with the configured device: "sync", "deliver" (sync then
      * send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
-    fun `operate`(`operation`: kotlin.String, `peerId`: kotlin.String?, `progress`: OperationProgress?): SyncResultData
+    fun `operate`(`operation`: kotlin.String, `deviceId`: kotlin.String?, `progress`: OperationProgress?): SyncResultData
     
     /**
      * Use a setup text (Stage 9): a code shown by a device that holds the
@@ -3202,11 +3207,6 @@ public interface VoiceClientInterface {
      * host (PAIR-5). The text says which, in its `g` field.
      */
     fun `pairWith`(`setupText`: kotlin.String): JoinedData
-    
-    /**
-     * Every peer dealt with: when it was last reached and by what.
-     */
-    fun `peerSummaries`(): List<PeerSummaryData>
     
     /**
      * Empty one note out of the trash for good.
@@ -3269,9 +3269,9 @@ public interface VoiceClientInterface {
     fun `removeTagFromNote`(`noteId`: kotlin.String, `tagId`: kotlin.String): TagChangeResultData
     
     /**
-     * A local name for a peer (Stage 5), shown in place of its card's.
+     * A local name for a device (Stage 5), shown in place of its card's.
      */
-    fun `renamePeer`(`peerId`: kotlin.String, `name`: kotlin.String): kotlin.Boolean
+    fun `renameDevice`(`deviceId`: kotlin.String, `name`: kotlin.String): kotlin.Boolean
     
     /**
      * Rename a tag
@@ -3298,9 +3298,9 @@ public interface VoiceClientInterface {
     fun `reparentTag`(`tagId`: kotlin.String, `newParentId`: kotlin.String?): kotlin.Boolean
     
     /**
-     * Reset sync timestamps to force re-fetching all data from peers
+     * Reset sync timestamps to force re-fetching all data from devices
      *
-     * Unlike clear_sync_state, this preserves peer configuration but clears
+     * Unlike clear_sync_state, this preserves device configuration but clears
      * the last_sync_at timestamps, causing the next sync to fetch all data.
      */
     fun `resetSyncTimestamps`()
@@ -3339,16 +3339,6 @@ public interface VoiceClientInterface {
      * Set the audio file directory for storing downloaded audio files
      */
     fun `setAudiofileDirectory`(`path`: kotlin.String)
-    
-    /**
-     * Set the device ID (for importing from another installation)
-     */
-    fun `setDeviceId`(`deviceId`: kotlin.String)
-    
-    /**
-     * Set the device name
-     */
-    fun `setDeviceName`(`name`: kotlin.String)
     
     /**
      * Turn encryption of new uploads on or off for the account (ENC-3);
@@ -3398,6 +3388,16 @@ public interface VoiceClientInterface {
     fun `setSetting`(`key`: kotlin.String, `value`: kotlin.String)
     
     /**
+     * Set the device ID (for importing from another installation)
+     */
+    fun `setThisDeviceId`(`thisDeviceId`: kotlin.String)
+    
+    /**
+     * Set the device name
+     */
+    fun `setThisDeviceName`(`name`: kotlin.String)
+    
+    /**
      * Keep the levels a recording's waveform is drawn from (FILE-20), after
      * this phone decoded it; they reach every device with the recording.
      */
@@ -3409,8 +3409,8 @@ public interface VoiceClientInterface {
     fun `snapshot`(): kotlin.String
     
     /**
-     * Start listening for peers (Stage 6): HTTPS with this phone's own
-     * certificate, on a thread of its own. Returns the URLs peers can use.
+     * Start listening for devices (Stage 6): HTTPS with this phone's own
+     * certificate, on a thread of its own. Returns the URLs devices can use.
      * Never started by the core itself; the application's switch starts it.
      */
     fun `startListener`(`port`: kotlin.UShort): List<kotlin.String>
@@ -3428,8 +3428,8 @@ public interface VoiceClientInterface {
     fun `storeContentHash`(`audioFileId`: kotlin.String): kotlin.String
     
     /**
-     * Sync with the last peer, or the only one: database changes both
-     * ways, no files. `operate` names a peer.
+     * Sync with the last device, or the only one: database changes both
+     * ways, no files. `operate` names a device.
      */
     fun `sync`(): SyncResultData
     
@@ -3645,7 +3645,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     
     /**
      * Accept the merged value of a conflict as it stands. The acceptance is
-     * a new version and reaches every peer on the next sync.
+     * a new version and reaches every device on the next sync.
      */
     @Throws(VoiceCoreException::class)override fun `acceptConflict`(`conflictId`: kotlin.String): kotlin.Boolean {
             return FfiConverterBoolean.lift(
@@ -3694,15 +3694,15 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Add a peer typed by hand (Stage 7, the third way): its device id,
-     * a name and where it listens. Pairing adds peers by itself.
+     * Add a device typed by hand (Stage 7, the third way): its device id,
+     * a name and where it listens. Pairing adds devices by itself.
      */
-    @Throws(VoiceCoreException::class)override fun `addPeer`(`peerId`: kotlin.String, `name`: kotlin.String, `url`: kotlin.String)
+    @Throws(VoiceCoreException::class)override fun `addDevice`(`deviceId`: kotlin.String, `name`: kotlin.String, `url`: kotlin.String)
         = 
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_add_peer(
-        it, FfiConverterString.lower(`peerId`),FfiConverterString.lower(`name`),FfiConverterString.lower(`url`),_status)
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_add_device(
+        it, FfiConverterString.lower(`deviceId`),FfiConverterString.lower(`name`),FfiConverterString.lower(`url`),_status)
 }
     }
     
@@ -3782,7 +3782,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     
     /**
      * The fingerprint of this phone's certificate, making the certificate
-     * if there is none yet: what a peer pins, and what the sync screen shows.
+     * if there is none yet: what a device pins, and what the sync screen shows.
      */
     @Throws(VoiceCoreException::class)override fun `certificateFingerprint`(): kotlin.String {
             return FfiConverterString.lift(
@@ -3798,15 +3798,15 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Check the connection to a peer (Stage 12): one row per thing that
+     * Check the connection to a device (Stage 12): one row per thing that
      * can be wrong, each with its refusal code. Nothing is changed.
      */
-    @Throws(VoiceCoreException::class)override fun `checkConnection`(`peerId`: kotlin.String): List<CheckRowData> {
+    @Throws(VoiceCoreException::class)override fun `checkConnection`(`deviceId`: kotlin.String): List<CheckRowData> {
             return FfiConverterSequenceTypeCheckRowData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_check_connection(
-        it, FfiConverterString.lower(`peerId`),_status)
+        it, FfiConverterString.lower(`deviceId`),_status)
 }
     }
     )
@@ -3833,16 +3833,16 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * The peer an operation runs with: the one named, else the one of the
+     * The device an operation runs with: the one named, else the one of the
      * last operation, else the only one. With several and none named, the
      * caller must choose.
      */
-    @Throws(VoiceCoreException::class)override fun `chosenPeer`(`peerId`: kotlin.String?): kotlin.String {
+    @Throws(VoiceCoreException::class)override fun `chosenDevice`(`deviceId`: kotlin.String?): kotlin.String {
             return FfiConverterString.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_chosen_peer(
-        it, FfiConverterOptionalString.lower(`peerId`),_status)
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_chosen_device(
+        it, FfiConverterOptionalString.lower(`deviceId`),_status)
 }
     }
     )
@@ -3874,7 +3874,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     /**
      * Clear sync state to force a full re-sync from scratch
      *
-     * This deletes the sync peer record, causing the next sync to start
+     * This deletes the sync device record, causing the next sync to start
      * from the beginning and fetch all data fresh.
      */
     @Throws(VoiceCoreException::class)override fun `clearSyncState`()
@@ -3890,7 +3890,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Where the copies of a recording are (Stage 10): the peers known to
+     * Where the copies of a recording are (Stage 10): the devices known to
      * hold it; the bucket is `storage_key` on the row, this phone the file.
      */
     @Throws(VoiceCoreException::class)override fun `copiesOf`(`audioId`: kotlin.String): List<CopyData> {
@@ -4012,6 +4012,22 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_delete_transcription(
         it, FfiConverterString.lower(`transcriptionId`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Every device dealt with: when it was last reached and by what.
+     */
+    @Throws(VoiceCoreException::class)override fun `deviceSummaries`(): List<DeviceSummaryData> {
+            return FfiConverterSequenceTypeDeviceSummaryData.lift(
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_device_summaries(
+        it, _status)
 }
     }
     )
@@ -4145,15 +4161,15 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Forget a peer on this phone (Stage 5): its card does not bring it
+     * Forget a device on this phone (Stage 5): its card does not bring it
      * back until it is added again.
      */
-    @Throws(VoiceCoreException::class)override fun `forgetPeer`(`peerId`: kotlin.String): kotlin.Boolean {
+    @Throws(VoiceCoreException::class)override fun `forgetDevice`(`deviceId`: kotlin.String): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_forget_peer(
-        it, FfiConverterString.lower(`peerId`),_status)
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_forget_device(
+        it, FfiConverterString.lower(`deviceId`),_status)
 }
     }
     )
@@ -4346,36 +4362,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_deleted_notes(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    
-    /**
-     * Get the device ID
-     */override fun `getDeviceId`(): kotlin.String {
-            return FfiConverterString.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_device_id(
-        it, _status)
-}
-    }
-    )
-    }
-    
-
-    
-    /**
-     * Get the device name
-     */override fun `getDeviceName`(): kotlin.String {
-            return FfiConverterString.lift(
-    callWithPointer {
-    uniffiRustCall() { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_device_name(
         it, _status)
 }
     }
@@ -4629,6 +4615,36 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Get the device ID
+     */override fun `getThisDeviceId`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_this_device_id(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Get the device name
+     */override fun `getThisDeviceName`(): kotlin.String {
+            return FfiConverterString.lift(
+    callWithPointer {
+    uniffiRustCall() { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_get_this_device_name(
+        it, _status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
      * Get a single transcription by ID
      */
     @Throws(VoiceCoreException::class)override fun `getTranscription`(`transcriptionId`: kotlin.String): TranscriptionData? {
@@ -4753,12 +4769,12 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
      * Unlike sync(), this ignores timestamps and fetches all data.
      * Use this for first-time sync or to re-fetch everything.
      */
-    @Throws(VoiceCoreException::class)override fun `initialSync`(`peerId`: kotlin.String?): SyncResultData {
+    @Throws(VoiceCoreException::class)override fun `initialSync`(`deviceId`: kotlin.String?): SyncResultData {
             return FfiConverterTypeSyncResultData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_initial_sync(
-        it, FfiConverterOptionalString.lower(`peerId`),_status)
+        it, FfiConverterOptionalString.lower(`deviceId`),_status)
 }
     }
     )
@@ -4852,11 +4868,11 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     /**
      * Every device of the account, by its card (CARD-1).
      */
-    @Throws(VoiceCoreException::class)override fun `listDevices`(): List<DeviceCardData> {
+    @Throws(VoiceCoreException::class)override fun `listDeviceCards`(): List<DeviceCardData> {
             return FfiConverterSequenceTypeDeviceCardData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_list_devices(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_list_device_cards(
         it, _status)
 }
     }
@@ -4866,15 +4882,15 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Every peer of this phone (Stage 5): the card's name or the local
+     * Every device of this phone (Stage 5): the card's name or the local
      * one, the remembered address, when it was last reached and by what,
      * and whether it is the one the visible button names.
      */
-    @Throws(VoiceCoreException::class)override fun `listPeers`(): List<PeerData> {
-            return FfiConverterSequenceTypePeerData.lift(
+    @Throws(VoiceCoreException::class)override fun `listDevices`(): List<SyncDeviceData> {
+            return FfiConverterSequenceTypeSyncDeviceData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_list_peers(
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_list_devices(
         it, _status)
 }
     }
@@ -5030,7 +5046,7 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     /**
      * Move this database, notes and all, to another account (ACCT-5). The
      * deliberate way to merge accounts; a snapshot is taken first and every
-     * peer is forgotten.
+     * device is forgotten.
      */
     @Throws(VoiceCoreException::class)override fun `moveToAccount`(`accountId`: kotlin.String)
         = 
@@ -5097,15 +5113,15 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * One operation with the configured peer: "sync", "deliver" (sync then
+     * One operation with the configured device: "sync", "deliver" (sync then
      * send), "exchange" (sync, send and fetch), "send" or "fetch".
      */
-    @Throws(VoiceCoreException::class)override fun `operate`(`operation`: kotlin.String, `peerId`: kotlin.String?, `progress`: OperationProgress?): SyncResultData {
+    @Throws(VoiceCoreException::class)override fun `operate`(`operation`: kotlin.String, `deviceId`: kotlin.String?, `progress`: OperationProgress?): SyncResultData {
             return FfiConverterTypeSyncResultData.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_operate(
-        it, FfiConverterString.lower(`operation`),FfiConverterOptionalString.lower(`peerId`),FfiConverterOptionalTypeOperationProgress.lower(`progress`),_status)
+        it, FfiConverterString.lower(`operation`),FfiConverterOptionalString.lower(`deviceId`),FfiConverterOptionalTypeOperationProgress.lower(`progress`),_status)
 }
     }
     )
@@ -5125,22 +5141,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_pair_with(
         it, FfiConverterString.lower(`setupText`),_status)
-}
-    }
-    )
-    }
-    
-
-    
-    /**
-     * Every peer dealt with: when it was last reached and by what.
-     */
-    @Throws(VoiceCoreException::class)override fun `peerSummaries`(): List<PeerSummaryData> {
-            return FfiConverterSequenceTypePeerSummaryData.lift(
-    callWithPointer {
-    uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_peer_summaries(
-        it, _status)
 }
     }
     )
@@ -5294,14 +5294,14 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * A local name for a peer (Stage 5), shown in place of its card's.
+     * A local name for a device (Stage 5), shown in place of its card's.
      */
-    @Throws(VoiceCoreException::class)override fun `renamePeer`(`peerId`: kotlin.String, `name`: kotlin.String): kotlin.Boolean {
+    @Throws(VoiceCoreException::class)override fun `renameDevice`(`deviceId`: kotlin.String, `name`: kotlin.String): kotlin.Boolean {
             return FfiConverterBoolean.lift(
     callWithPointer {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_rename_peer(
-        it, FfiConverterString.lower(`peerId`),FfiConverterString.lower(`name`),_status)
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_rename_device(
+        it, FfiConverterString.lower(`deviceId`),FfiConverterString.lower(`name`),_status)
 }
     }
     )
@@ -5356,9 +5356,9 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Reset sync timestamps to force re-fetching all data from peers
+     * Reset sync timestamps to force re-fetching all data from devices
      *
-     * Unlike clear_sync_state, this preserves peer configuration but clears
+     * Unlike clear_sync_state, this preserves device configuration but clears
      * the last_sync_at timestamps, causing the next sync to fetch all data.
      */
     @Throws(VoiceCoreException::class)override fun `resetSyncTimestamps`()
@@ -5465,36 +5465,6 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
     uniffiRustCallWithError(VoiceCoreException) { _status ->
     UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_audiofile_directory(
         it, FfiConverterString.lower(`path`),_status)
-}
-    }
-    
-    
-
-    
-    /**
-     * Set the device ID (for importing from another installation)
-     */
-    @Throws(VoiceCoreException::class)override fun `setDeviceId`(`deviceId`: kotlin.String)
-        = 
-    callWithPointer {
-    uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_device_id(
-        it, FfiConverterString.lower(`deviceId`),_status)
-}
-    }
-    
-    
-
-    
-    /**
-     * Set the device name
-     */
-    @Throws(VoiceCoreException::class)override fun `setDeviceName`(`name`: kotlin.String)
-        = 
-    callWithPointer {
-    uniffiRustCallWithError(VoiceCoreException) { _status ->
-    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_device_name(
-        it, FfiConverterString.lower(`name`),_status)
 }
     }
     
@@ -5630,6 +5600,36 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
+     * Set the device ID (for importing from another installation)
+     */
+    @Throws(VoiceCoreException::class)override fun `setThisDeviceId`(`thisDeviceId`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_this_device_id(
+        it, FfiConverterString.lower(`thisDeviceId`),_status)
+}
+    }
+    
+    
+
+    
+    /**
+     * Set the device name
+     */
+    @Throws(VoiceCoreException::class)override fun `setThisDeviceName`(`name`: kotlin.String)
+        = 
+    callWithPointer {
+    uniffiRustCallWithError(VoiceCoreException) { _status ->
+    UniffiLib.INSTANCE.uniffi_voicecore_fn_method_voiceclient_set_this_device_name(
+        it, FfiConverterString.lower(`name`),_status)
+}
+    }
+    
+    
+
+    
+    /**
      * Keep the levels a recording's waveform is drawn from (FILE-20), after
      * this phone decoded it; they reach every device with the recording.
      */
@@ -5662,8 +5662,8 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Start listening for peers (Stage 6): HTTPS with this phone's own
-     * certificate, on a thread of its own. Returns the URLs peers can use.
+     * Start listening for devices (Stage 6): HTTPS with this phone's own
+     * certificate, on a thread of its own. Returns the URLs devices can use.
      * Never started by the core itself; the application's switch starts it.
      */
     @Throws(VoiceCoreException::class)override fun `startListener`(`port`: kotlin.UShort): List<kotlin.String> {
@@ -5712,8 +5712,8 @@ open class VoiceClient: Disposable, AutoCloseable, VoiceClientInterface {
 
     
     /**
-     * Sync with the last peer, or the only one: database changes both
-     * ways, no files. `operate` names a peer.
+     * Sync with the last device, or the only one: database changes both
+     * ways, no files. `operate` names a device.
      */
     @Throws(VoiceCoreException::class)override fun `sync`(): SyncResultData {
             return FfiConverterTypeSyncResultData.lift(
@@ -6297,10 +6297,10 @@ public object FfiConverterTypeConflictData: FfiConverterRustBuffer<ConflictData>
 
 
 /**
- * A peer known to hold a copy of a recording (Stage 10)
+ * A device known to hold a copy of a recording (Stage 10)
  */
 data class CopyData (
-    var `peerId`: kotlin.String, 
+    var `deviceId`: kotlin.String, 
     var `at`: kotlin.Long
 ) {
     
@@ -6319,12 +6319,12 @@ public object FfiConverterTypeCopyData: FfiConverterRustBuffer<CopyData> {
     }
 
     override fun allocationSize(value: CopyData) = (
-            FfiConverterString.allocationSize(value.`peerId`) +
+            FfiConverterString.allocationSize(value.`deviceId`) +
             FfiConverterLong.allocationSize(value.`at`)
     )
 
     override fun write(value: CopyData, buf: ByteBuffer) {
-            FfiConverterString.write(value.`peerId`, buf)
+            FfiConverterString.write(value.`deviceId`, buf)
             FfiConverterLong.write(value.`at`, buf)
     }
 }
@@ -6384,6 +6384,49 @@ public object FfiConverterTypeDeviceCardData: FfiConverterRustBuffer<DeviceCardD
             FfiConverterBoolean.write(value.`listens`, buf)
             FfiConverterBoolean.write(value.`revoked`, buf)
             FfiConverterString.write(value.`application`, buf)
+    }
+}
+
+
+
+/**
+ * A device as remembered: when it was last reached and by which operation
+ */
+data class DeviceSummaryData (
+    var `deviceId`: kotlin.String, 
+    var `deviceName`: kotlin.String, 
+    var `lastReachedAt`: kotlin.Long?, 
+    var `lastOperation`: kotlin.String
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeDeviceSummaryData: FfiConverterRustBuffer<DeviceSummaryData> {
+    override fun read(buf: ByteBuffer): DeviceSummaryData {
+        return DeviceSummaryData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalLong.read(buf),
+            FfiConverterString.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: DeviceSummaryData) = (
+            FfiConverterString.allocationSize(value.`deviceId`) +
+            FfiConverterString.allocationSize(value.`deviceName`) +
+            FfiConverterOptionalLong.allocationSize(value.`lastReachedAt`) +
+            FfiConverterString.allocationSize(value.`lastOperation`)
+    )
+
+    override fun write(value: DeviceSummaryData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`deviceId`, buf)
+            FfiConverterString.write(value.`deviceName`, buf)
+            FfiConverterOptionalLong.write(value.`lastReachedAt`, buf)
+            FfiConverterString.write(value.`lastOperation`, buf)
     }
 }
 
@@ -6640,12 +6683,12 @@ public object FfiConverterTypeIssuesData: FfiConverterRustBuffer<IssuesData> {
  */
 data class JoinedData (
     var `accountId`: kotlin.String, 
-    var `peerId`: kotlin.String, 
-    var `peerName`: kotlin.String, 
-    var `peerUrl`: kotlin.String, 
+    var `deviceId`: kotlin.String, 
+    var `deviceName`: kotlin.String, 
+    var `deviceUrl`: kotlin.String, 
     /**
-     * True when the text was a grant: the peer now hosts this account
-     * (PAIR-5); false when this device joined the peer's account (PAIR-4)
+     * True when the text was a grant: the device now hosts this account
+     * (PAIR-5); false when this device joined the device's account (PAIR-4)
      */
     var `granted`: kotlin.Boolean
 ) {
@@ -6669,17 +6712,17 @@ public object FfiConverterTypeJoinedData: FfiConverterRustBuffer<JoinedData> {
 
     override fun allocationSize(value: JoinedData) = (
             FfiConverterString.allocationSize(value.`accountId`) +
-            FfiConverterString.allocationSize(value.`peerId`) +
-            FfiConverterString.allocationSize(value.`peerName`) +
-            FfiConverterString.allocationSize(value.`peerUrl`) +
+            FfiConverterString.allocationSize(value.`deviceId`) +
+            FfiConverterString.allocationSize(value.`deviceName`) +
+            FfiConverterString.allocationSize(value.`deviceUrl`) +
             FfiConverterBoolean.allocationSize(value.`granted`)
     )
 
     override fun write(value: JoinedData, buf: ByteBuffer) {
             FfiConverterString.write(value.`accountId`, buf)
-            FfiConverterString.write(value.`peerId`, buf)
-            FfiConverterString.write(value.`peerName`, buf)
-            FfiConverterString.write(value.`peerUrl`, buf)
+            FfiConverterString.write(value.`deviceId`, buf)
+            FfiConverterString.write(value.`deviceName`, buf)
+            FfiConverterString.write(value.`deviceUrl`, buf)
             FfiConverterBoolean.write(value.`granted`, buf)
     }
 }
@@ -6736,7 +6779,7 @@ public object FfiConverterTypeListenAddressesData: FfiConverterRustBuffer<Listen
  */
 data class MovedData (
     var `accountId`: kotlin.String, 
-    var `peerName`: kotlin.String, 
+    var `deviceName`: kotlin.String, 
     var `notesMoved`: kotlin.Long, 
     var `tagsMerged`: kotlin.Long
 ) {
@@ -6759,14 +6802,14 @@ public object FfiConverterTypeMovedData: FfiConverterRustBuffer<MovedData> {
 
     override fun allocationSize(value: MovedData) = (
             FfiConverterString.allocationSize(value.`accountId`) +
-            FfiConverterString.allocationSize(value.`peerName`) +
+            FfiConverterString.allocationSize(value.`deviceName`) +
             FfiConverterLong.allocationSize(value.`notesMoved`) +
             FfiConverterLong.allocationSize(value.`tagsMerged`)
     )
 
     override fun write(value: MovedData, buf: ByteBuffer) {
             FfiConverterString.write(value.`accountId`, buf)
-            FfiConverterString.write(value.`peerName`, buf)
+            FfiConverterString.write(value.`deviceName`, buf)
             FfiConverterLong.write(value.`notesMoved`, buf)
             FfiConverterLong.write(value.`tagsMerged`, buf)
     }
@@ -7039,107 +7082,6 @@ public object FfiConverterTypeOrphanedTranscriptionData: FfiConverterRustBuffer<
 
 
 /**
- * A peer of this phone (Stage 5)
- */
-data class PeerData (
-    var `peerId`: kotlin.String, 
-    var `name`: kotlin.String, 
-    var `url`: kotlin.String, 
-    var `certificateFingerprint`: kotlin.String, 
-    var `lastReachedAt`: kotlin.Long?, 
-    var `lastOperation`: kotlin.String, 
-    /**
-     * The one the visible button names
-     */
-    var `isLast`: kotlin.Boolean
-) {
-    
-    companion object
-}
-
-/**
- * @suppress
- */
-public object FfiConverterTypePeerData: FfiConverterRustBuffer<PeerData> {
-    override fun read(buf: ByteBuffer): PeerData {
-        return PeerData(
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterOptionalLong.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterBoolean.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: PeerData) = (
-            FfiConverterString.allocationSize(value.`peerId`) +
-            FfiConverterString.allocationSize(value.`name`) +
-            FfiConverterString.allocationSize(value.`url`) +
-            FfiConverterString.allocationSize(value.`certificateFingerprint`) +
-            FfiConverterOptionalLong.allocationSize(value.`lastReachedAt`) +
-            FfiConverterString.allocationSize(value.`lastOperation`) +
-            FfiConverterBoolean.allocationSize(value.`isLast`)
-    )
-
-    override fun write(value: PeerData, buf: ByteBuffer) {
-            FfiConverterString.write(value.`peerId`, buf)
-            FfiConverterString.write(value.`name`, buf)
-            FfiConverterString.write(value.`url`, buf)
-            FfiConverterString.write(value.`certificateFingerprint`, buf)
-            FfiConverterOptionalLong.write(value.`lastReachedAt`, buf)
-            FfiConverterString.write(value.`lastOperation`, buf)
-            FfiConverterBoolean.write(value.`isLast`, buf)
-    }
-}
-
-
-
-/**
- * A peer as remembered: when it was last reached and by which operation
- */
-data class PeerSummaryData (
-    var `peerId`: kotlin.String, 
-    var `peerName`: kotlin.String, 
-    var `lastReachedAt`: kotlin.Long?, 
-    var `lastOperation`: kotlin.String
-) {
-    
-    companion object
-}
-
-/**
- * @suppress
- */
-public object FfiConverterTypePeerSummaryData: FfiConverterRustBuffer<PeerSummaryData> {
-    override fun read(buf: ByteBuffer): PeerSummaryData {
-        return PeerSummaryData(
-            FfiConverterString.read(buf),
-            FfiConverterString.read(buf),
-            FfiConverterOptionalLong.read(buf),
-            FfiConverterString.read(buf),
-        )
-    }
-
-    override fun allocationSize(value: PeerSummaryData) = (
-            FfiConverterString.allocationSize(value.`peerId`) +
-            FfiConverterString.allocationSize(value.`peerName`) +
-            FfiConverterOptionalLong.allocationSize(value.`lastReachedAt`) +
-            FfiConverterString.allocationSize(value.`lastOperation`)
-    )
-
-    override fun write(value: PeerSummaryData, buf: ByteBuffer) {
-            FfiConverterString.write(value.`peerId`, buf)
-            FfiConverterString.write(value.`peerName`, buf)
-            FfiConverterOptionalLong.write(value.`lastReachedAt`, buf)
-            FfiConverterString.write(value.`lastOperation`, buf)
-    }
-}
-
-
-
-/**
  * An audio file from the database
  * A recording removed for good with its note, and the name its file has here.
  */
@@ -7369,6 +7311,64 @@ public object FfiConverterTypeStamp: FfiConverterRustBuffer<Stamp> {
 
 
 /**
+ * A device of this phone (Stage 5)
+ */
+data class SyncDeviceData (
+    var `deviceId`: kotlin.String, 
+    var `name`: kotlin.String, 
+    var `url`: kotlin.String, 
+    var `certificateFingerprint`: kotlin.String, 
+    var `lastReachedAt`: kotlin.Long?, 
+    var `lastOperation`: kotlin.String, 
+    /**
+     * The one the visible button names
+     */
+    var `isLast`: kotlin.Boolean
+) {
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeSyncDeviceData: FfiConverterRustBuffer<SyncDeviceData> {
+    override fun read(buf: ByteBuffer): SyncDeviceData {
+        return SyncDeviceData(
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterOptionalLong.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterBoolean.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: SyncDeviceData) = (
+            FfiConverterString.allocationSize(value.`deviceId`) +
+            FfiConverterString.allocationSize(value.`name`) +
+            FfiConverterString.allocationSize(value.`url`) +
+            FfiConverterString.allocationSize(value.`certificateFingerprint`) +
+            FfiConverterOptionalLong.allocationSize(value.`lastReachedAt`) +
+            FfiConverterString.allocationSize(value.`lastOperation`) +
+            FfiConverterBoolean.allocationSize(value.`isLast`)
+    )
+
+    override fun write(value: SyncDeviceData, buf: ByteBuffer) {
+            FfiConverterString.write(value.`deviceId`, buf)
+            FfiConverterString.write(value.`name`, buf)
+            FfiConverterString.write(value.`url`, buf)
+            FfiConverterString.write(value.`certificateFingerprint`, buf)
+            FfiConverterOptionalLong.write(value.`lastReachedAt`, buf)
+            FfiConverterString.write(value.`lastOperation`, buf)
+            FfiConverterBoolean.write(value.`isLast`, buf)
+    }
+}
+
+
+
+/**
  * Sync operation result
  */
 data class SyncResultData (
@@ -7376,11 +7376,11 @@ data class SyncResultData (
     var `notesReceived`: kotlin.Int, 
     var `notesSent`: kotlin.Int, 
     /**
-     * Recordings sent to the peer (deliver, exchange, send)
+     * Recordings sent to the device (deliver, exchange, send)
      */
     var `filesSent`: kotlin.Int, 
     /**
-     * Recordings fetched from the peer (exchange, fetch)
+     * Recordings fetched from the device (exchange, fetch)
      */
     var `filesFetched`: kotlin.Int, 
     /**
@@ -7397,7 +7397,7 @@ data class SyncResultData (
      */
     var `requestId`: kotlin.String, 
     /**
-     * The peer's clock minus this phone's, in seconds, past a minute; else 0
+     * The device's clock minus this phone's, in seconds, past a minute; else 0
      */
     var `clockSkewSeconds`: kotlin.Long
 ) {
@@ -8699,6 +8699,34 @@ public object FfiConverterSequenceTypeDeviceCardData: FfiConverterRustBuffer<Lis
 /**
  * @suppress
  */
+public object FfiConverterSequenceTypeDeviceSummaryData: FfiConverterRustBuffer<List<DeviceSummaryData>> {
+    override fun read(buf: ByteBuffer): List<DeviceSummaryData> {
+        val len = buf.getInt()
+        return List<DeviceSummaryData>(len) {
+            FfiConverterTypeDeviceSummaryData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<DeviceSummaryData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeDeviceSummaryData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<DeviceSummaryData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeDeviceSummaryData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
 public object FfiConverterSequenceTypeFileLocationData: FfiConverterRustBuffer<List<FileLocationData>> {
     override fun read(buf: ByteBuffer): List<FileLocationData> {
         val len = buf.getInt()
@@ -8867,62 +8895,6 @@ public object FfiConverterSequenceTypeOrphanedTranscriptionData: FfiConverterRus
 /**
  * @suppress
  */
-public object FfiConverterSequenceTypePeerData: FfiConverterRustBuffer<List<PeerData>> {
-    override fun read(buf: ByteBuffer): List<PeerData> {
-        val len = buf.getInt()
-        return List<PeerData>(len) {
-            FfiConverterTypePeerData.read(buf)
-        }
-    }
-
-    override fun allocationSize(value: List<PeerData>): ULong {
-        val sizeForLength = 4UL
-        val sizeForItems = value.map { FfiConverterTypePeerData.allocationSize(it) }.sum()
-        return sizeForLength + sizeForItems
-    }
-
-    override fun write(value: List<PeerData>, buf: ByteBuffer) {
-        buf.putInt(value.size)
-        value.iterator().forEach {
-            FfiConverterTypePeerData.write(it, buf)
-        }
-    }
-}
-
-
-
-
-/**
- * @suppress
- */
-public object FfiConverterSequenceTypePeerSummaryData: FfiConverterRustBuffer<List<PeerSummaryData>> {
-    override fun read(buf: ByteBuffer): List<PeerSummaryData> {
-        val len = buf.getInt()
-        return List<PeerSummaryData>(len) {
-            FfiConverterTypePeerSummaryData.read(buf)
-        }
-    }
-
-    override fun allocationSize(value: List<PeerSummaryData>): ULong {
-        val sizeForLength = 4UL
-        val sizeForItems = value.map { FfiConverterTypePeerSummaryData.allocationSize(it) }.sum()
-        return sizeForLength + sizeForItems
-    }
-
-    override fun write(value: List<PeerSummaryData>, buf: ByteBuffer) {
-        buf.putInt(value.size)
-        value.iterator().forEach {
-            FfiConverterTypePeerSummaryData.write(it, buf)
-        }
-    }
-}
-
-
-
-
-/**
- * @suppress
- */
 public object FfiConverterSequenceTypePurgedRecordingData: FfiConverterRustBuffer<List<PurgedRecordingData>> {
     override fun read(buf: ByteBuffer): List<PurgedRecordingData> {
         val len = buf.getInt()
@@ -8997,6 +8969,34 @@ public object FfiConverterSequenceTypeSnapshotData: FfiConverterRustBuffer<List<
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeSnapshotData.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeSyncDeviceData: FfiConverterRustBuffer<List<SyncDeviceData>> {
+    override fun read(buf: ByteBuffer): List<SyncDeviceData> {
+        val len = buf.getInt()
+        return List<SyncDeviceData>(len) {
+            FfiConverterTypeSyncDeviceData.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<SyncDeviceData>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeSyncDeviceData.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<SyncDeviceData>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeSyncDeviceData.write(it, buf)
         }
     }
 }

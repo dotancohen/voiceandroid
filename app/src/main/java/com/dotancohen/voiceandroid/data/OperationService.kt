@@ -31,7 +31,7 @@ object OperationState {
     private val _running = MutableStateFlow(false)
     val running: StateFlow<Boolean> = _running.asStateFlow()
 
-    /** The operation and the peer of the run under way, or of the last one. */
+    /** The operation and the device of the run under way, or of the last one. */
     private val _operation = MutableStateFlow("exchange")
     val operation: StateFlow<String> = _operation.asStateFlow()
 
@@ -94,7 +94,7 @@ class OperationService : Service() {
             return START_NOT_STICKY
         }
         val operation = intent?.getStringExtra(EXTRA_OPERATION) ?: "exchange"
-        val peerId = intent?.getStringExtra(EXTRA_PEER)
+        val deviceId = intent?.getStringExtra(EXTRA_DEVICE)
         OperationState.started(operation)
         startInForeground(notification(operation, "Starting…"))
         scope.launch {
@@ -103,20 +103,20 @@ class OperationService : Service() {
                 OperationState.progressed(sentence)
                 manager.notify(NOTIFICATION_ID, notification(operation, sentence))
             }
-            var outcome = repository.operate(operation, peerId, onProgress)
-            // The remembered address first; when the peer is not reached
+            var outcome = repository.operate(operation, deviceId, onProgress)
+            // The remembered address first; when the device is not reached
             // there, the network is asked where it is (Stage 7)
-            val silence = outcome.getOrNull()?.let { !it.success && PeerDiscovery.looksUnreachable(it.errorMessage) }
-                ?: PeerDiscovery.looksUnreachable(outcome.exceptionOrNull()?.message)
-            val peers = repository.listPeers().getOrNull() ?: emptyList()
-            val peer = peers.firstOrNull { it.peerId == peerId } ?: peers.firstOrNull { it.isLast } ?: peers.singleOrNull()
-            if (silence && peer != null) {
+            val silence = outcome.getOrNull()?.let { !it.success && DeviceDiscovery.looksUnreachable(it.errorMessage) }
+                ?: DeviceDiscovery.looksUnreachable(outcome.exceptionOrNull()?.message)
+            val devices = repository.listDevices().getOrNull() ?: emptyList()
+            val device = devices.firstOrNull { it.deviceId == deviceId } ?: devices.firstOrNull { it.isLast } ?: devices.singleOrNull()
+            if (silence && device != null) {
                 val accountId = repository.getAccountId().getOrNull() ?: ""
-                val found = runCatching { PeerDiscovery(applicationContext).find(accountId, peer.peerId) }.getOrNull()
-                if (found != null && found.url.trimEnd('/') != peer.url.trimEnd('/')) {
-                    AppLogger.i(TAG, "${peer.name} answered from ${found.url}; remembering it")
-                    repository.addPeer(peer.peerId, peer.name, found.url)
-                    outcome = repository.operate(operation, peer.peerId, onProgress)
+                val found = runCatching { DeviceDiscovery(applicationContext).find(accountId, device.deviceId) }.getOrNull()
+                if (found != null && found.url.trimEnd('/') != device.url.trimEnd('/')) {
+                    AppLogger.i(TAG, "${device.name} answered from ${found.url}; remembering it")
+                    repository.addDevice(device.deviceId, device.name, found.url)
+                    outcome = repository.operate(operation, device.deviceId, onProgress)
                 }
             }
             outcome
@@ -175,13 +175,13 @@ class OperationService : Service() {
         private const val NOTIFICATION_ID = 4824
         const val ACTION_CANCEL = "com.dotancohen.voiceandroid.OPERATION_CANCEL"
         const val EXTRA_OPERATION = "operation"
-        const val EXTRA_PEER = "peer"
+        const val EXTRA_DEVICE = "device"
 
         /** Start an operation; nothing happens if one is under way. */
-        fun start(context: Context, operation: String, peerId: String?) {
+        fun start(context: Context, operation: String, deviceId: String?) {
             val intent = Intent(context, OperationService::class.java)
                 .putExtra(EXTRA_OPERATION, operation)
-                .putExtra(EXTRA_PEER, peerId)
+                .putExtra(EXTRA_DEVICE, deviceId)
             context.startForegroundService(intent)
         }
 

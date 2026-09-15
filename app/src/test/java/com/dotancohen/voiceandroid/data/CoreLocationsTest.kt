@@ -44,7 +44,7 @@ class CoreLocationsTest {
     fun `this phone's copy is stated when it is hashed, and it is not removed while no other place confirms it`() {
         val (client, _) = client()
         val id = recording(client, "הקלטה בטלפון.ogg", ByteArray(5000) { (it % 251).toByte() })
-        val here = client.getDeviceId()
+        val here = client.getThisDeviceId()
         assertEquals(listOf(here to true), client.fileLocations(id).map { it.place to it.present })
         assertEquals("hashing already stated it", listOf(0u, 0u), client.checkFilesHere())
 
@@ -98,7 +98,7 @@ class CoreLocationsTest {
         assertEquals(1uL, client.getMaxUploadMb())
         val issues = client.issues()
         assertEquals(mapOf(big to "too_large", small to "waiting_for_upload"), issues.recordingsNotInCloud.associate { it.audioId to it.reason })
-        assertEquals(listOf(client.getDeviceId()), issues.recordingsNotInCloud.first { it.audioId == small }.heldBy)
+        assertEquals(listOf(client.getThisDeviceId()), issues.recordingsNotInCloud.first { it.audioId == small }.heldBy)
         assertEquals(1024uL * 1024uL, issues.maxUploadBytes)
     }
 }

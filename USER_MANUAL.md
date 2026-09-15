@@ -12,9 +12,9 @@ and why things are arranged as they are. For what the application is, see the
   - [The words](#the-words)
   - [Pairing](#pairing)
   - [A phone that holds Notes cannot join another account](#a-phone-that-holds-notes-cannot-join-another-account)
-  - [Peers](#peers)
+  - [Devices](#devices)
   - [The five operations](#the-five-operations)
-  - [Listen for peers](#listen-for-peers)
+  - [Listen for devices](#listen-for-devices)
   - [Check connection](#check-connection)
   - [The proof line](#the-proof-line)
   - [This device](#this-device)
@@ -75,11 +75,11 @@ Notes, Recordings, Tags, search and transcription all work with no network.
 
 Settings → **Sync Settings**. The devices of one account sync directly with
 each other; no server of your own is needed. The phone connects to a device
-that listens, and while **Listen for peers** is on, other devices connect to
-the phone. A device this phone syncs with is a **peer**.
+that listens, and while **Listen for devices** is on, other devices connect to
+the phone. The devices this phone syncs with are listed under **Devices**.
 
 Settings itself starts with the card **Synchronization**: the same
-**Exchange with \<peer>** button as on Sync Settings, the result of the last
+**Exchange with \<device>** button as on Sync Settings, the result of the last
 operation in one line, and the text button **Sync Settings**.
 
 ### The words
@@ -88,17 +88,17 @@ Each of these words has one meaning, on screen and in this manual:
 
 | Word | What happens |
 |---|---|
-| Sync | Changes to the database — Notes, Tags, Transcriptions, and the rows that describe Recordings — go both ways between this phone and a peer. No recording file moves. |
+| Sync | Changes to the database — Notes, Tags, Transcriptions, and the rows that describe Recordings — go both ways between this phone and a device. No recording file moves. |
 | Upload / Download | Recording files are copied from this phone to the bucket / from the bucket to this phone. |
-| Send / Fetch | Recording files are copied from this phone to a peer / from a peer to this phone. |
+| Send / Fetch | Recording files are copied from this phone to a device / from a device to this phone. |
 | Deliver | Sync, then send. |
 | Exchange | Sync, then send and fetch. |
-| Listen | The phone accepts connections from peers. |
+| Listen | The phone accepts connections from devices. |
 | Host | A device serves an account that is not its own. |
-| Pair | A new device receives the account's id, a key of its own, and one peer. |
+| Pair | A new device receives the account's id, a key of its own, and one other device to sync with. |
 
 A sync therefore never moves a file. The bucket is reached only by Upload and
-Download, a peer's files only by Send and Fetch, and each of them starts only
+Download, a device's files only by Send and Fetch, and each of them starts only
 when you press its button.
 
 ### Pairing
@@ -109,7 +109,7 @@ reads it.
 **On the device that holds the account**, press **Show my code**. On the phone
 the button is in the card **Sync Actions**. The phone then:
 
-- turns on **Listen for peers** if it is off, because the reading device
+- turns on **Listen for devices** if it is off, because the reading device
   connects to this phone;
 - makes a setup text that starts with `voice://pair?` and holds every address
   this phone may be reached at; the reading device tries each of them in turn
@@ -141,13 +141,13 @@ screen; the first time, the phone asks for permission to use it.
 on the phone, it opens Voice at Sync Settings and pairs at once.
 
 After a successful pairing the phone says "Joined account \<id> through
-\<peer>." and shows a card for the new peer: "Paired with \<peer>. Exchange
+\<device>." and shows a card for the new device: "Paired with \<device>. Exchange
 brings its notes and recordings here, and yours there." **Exchange now** starts
-an exchange with that peer; **Later** closes the card.
+an exchange with that device; **Later** closes the card.
 
 **A server that holds no account** prints a grant text instead of a code.
 Pasted into the same field, it makes that server host this phone's account.
-The phone says "\<peer> now hosts this account. Press Deliver to send it your
+The phone says "\<device> now hosts this account. Press Deliver to send it your
 notes and recordings." and offers **Deliver now** and **Later**.
 
 When pairing fails, the reason follows **Could not join:**. Among the reasons:
@@ -178,23 +178,25 @@ Two choices remain:
   command; on the phone it is Settings → Advanced →
   [Move this device to another account](#move-this-device-to-another-account).
 
-### Peers
+### Devices
 
-The card **Peers** lists every peer this phone knows. For each peer:
+Sync Settings starts with **This device: \<name>**, this phone's own name, so it
+is clear which device the screen is on. The card **Other devices of this
+account** lists every other device this phone knows. For each device:
 
-- its name, with "(last used)" after the peer of the last operation;
+- its name, with "(last used)" after the device of the last operation;
 - the first eight characters of its device id, and its address, or "no address
   yet";
 - "Last reached \<time or never>, last operation \<operation>".
 
 **Rename** opens the field **Name on this phone**; **Save name** stores the
-name. The name belongs to this phone's list and changes nothing on the peer.
+name. The name belongs to this phone's list and changes nothing on the other device.
 
-**Forget** removes the peer from this phone's list at once, without asking:
+**Forget** removes the device from this phone's list at once, without asking:
 "Forgotten. Its card will not bring it back; add it again or pair again to
-undo." Forgetting a peer deletes no Note, here or there.
+undo." Forgetting a device deletes no Note, here or there.
 
-**Add a peer by its address** tells this phone where a device of the same
+**Add a device by its address** tells this phone where a device of the same
 account listens:
 
 - **Its device id (32 hex characters)**
@@ -202,20 +204,20 @@ account listens:
 - **A name for it**. When left empty, the name is the first eight characters of
   the id.
 
-**Add peer** is available once the id is 32 characters long and the address is
+**Add device** is available once the id is 32 characters long and the address is
 not empty. A device shows its own id and address on its sync screen; on the
-phone they are **Device ID** in the card **Device** and the line **Address** in
-the card **Sync Actions**. Adding a peer lets no device into the account; only
+phone they are **This device's ID** in the card **This device** and the line **Address** in
+the card **Sync Actions**. Adding a device lets no device into the account; only
 pairing lets a device in.
 
 ### The five operations
 
-In the card **Sync Actions**, one button names the peer of the last operation:
-**Exchange with Desk**, where Desk is that peer. With no peer it reads **No
-peer yet**; with several peers and none used yet, **Choose a peer ▸**.
+In the card **Sync Actions**, one button names the device of the last operation:
+**Exchange with Desk**, where Desk is that device. With no device it reads **No
+device yet**; with several devices and none used yet, **Choose a device ▸**.
 
-The **▾** beside it (accessible name "Choose another peer or operation") lists
-five operations for every peer:
+The **▾** beside it (accessible name "Choose another device or operation") lists
+five operations for every device:
 
 | Menu item | What moves |
 |---|---|
@@ -248,10 +250,10 @@ operation goes on with the next file; after three files failed every try, the
 operation stops and says how many it did not attempt. Start it again when the
 connection works. Upload and download follow the same rule.
 
-When the peer gives no answer at its remembered address, the phone tries each
-address the peer's device card names, checking the peer's certificate, and
+When the device gives no answer at its remembered address, the phone tries each
+address the other device's card names, checking the device's certificate, and
 remembers the address that answers. When none answers, the phone searches the
-local network for the peer for three seconds. If the peer answers from another
+local network for the device for three seconds. If the device answers from another
 address, the phone stores that address and runs the operation once more.
 
 Before every sync the phone takes a [snapshot](#snapshots) of its Notes
@@ -263,18 +265,18 @@ changes and sent 3, sent 2 recordings, fetched 4 recordings, 40 MB moved.", or
 failed: \<reason>". Lines "Warning: \<warning>" and "Request \<id>" can follow. A
 failed operation is also written to the [Critical Log](#where-the-logs-are).
 
-### Listen for peers
+### Listen for devices
 
-The switch **Listen for peers**, at the top of the card **Sync Actions**, lets
+The switch **Listen for devices**, at the top of the card **Sync Actions**, lets
 other devices of the account connect to this phone. Under it the phone says
 "Other devices can reach this phone" or "Off; nothing can reach this phone".
 
 While the phone listens:
 
-- a notification **Listening for peers** shows the phone's first address, with
+- a notification **Listening for devices** shows the phone's first address, with
   a **Stop** action;
 - the phone accepts connections on port 8384, from its local network only;
-- the phone announces itself on the local network, so a peer that has lost
+- the phone announces itself on the local network, so a device that has lost
   its address can find it.
 
 Only this switch and **Show my code** start listening.
@@ -306,26 +308,26 @@ left out.
 
 ### Check connection
 
-**Check connection** tests the connection to the peer that the one button
+**Check connection** tests the connection to the device that the one button
 names, and changes nothing. Each line reads ✓ or ✗, the thing checked, what was
-found, and a code in brackets when there is one. Without a peer, the only line
-is "✗ Peer: No peer yet: read a code shown by another device, or add one by its
+found, and a code in brackets when there is one. Without a device, the only line
+is "✗ Device: No device yet: read a code shown by another device, or add one by its
 address".
 
 | Line | Passes with | Fails with |
 |---|---|---|
-| Peer | | "No peer \<id> is remembered on this device" |
+| Device | | "This device remembers no device \<id>" |
 | Reachable | "\<name> answers at \<address>" | "\<address> answered with status \<status>", "\<address> does not answer: \<reason>" |
 | Device | | "The device at \<address> is \<id>, not \<id>" (DEVICE_MISMATCH) |
 | Certificate | "Verified by the system's root certificates", "The pinned fingerprint matches" | the certificate error (CERTIFICATE_MISMATCH) |
 | Protocol | "Version \<version>" | the refusal (PROTOCOL_TOO_OLD) |
-| Account | "The peer holds account \<id>" | "The peer holds account \<id>, this device \<id>" (ACCOUNT_MISMATCH) |
+| Account | "The other device holds account \<id>" | "The other device holds account \<id>, this device \<id>" (ACCOUNT_MISMATCH) |
 | Key | "This device's key is accepted" | the refusal, with its code |
-| Clock | "The clocks agree to within a minute" | "This device's clock is \<n> minutes behind \<peer>'s", or ahead |
-| Free space there | "\<n> MB free on \<peer>" | the same, when less than 64 MB is free |
-| Recordings there | "The peer serves recordings", or "The peer serves notes only; no audio directory is configured there" | |
+| Clock | "The clocks agree to within a minute" | "This device's clock is \<n> minutes behind \<device>'s", or ahead |
+| Free space there | "\<n> MB free on \<device>" | the same, when less than 64 MB is free |
+| Recordings there | "The other device serves recordings", or "The other device serves notes only; no audio directory is configured there" | |
 | Free space here | "\<n> MB free on this device" | the same, when less than 64 MB is free |
-| Listener here | "This device is listening", or "This device is not listening; the peer cannot start an operation towards it" | |
+| Listener here | "This device is listening", or "This device is not listening; the other device cannot start an operation towards it" | |
 
 ### The proof line
 
@@ -333,35 +335,35 @@ The first line of Sync Settings says what exists on this phone only:
 "Everything is duplicated off this device.", or, for example, "3 notes and 2
 recordings are not duplicated off this device."
 
-- A Note counts when its current text was written on this phone and no peer has
+- A Note counts when its current text was written on this phone and no device has
   received it by sync yet.
 - A Recording counts when its file is on this phone, the bucket holds no copy
-  of it, and no peer is known to hold it.
+  of it, and no device is known to hold it.
 
-Under it is one line per peer: "Desk: last reached \<time>, last operation
+Under it is one line per device: "Desk: last reached \<time>, last operation
 exchange". This line is the only place the phone says this: there is no
 notification and no badge.
 
 ### This device
 
-The card **Device** holds **Device Name** and **Device ID**, this phone's id in
-the account. **Device Name** starts as the first of: the phone's name in
+The card **This device** holds **This device's name** and **This device's ID**,
+this phone's id in the account. **This device's name** starts as the first of: the phone's name in
 Android's **Settings → About phone** ("Galaxy A12", or the name given there);
 the phone's Bluetooth name; its maker and model ("Samsung SM-A125F"); and when
 Android says none of these, an animal with the ends of the phone's addresses,
 such as "Wombat 81:4c 7.21".
-**Generate New Device ID** writes a new random id into the field; nothing
+**Generate a new ID for this device** writes a new random id into the field; nothing
 changes until **Save Settings**, under the card, is pressed. **Save Settings**
 stores the name and the id.
 
 ### Advanced Sync Options
 
-- **Full Re-sync** asks the peer of the last operation for all of its changes,
+- **Full Re-sync** asks the device of the last operation for all of its changes,
   not only those since the last sync. It moves no recording file, shows no
   notification and has no Cancel. It is available only when the one button names a
-  peer.
+  device.
 - **Reset Sync Timestamps** clears this phone's record of when it last synced
-  with each peer, so the next sync goes through all changes again. The peers
+  with each device, so the next sync goes through all changes again. The devices
   stay.
 - The card **Debug Info** counts the Recordings and Notes in the database and
   names the audio folder; **Refresh Debug Info** counts again.
@@ -422,8 +424,8 @@ The result reads "Media: " followed by "downloaded \<n>", "\<n> already on this
 device", "\<n> not uploaded by their device yet" and "\<n> failed", or "nothing
 to download". A failure reads "Download failed: \<reason>".
 
-A file that is not in the bucket can come from a peer instead: **Fetch from
-\<peer>** or **Exchange with \<peer>**; see
+A file that is not in the bucket can come from a device instead: **Fetch from
+\<device>** or **Exchange with \<device>**; see
 [The five operations](#the-five-operations).
 
 ### Where are the copies?
@@ -530,10 +532,10 @@ the same path become one Tag, and nothing is deleted.
    the code starts with `voice://pair?` and the typed id is 32 characters long.
 
 The phone then takes a snapshot, uses the code to receive a key of the other
-account, changes its account id, forgets every peer, receives the other
+account, changes its account id, forgets every device, receives the other
 account's Tags and makes Tags with the same path into one, and syncs with the
 device whose code it read. It reports "Moved \<n> notes to account \<id> through
-\<peer>; \<m> tags with one path became one.", or "Not moved: \<reason>".
+\<device>; \<m> tags with one path became one.", or "Not moved: \<reason>".
 
 A grant text is refused here ("This is a grant text, not a code"), and so is a
 code of this phone's own account ("That is already this device's account").
@@ -805,10 +807,15 @@ a removed Note is dropped. A Recording that another Note still holds is kept.
 
 ## Reading and moving about
 
+Voice is laid out left to right on every phone, also when the phone's language
+is written right to left, such as Hebrew: buttons, rows and dialogs keep the
+places this manual describes. What you write keeps its own direction: a Note in
+Hebrew is drawn right to left.
+
 Inside a Note, **Previous note** and **Next note**, beside the back arrow, step
 to the previous and the next Note in the list you were looking at, search and
 star filter included. They point up and down rather than left and right, because
-that is how the list runs and because "up" needs no mirroring in Hebrew. Holding
+that is how the list runs. Holding
 one shows that Note's row from the list, at the full width of the screen and
 with twice as many lines of text as the list itself shows, so a glance is enough
 to decide whether to go there.
@@ -964,8 +971,7 @@ are all edited in one place.
 The recorder sits where the player of a Note with Recordings sits, and reads the
 same way: the elapsed time in `hh:mm:ss`, a live waveform, a large red
 Record/Pause button with a small **Discard** to its left and a small **Save** to
-its right. Those three keep their sides in a right-to-left layout, the way the
-buttons of a tape recorder stay where they are. A line under them gives the
+its right, on every phone, like the buttons of a tape recorder. A line under them gives the
 recorder's state, which microphone it uses and in which format it records.
 
 The first press of Record asks for permission to use the microphone.

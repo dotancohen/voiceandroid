@@ -281,7 +281,7 @@ screen.
 | `tags/{noteId}` | `TagManagementScreen.kt` | The Tags of one Note |
 | `tag_hierarchy` | `TagHierarchyScreen.kt` | Create, rename, move, delete Tags |
 | `settings` | `SettingsScreen.kt` | The settings menu |
-| `sync_settings` | `SyncSettingsScreen.kt` | Peers, the device, the account's upload limit, listening, the operation buttons, pairing codes |
+| `sync_settings` | `SyncSettingsScreen.kt` | This device's name first, the other devices of the account, this device's own name and id, the account's upload limit, listening, the operation buttons, pairing codes. The words that say which device is which are in `SyncScreenWords.kt` (`SyncScreenWordsTest`), the same as the desktop's Sync window |
 | `import_audio` | `ImportAudioScreen.kt` | Importing a folder of existing recordings |
 | `recorder_settings`, `microphone_settings`, `playback_settings`, `transcription_settings`, `advanced_settings` | `...SettingsScreen.kt` | One settings page each |
 | `transcription_queue` | `TranscriptionQueueScreen.kt` | What is being transcribed and what waits |
@@ -327,11 +327,11 @@ inside `viewModelScope.launch`. A screen reads a flow with `collectAsState()`.
 
 | File | Purpose |
 |---|---|
-| `VoiceRepository.kt` | The only class that calls `VoiceClient`. A process-wide **singleton** (`VoiceRepository.getInstance(context)`). Chooses the audio directory, creates the client, reports the timezone. About 125 methods, grouped by Notes, Tags, Recordings, Transcriptions, conflicts and history, peers and operations, pairing, snapshots, bucket and encryption, and (since 2026-09-14) `fileLocations`, `checkFilesHere`, `madeHereButMissing`, `removeLocalCopy`, `listenAddresses`, `getMaxUploadMb`, `setMaxUploadMb`, `issues` and `deviceNames` |
-| `Note.kt` | Kotlin data classes that mirror the generated ones: `Note`, `AudioFile`, `NoteAttachment`, `Transcription`, `Tag`, `SyncResult`, `Peer`, `CheckRow` ... |
+| `VoiceRepository.kt` | The only class that calls `VoiceClient`. A process-wide **singleton** (`VoiceRepository.getInstance(context)`). Chooses the audio directory, creates the client, reports the timezone. About 125 methods, grouped by Notes, Tags, Recordings, Transcriptions, conflicts and history, devices and operations, pairing, snapshots, bucket and encryption, and (since 2026-09-14) `fileLocations`, `checkFilesHere`, `madeHereButMissing`, `removeLocalCopy`, `listenAddresses`, `getMaxUploadMb`, `setMaxUploadMb`, `issues` and `deviceNames` |
+| `Note.kt` | Kotlin data classes that mirror the generated ones: `Note`, `AudioFile`, `NoteAttachment`, `Transcription`, `Tag`, `SyncResult`, `SyncDevice`, `CheckRow` ... |
 | `OperationService.kt` | Foreground service in which every sync operation runs, with progress and Cancel in its notification; `OperationState` publishes progress to the screens |
-| `SyncListenerService.kt` | Foreground service that keeps the phone listening for peers while the switch is on |
-| `PeerDiscovery.kt` | Finding peers on the local network |
+| `SyncListenerService.kt` | Foreground service that keeps the phone listening for devices while the switch is on |
+| `DeviceDiscovery.kt` | Finding devices on the local network |
 | `PairingRequests.kt` | A `voice://pair` link or a request to open the code reader, passed from the activity to the sync screen |
 | `AudioImport.kt` | Importing one audio file into a new Note, shared by the folder import and the share menu: the format check, the "already imported" check (D31), the duration, `importAudioFile`, `copyAudioFileToStorage`, the Tags |
 | `SharedContent.kt` | What an `ACTION_SEND` intent carries: `Text` or `Audio`, or nothing Voice takes; `noteText` (subject and text) and `fileName` (the extension of the MIME type added to a name without one) are pure (`SharedContentTest`, Robolectric) |
@@ -438,7 +438,7 @@ phone", the upload limit, Issues) have no ADB action yet (section 13.2).
 ```
 files/
 ├── notes.db            the database (plus notes.db-wal and notes.db-shm while open)
-├── config.json         device id and name, peers, device key (wrapped by the Keystore), sync options
+├── config.json         device id and name, devices, device key (wrapped by the Keystore), sync options
 ├── snapshots/          up to five copies of notes.db
 ├── certs/              the listener's TLS certificate
 ├── whisper-models/     downloaded Whisper models (a gigabyte or more each)
@@ -473,7 +473,7 @@ hash (FILE-18).
 | Where | Synced? | Examples |
 |---|---|---|
 | `SharedPreferences` file `voice_settings`, written by `UiPreferences`, `RecorderPreferences`, `TranscriptionPreferences`, `PlaybackPreferences` | Never | Interface size, recording format, microphone, Whisper model, playback speed, date format. A unit test checks that no two classes use the same key |
-| `files/config.json` (through the core) | Never | Peers, device key, listener idle stop, and `sync.max_sync_file_size_mb`, which is now only the listener's size limit for the body of its JSON routes (FILE-23) |
+| `files/config.json` (through the core) | Never | Devices, device key, listener idle stop, and `sync.max_sync_file_size_mb`, which is now only the listener's size limit for the body of its JSON routes (FILE-23) |
 | Table `synced_settings` (through the core) | Yes | Preferred transcription languages, `tag_color.<name>` |
 | Table `file_storage_config` | Yes | The bucket's settings, and the account's upload limit `max_upload_mb` (FILE-23) |
 
@@ -520,7 +520,7 @@ creates it. Only its location differs (`files/notes.db`).
   (but see section 13.2).
 - **Foreign keys are enforced** on the connections the core opens: the core's
   SQLite is the one bundled with `rusqlite`, compiled with
-  `SQLITE_DEFAULT_FOREIGN_KEYS=1`. A row from a peer whose parent row is not
+  `SQLITE_DEFAULT_FOREIGN_KEYS=1`. A row from a device whose parent row is not
   there yet is refused and tried again later (`sync_failures`). A database
   written by a program that leaves foreign keys off (Python's `sqlite3` module,
   the `sqlite3` tool) can still hold rows without a parent; the Issues screen
@@ -626,7 +626,7 @@ listener, a snapshot restore, the Issues screen or "Where are the copies?"
 compares its audio folder with what it has stated. An upload states the
 bucket's row; a download that finds no object, or an object whose hash is not
 the Recording's, states that the bucket does not hold it. A sender or a fetcher
-states that the peer holds the file. The newest statement about a
+states that the device holds the file. The newest statement about a
 place wins, then the larger device id, then presence, so every device keeps the
 same rows whatever order they arrive in.
 
@@ -696,7 +696,7 @@ history and conflicts through `getNoteHistory`, `getNoteConflicts` and
 core's version functions (SYNC_SPECIFICATION DM-1).
 
 Values written by the machine (`filename`, `duration_seconds`,
-`service_response` ...) are not versioned; when a row arrives from a peer they
+`service_response` ...) are not versioned; when a row arrives from a device they
 are merged column by column, and the newer `modified_at` wins a column (DM-4).
 `file_locations` rows are not versioned either; they follow the order given in
 section 8.3.
@@ -708,13 +708,13 @@ section 8.3.
 | `sync_sequence` | One counter for the whole database |
 | `seq` column | On `field_versions`, `notes`, `tags`, `note_tags`, `note_attachments`, `audio_files`, `transcriptions`, `file_storage_config`, `purges`, `file_locations`. **Triggers** set it when a row is inserted or a synced column really changed |
 | `sync_meta` | `database_id` and `account_id` |
-| `sync_peers` | One row per peer: id, name, URL, certificate fingerprint, cursors (`last_received_cursor`, `last_sent_seq`), `last_sync_at`, `last_operation`, the peer's database and account ids |
-| `sync_failures` | Changes from a peer that could not be applied, tried again at the next batch |
-| `purges` | Everything ever purged, kept for ever so no peer can bring it back |
+| `sync_devices` | One row per device: id, name, URL, certificate fingerprint, cursors (`last_received_cursor`, `last_sent_seq`), `last_sync_at`, `last_operation`, the device's database and account ids |
+| `sync_failures` | Changes from a device that could not be applied, tried again at the next batch |
+| `purges` | Everything ever purged, kept for ever so no device can bring it back |
 | `file_storage_config` | One row: the bucket settings, including the account's upload limit `max_upload_mb` |
 | `file_locations` | Where each copy of a Recording is (section 8.3) |
 
-A sync sends every row and version whose `seq` is above what the peer already
+A sync sends every row and version whose `seq` is above what the device already
 received, for the entity types `note`, `tag`, `note_tag`, `note_attachment`,
 `audio_file`, `transcription`, `file_storage_config`, `field_version`, `purge`
 and `file_location` (PROTO-1).
@@ -727,8 +727,8 @@ and `file_location` (PROTO-1).
 | `upload_parts` | Journal of an upload in parts |
 | `pending_file_renames` | A Recording whose file must still be renamed |
 | `purged_objects` | Bucket objects of purged Recordings, waiting for the purge tag at the next upload run. An object that a Recording which stays also uses is not listed |
-| `file_holds` | A promise this phone gave a peer to keep its copy of a Recording while that peer removes its own, until `until_ms` (FILE-26) |
-| `file_removals` | A removal of this phone's copy that is under way; while it is, a peer's request to keep a copy is refused (FILE-26) |
+| `file_holds` | A promise this phone gave a device to keep its copy of a Recording while that device removes its own, until `until_ms` (FILE-26) |
+| `file_removals` | A removal of this phone's copy that is under way; while it is, a device's request to keep a copy is refused (FILE-26) |
 
 ### 8.7 Reading the phone's database safely
 
@@ -805,40 +805,40 @@ interface:
 
 | Word | Meaning |
 |---|---|
-| **Sync** | Exchange database changes with a peer, both directions. No file moves |
+| **Sync** | Exchange database changes with a device, both directions. No file moves |
 | **Upload** / **Download** | Copy Recording files to / from the S3 bucket |
 | **Send** / **Fetch** | Copy Recording files to / from another Voice installation |
 | **Deliver** | Sync, then send |
 | **Exchange** | Sync, then send and fetch |
-| **Listen** | Accept connections from peers |
+| **Listen** | Accept connections from devices |
 | **Host** | Serve an account that is not this device's own |
-| **Pair** | Give a fresh device the account's id, a key of its own and one peer |
+| **Pair** | Give a fresh device the account's id, a key of its own and one device |
 
 Every one runs only when the user presses a button.
 
 **Path of an operation on the phone:** `SyncSettingsScreen` →
 `SettingsViewModel` → `OperationService` (foreground service, notification
-with Cancel) → `VoiceRepository.operate(operation, peerId, onProgress)` →
+with Cancel) → `VoiceRepository.operate(operation, deviceId, onProgress)` →
 `VoiceClient.operate` in `android.rs` → `SyncClient` in `sync_client.rs`.
 Progress comes back through the `OperationProgress` callback interface and is
 published by `OperationState`.
 
 **A sync, step by step** (SYNC_SPECIFICATION FLOW-1):
 
-1. `POST /sync/handshake` to the peer: identities, protocol version `2.0`, account, key.
-2. If the peer's `database_id` changed, both cursors restart from zero.
+1. `POST /sync/handshake` to the device: identities, protocol version `2.0`, account, key.
+2. If the device's `database_id` changed, both cursors restart from zero.
 3. **Pull** `GET /sync/changes?cursor=N` page by page (about 4 MB at most),
    applying each page in one transaction and saving the cursor after it.
 4. **Push** this phone's changes since `last_sent_seq` through `POST /sync/apply`.
-5. Record the time and operation in `sync_peers`.
+5. Record the time and operation in `sync_devices`.
 
 An interrupted sync continues from the last saved cursor. Applying a page twice
 changes nothing (**idempotent**).
 
 **The phone as a listener:** the switch on the sync screen starts
 `SyncListenerService`, which calls `startListener(port)`; the Rust server in
-`sync_server.rs` then serves peers over HTTPS with a self-signed certificate
-that peers remember at first connection (**TOFU**).
+`sync_server.rs` then serves devices over HTTPS with a self-signed certificate
+that devices remember at first connection (**TOFU**).
 
 **Where the phone can be reached** (LISTEN-4): `SettingsViewModel` reads
 `VoiceRepository.listenAddresses(port)` (`VoiceClient.listen_addresses`), which
@@ -847,10 +847,10 @@ private IPv4 addresses of interfaces that can carry a local network (mobile
 data, tunnels, VPNs and virtual networks are left out); the source address of
 the phone's route is the one found, shown alone and tried first. Sync Settings
 shows `AddressText.words(...)` after "Address", and "Show my code" puts every
-URL of `urls` into the code; the reading device tries each in turn. When a peer
+URL of `urls` into the code; the reading device tries each in turn. When a device
 does not answer at its remembered address, the core tries each address on the
-peer's device card, with the peer's pinned certificate, and remembers the one
-that answers, before `OperationService` searches the network (`PeerDiscovery`).
+device's device card, with the device's pinned certificate, and remembers the one
+that answers, before `OperationService` searches the network (`DeviceDiscovery`).
 
 **Files between installations** (FILE-12, FILE-13): `POST /sync/audio/missing`
 finds what the receiver lacks; `GET` and `POST /sync/audio/:id/file` stream
@@ -871,13 +871,13 @@ behave the same):
 - Reading, for a sync's requests and for a file: the request ends when a read
   moves nothing for thirty seconds. A file has no overall time limit, so a slow
   link that still moves bytes is never cut off.
-- An upload (a send to a peer, a part or a small file to the bucket) has no
+- An upload (a send to a device, a part or a small file to the bucket) has no
   read timeout. It ends when no byte of its body has moved for thirty seconds,
   or one minute after the last byte with no answer (`transfer::stall_of_upload`).
 - A transfer (send, fetch, bucket upload, bucket download) is tried three
   times: the second try straight after the first, the third a minute after the
   second. After three files failed every try the operation stops and names the
-  files it did not attempt. A new try asks the peer how many bytes it holds and
+  files it did not attempt. A new try asks the device how many bytes it holds and
   continues from there. A refusal
   (4xx) is not tried again. The bytes that arrived stay in the part file on both
   sides.
@@ -896,11 +896,11 @@ through Compose; `CameraChoice.at(count)` picks the camera, and its own
 is a dialog window, where that picture is black. The reader sits on an opaque
 `Surface`, so Sync Settings does not show through.
 `VoiceRepository.pairWith(setupText)` gives the phone the account id, a device
-key of its own and one peer.
+key of its own and one other device to sync with.
 
 ### 9.6 Snapshots
 
-A copy of `notes.db` goes into `files/snapshots/` before anything from a peer
+A copy of `notes.db` goes into `files/snapshots/` before anything from a device
 is applied, before moving to another account and before a restore; five are
 kept. Advanced settings list and restore them (`SnapshotsViewModel`). After a
 restore, `VoiceClient.restore_snapshot` compares the audio folder with the
@@ -936,10 +936,10 @@ exists and does not carry the `voice-purged` tag), or a device stated to hold
 it, which answers `POST /sync/audio/:audio_id/keep` with `holds`, `until_ms` and
 `reason`, and promises to keep its own copy for ten minutes (`HOLD_MS`). Then
 the file is deleted and this phone states it absent. The core refuses when the
-file is not on this phone, while this phone has promised a peer to keep that
+file is not on this phone, while this phone has promised a device to keep that
 copy (`file_holds`), and when no place confirms; the refusal names what each
 place answered. While a removal is under way (`file_removals`) the phone
-refuses a peer's keep request, so two devices that count on each other never
+refuses a device's keep request, so two devices that count on each other never
 both remove the file. The view model reloads the Note on success and shows
 "Not removed: <reason>" on a refusal. The Recording row stays, and the file can
 be fetched or downloaded again.
@@ -952,7 +952,7 @@ refuses a value below 1 MB, and refuses to set it before a bucket is
 configured. The per-device "largest file to sync" field is gone.
 
 **Issues** (Settings → Issues): `IssuesScreen` → `IssuesViewModel.load` →
-`VoiceRepository.deviceNames()`, `getDeviceId()` and `issues()` →
+`VoiceRepository.deviceNames()`, `getThisDeviceId()` and `issues()` →
 `IssuesText.sections`. The core compares the audio folder first, then lists,
 from the database as it is: Recordings not in the bucket with the reason for
 each (no bucket, over the upload limit, waiting for the named devices that
@@ -1110,8 +1110,14 @@ The Rust core has its own tests: `cd submodules/voicecore && cargo test`.
    samples; stream or bound (3.1). An eight-hour Recording once killed the
    application.
 10. **One decoder at a time** for waveforms (3.6).
-11. **Right-to-left first**: test text contains Hebrew (6.3); a mixed symbol
-    and digit label may need `LayoutDirection.Ltr` inside it.
+11. **Hebrew text, left-to-right interface**: test text contains Hebrew (6.3).
+    The interface is never mirrored: the manifest says
+    `android:supportsRtl="false"` (the owner's decision of 2026-09-15, until the
+    interface is replaced), so screens and dialogs are laid out left to right on
+    every phone, while text the user wrote takes its paragraph direction from
+    its own characters. The two `LayoutDirection.Ltr` providers inside a mixed
+    symbol and digit label (`NotesScreen`'s chip, `AudioRecorderWidget`) predate
+    that and change nothing now.
 12. **No ambiguous words** in names or text ("handle", "process", "manage",
     "fill", "update" as a vague verb); use the sync vocabulary of 9.4 exactly;
     entity nouns capitalised where the user reads them: Note, Tag, Recording,
@@ -1188,7 +1194,7 @@ in a test. Confirm each one, with a test that fails, before changing the code.
    an upload whose only file is too large reads "nothing to upload". The Issues
    screen lists the file.
 5. **A refused Device ID is not shown.** `SettingsViewModel.saveSettings`
-   calls `setDeviceId` and `setDeviceName` with `onSuccess` only; a refusal by
+   calls `setThisDeviceId` and `setThisDeviceName` with `onSuccess` only; a refusal by
    the core is dropped without a message.
 6. **A hidden pairing code stays valid.** "Hide my code" and the 60-second
    countdown do not withdraw the code: no view model calls
@@ -1254,7 +1260,7 @@ in a test. Confirm each one, with a test that fails, before changing the code.
 
 **MVVM** — Model, view, view model: screens (views) show state held by view models, which get data from a model layer (here the repository and the core).
 
-**Peer** — Another Voice installation of the same account.
+**Other device** — Another Voice installation of the same account, which this one syncs with.
 
 **Polymorphic association** — A link whose target table is named in a column (`attachment_type`).
 

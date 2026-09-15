@@ -107,7 +107,7 @@ to:
   on the local network;
 - the account's cloud bucket, if it has one, when you press Upload or Download.
 
-While **Listen for peers** is on, the phone also accepts connections from
+While **Listen for devices** is on, the phone also accepts connections from
 devices on its local network and announces itself there (mDNS).
 
 ## Everything else

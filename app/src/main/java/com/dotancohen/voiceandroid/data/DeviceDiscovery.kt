@@ -16,23 +16,23 @@ import kotlin.coroutines.resume
  * its certificate fingerprint; a caller browses and compares hashes. The
  * remembered address is tried first; the browse runs when it fails.
  */
-class PeerDiscovery(context: Context) {
+class DeviceDiscovery(context: Context) {
     private val app = context.applicationContext
     private val nsd = app.getSystemService(Context.NSD_SERVICE) as NsdManager
     private var registration: NsdManager.RegistrationListener? = null
     private var lock: WifiManager.MulticastLock? = null
 
     /** Announce this phone's listener while it runs. */
-    fun announce(port: Int, accountId: String, deviceId: String, deviceName: String, fingerprint: String) {
+    fun announce(port: Int, accountId: String, thisDeviceId: String, thisDeviceName: String, fingerprint: String) {
         stopAnnouncing()
         val info = NsdServiceInfo().apply {
-            serviceName = "voice-" + deviceId.take(12)
+            serviceName = "voice-" + thisDeviceId.take(12)
             serviceType = SERVICE_TYPE
             setPort(port)
             setAttribute("v", "1")
             setAttribute("a", accountHash(accountId))
-            setAttribute("d", deviceId)
-            setAttribute("n", deviceName.take(60))
+            setAttribute("d", thisDeviceId)
+            setAttribute("n", thisDeviceName.take(60))
             setAttribute("f", fingerprint)
         }
         val listener = object : NsdManager.RegistrationListener {
@@ -109,7 +109,7 @@ class PeerDiscovery(context: Context) {
     data class Found(val deviceId: String, val name: String, val url: String, val certificateFingerprint: String)
 
     companion object {
-        private const val TAG = "PeerDiscovery"
+        private const val TAG = "DeviceDiscovery"
         const val SERVICE_TYPE = "_voicesync._tcp."
 
         /** The SHA-256 of the account id, lowercase hex, as the broadcast carries it. */

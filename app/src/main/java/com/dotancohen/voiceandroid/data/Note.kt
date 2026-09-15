@@ -24,9 +24,9 @@ data class SyncResult(
     val success: Boolean,
     val notesReceived: Int,
     val notesSent: Int,
-    /** Recordings sent to the peer (deliver, exchange, send) */
+    /** Recordings sent to the device (deliver, exchange, send) */
     val filesSent: Int = 0,
-    /** Recordings fetched from the peer (exchange, fetch) */
+    /** Recordings fetched from the device (exchange, fetch) */
     val filesFetched: Int = 0,
     /** Bytes of recordings moved either way */
     val bytesMoved: Long = 0,
@@ -35,13 +35,13 @@ data class SyncResult(
     val warnings: List<String> = emptyList(),
     /** The id of the operation, on every request of it and in both logs (Stage 12) */
     val requestId: String = "",
-    /** The peer's clock minus this phone's, in seconds, past a minute; else 0 */
+    /** The device's clock minus this phone's, in seconds, past a minute; else 0 */
     val clockSkewSeconds: Long = 0
 )
 
-/** A peer of this phone (Stage 5): the card's name or the local one, the remembered address, and the last operation. */
-data class Peer(
-    val peerId: String,
+/** A device of this phone (Stage 5): the card's name or the local one, the remembered address, and the last operation. */
+data class SyncDevice(
+    val deviceId: String,
     val name: String,
     val url: String,
     val certificateFingerprint: String,
@@ -62,11 +62,11 @@ data class NotDuplicated(val notes: Long, val recordings: Long) {
     }
 }
 
-/** A peer known to hold a copy of a recording, and when that was learnt (Stage 10). */
-data class RecordingCopy(val peerId: String, val at: Long)
+/** A device known to hold a copy of a recording, and when that was learnt (Stage 10). */
+data class RecordingCopy(val deviceId: String, val at: Long)
 
-/** A peer as remembered: when it was last reached and by which operation (Stage 10). */
-data class PeerSummary(val peerId: String, val peerName: String, val lastReachedAt: Long?, val lastOperation: String)
+/** A device as remembered: when it was last reached and by which operation (Stage 10). */
+data class DeviceSummary(val deviceId: String, val deviceName: String, val lastReachedAt: Long?, val lastOperation: String)
 
 /** One row of a connection check (Stage 12): what was checked, whether it passed, a sentence and a code. */
 data class CheckRow(val name: String, val passed: Boolean, val detail: String, val code: String)

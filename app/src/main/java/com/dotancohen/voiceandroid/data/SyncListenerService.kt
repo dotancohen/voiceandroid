@@ -21,19 +21,19 @@ import kotlinx.coroutines.launch
 
 /**
  * The phone as a listener (Stage 6): a foreground service that holds the
- * port while peers may reach this phone, with a Stop action. Never started
+ * port while devices may reach this phone, with a Stop action. Never started
  * by itself; the switch on the sync screen starts it, and only then does
  * the phone cost anything.
  */
 class SyncListenerService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var discovery: PeerDiscovery? = null
+    private var discovery: DeviceDiscovery? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
     override fun onCreate() {
         super.onCreate()
-        val channel = NotificationChannel(CHANNEL, "Listening for peers", NotificationManager.IMPORTANCE_LOW).apply {
+        val channel = NotificationChannel(CHANNEL, "Listening for devices", NotificationManager.IMPORTANCE_LOW).apply {
             description = "Shown while other devices may reach this phone to sync"
         }
         getSystemService(NotificationManager::class.java).createNotificationChannel(channel)
@@ -53,11 +53,13 @@ class SyncListenerService : Service() {
                     getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification(urls.firstOrNull() ?: "no address"))
                     // Announced on the network while listening (Stage 7)
                     val accountId = repository.getAccountId().getOrNull() ?: ""
-                    val deviceId = repository.getDeviceId().getOrNull() ?: ""
-                    val name = repository.getDeviceName().getOrNull() ?: ""
+                    val thisDeviceId = repository.getThisDeviceId().getOrNull() ?: ""
+                    val name = repository.getThisDeviceName().getOrNull() ?: ""
                     val fingerprint = repository.certificateFingerprint().getOrNull() ?: ""
-                    if (accountId.isNotEmpty() && deviceId.isNotEmpty()) {
-                        discovery = PeerDiscovery(applicationContext).also { it.announce(PORT, accountId, deviceId, name, fingerprint) }
+                    // thisDeviceId, never deviceId: in a Service that name is Android's
+                    // Context.deviceId (an Int, the virtual device), not this phone's id
+                    if (accountId.isNotEmpty() && thisDeviceId.isNotEmpty()) {
+                        discovery = DeviceDiscovery(applicationContext).also { it.announce(PORT, accountId, thisDeviceId, name, fingerprint) }
                     }
                     // The idle stop (Stage 6): after the chosen hours of silence, and never otherwise
                     while (true) {
@@ -100,7 +102,7 @@ class SyncListenerService : Service() {
         )
         return Notification.Builder(this, CHANNEL)
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setContentTitle("Listening for peers")
+            .setContentTitle("Listening for devices")
             .setContentText(address)
             .setOngoing(true)
             .setOnlyAlertOnce(true)

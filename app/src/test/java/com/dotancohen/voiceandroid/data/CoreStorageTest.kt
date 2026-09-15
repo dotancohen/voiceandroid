@@ -95,7 +95,7 @@ class CoreStorageTest {
         assertEquals(emptyList<String>(), down.errors)
         assertEquals(1, down.downloaded)
         assertArrayEquals(content, file.readBytes())
-        assertTrue(client.fileLocations(id).any { it.place == client.getDeviceId() && it.present })
+        assertTrue(client.fileLocations(id).any { it.place == client.getThisDeviceId() && it.present })
     }
 
     @Test
@@ -105,7 +105,7 @@ class CoreStorageTest {
         assertEquals(1, client.upload().uploaded)
         assertEquals("Removed ${file.name} from this device; the bucket holds it", client.removeLocalCopy(id))
         assertFalse(file.exists())
-        assertEquals(mapOf("cloud" to true, client.getDeviceId() to false), client.fileLocations(id).associate { it.place to it.present })
+        assertEquals(mapOf("cloud" to true, client.getThisDeviceId() to false), client.fileLocations(id).associate { it.place to it.present })
     }
 
     @Test

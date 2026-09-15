@@ -47,7 +47,7 @@ class SnapshotsViewModel(application: Application) : AndroidViewModel(applicatio
         viewModelScope.launch {
             _moveMessage.value = null
             repository.moveToAccount(setupText, typedCurrentId)
-                .onSuccess { _moveMessage.value = "Moved ${it.notesMoved} notes to account ${it.accountId.take(8)} through ${it.peerName}; ${it.tagsMerged} tags with one path became one."; _accountId.value = it.accountId }
+                .onSuccess { _moveMessage.value = "Moved ${it.notesMoved} notes to account ${it.accountId.take(8)} through ${it.deviceName}; ${it.tagsMerged} tags with one path became one."; _accountId.value = it.accountId }
                 .onFailure { _moveMessage.value = "Not moved: ${it.message}" }
         }
     }
